@@ -84,6 +84,10 @@ libmangosgame_a_SOURCES = \
 	Chat.cpp \
 	Chat.h \
 	ChatHandler.cpp \
+	ChatLexicsCutter.cpp \
+	ChatLexicsCutter.h \
+	ChatLog.cpp \
+	ChatLog.h \
 	CombatHandler.cpp \
 	ConfusedMovementGenerator.cpp \
 	ConfusedMovementGenerator.h \
@@ -201,6 +205,26 @@ libmangosgame_a_SOURCES = \
 	ObjectPosSelector.h \
 	Opcodes.cpp \
 	Opcodes.h \
+	OutdoorPvP.cpp \
+	OutdoorPvP.h \
+	OutdoorPvPEP.cpp \
+	OutdoorPvPEP.h \
+	OutdoorPvPHP.cpp \
+	OutdoorPvPHP.h \
+	OutdoorPvPMgr.cpp \
+	OutdoorPvPMgr.h \
+	OutdoorPvPNA.cpp \
+	OutdoorPvPNA.h \
+	OutdoorPvPObjectiveAI.cpp \
+	OutdoorPvPObjectiveAI.h \
+	OutdoorPvPSI.cpp \
+	OutdoorPvPSI.h \
+	OutdoorPvPTF.cpp \
+	OutdoorPvPTF.h \
+	OutdoorPvPZM.cpp \
+	OutdoorPvPZM.h \
+	OutdoorPvPLA.cpp \
+	OutdoorPvPLA.h \
 	Path.h \
 	PetAI.cpp \
 	PetAI.h \
@@ -293,14 +317,6 @@ libmangosgame_a_SOURCES = \
 	GroupReference.cpp \
 	GroupReference.h \
 	GroupRefManager.h
-
-## Link against shared library
-libmangosgame_a_LIBADD = \
-	../shared/libmangosshared.a \
-	../shared/Auth/libmangosauth.a \
-	../shared/Config/libmangosconfig.a \
-	../shared/Database/libmangosdatabase.a \
-	../shared/vmap/libmangosvmaps.a
 
 ## Additional files to include when running 'make dist'
 #  Precompiled Headers for WIN

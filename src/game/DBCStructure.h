@@ -81,11 +81,14 @@ struct AchievementCriteriaEntry
         } kill_creature;
 
         // ACHIEVEMENT_CRITERIA_TYPE_WIN_BG                 = 1
-        // TODO: there are further criterias instead just winning
         struct
         {
             uint32  bgMapID;                                // 3
             uint32  winCount;                               // 4
+            uint32  additionalRequirement1_type;            // 5 additional requirement 1 type
+            uint32  additionalRequirement1_value;           // 6 additional requirement 1 value
+            uint32  additionalRequirement2_type;            // 7 additional requirement 2 type
+            uint32  additionalRequirement2_value;           // 8 additional requirement 1 value
         } win_bg;
 
         // ACHIEVEMENT_CRITERIA_TYPE_REACH_LEVEL            = 5
@@ -1518,7 +1521,6 @@ struct StableSlotPricesEntry
     uint32 Price;
 };
 
-/* unused currently
 struct SummonPropertiesEntry
 {
     uint32  Id;                                             // 0
@@ -1528,7 +1530,6 @@ struct SummonPropertiesEntry
     uint32  Slot;                                           // 4,                        0-6
     uint32  Flags;                                          // 5, enum SummonPropFlags
 };
-*/
 
 #define MAX_TALENT_RANK 5
 #define MAX_PET_TALENT_RANK 3                               // use in calculations, expected <= MAX_TALENT_RANK

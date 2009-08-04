@@ -104,7 +104,7 @@ class SpellCastTargets
         SpellCastTargets();
         ~SpellCastTargets();
 
-        bool read ( WorldPacket * data, Unit *caster );
+        bool read ( WorldPacket * data, Unit *caster, SpellEntry const* spell = NULL );
         void write ( WorldPacket * data );
 
         SpellCastTargets& operator=(const SpellCastTargets &target)
@@ -237,6 +237,7 @@ class Spell
         void EffectSummonChangeItem(uint32 i);
         void EffectProficiency(uint32 i);
         void EffectApplyAreaAura(uint32 i);
+        void EffectRedirectThreat(uint32 i);
         void EffectSummonType(uint32 i);
         void EffectSummon(uint32 i);
         void EffectLearnSpell(uint32 i);
@@ -321,6 +322,8 @@ class Spell
         void EffectActivateRune(uint32 i);
         void EffectTitanGrip(uint32 i);
         void EffectEnchantItemPrismatic(uint32 i);
+        void EffectSummonVehicle(uint32 i);
+        void EffectDamageBuilding(uint32 i);
         void EffectPlayMusic(uint32 i);
 
         Spell( Unit* Caster, SpellEntry const *info, bool triggered, uint64 originalCasterGUID = 0, Spell** triggeringContainer = NULL );
@@ -368,6 +371,7 @@ class Spell
         typedef std::list<Unit*> UnitList;
         void FillTargetMap();
         void SetTargetMap(uint32 i,uint32 cur,UnitList& TagUnitMap);
+        void FillCustomTargetMap(uint32 i, UnitList& TagUnitMap);
 
         void FillAreaTargets( UnitList& TagUnitMap, float x, float y, float radius, SpellNotifyPushType pushType, SpellTargets spellTargets );
         void FillRaidOrPartyTargets( UnitList &TagUnitMap, Unit* member, Unit* center, float radius, bool raid, bool withPets, bool withcaster );

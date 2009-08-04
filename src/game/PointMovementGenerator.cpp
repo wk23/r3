@@ -28,7 +28,7 @@ template<class T>
 void PointMovementGenerator<T>::Initialize(T &unit)
 {
     unit.StopMoving();
-    unit.addUnitState(UNIT_STAT_MOVING);
+    unit.addUnitState(UNIT_STAT_ROAMING);
     Traveller<T> traveller(unit);
     i_destinationHolder.SetDestination(traveller,i_x,i_y,i_z);
 
@@ -42,7 +42,7 @@ bool PointMovementGenerator<T>::Update(T &unit, const uint32 &diff)
     if(!&unit)
         return false;
 
-    if(unit.hasUnitState(UNIT_STAT_ROOT | UNIT_STAT_STUNNED))
+    if(unit.hasUnitState(UNIT_STAT_ROOT | UNIT_STAT_STUNNED | UNIT_STAT_ON_VEHICLE))
         return true;
 
     Traveller<T> traveller(unit);

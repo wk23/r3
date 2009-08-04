@@ -32,6 +32,17 @@ MapInstanced::MapInstanced(uint32 id, time_t expiry) : Map(id, expiry, 0, 0)
     memset(&GridMapReference, 0, MAX_NUMBER_OF_GRIDS*MAX_NUMBER_OF_GRIDS*sizeof(uint16));
 }
 
+void MapInstanced::InitVisibilityDistance()
+{
+    if(m_InstancedMaps.empty())
+        return;
+    //initialize visibility distances for all instance copies
+    for (InstancedMaps::iterator i = m_InstancedMaps.begin(); i != m_InstancedMaps.end(); ++i)
+    {
+        (*i).second->InitVisibilityDistance();
+    }
+}
+
 void MapInstanced::Update(const uint32& t)
 {
     // take care of loaded GridMaps (when unused, unload it!)
@@ -124,7 +135,21 @@ Map* MapInstanced::CreateInstance(const uint32 mapId, Player * player)
         ASSERT(NewInstanceId);
         map = _FindMap(NewInstanceId);
         if(!map)
+        {
             map = CreateBattleGround(NewInstanceId);
+            ((BattleGroundMap*)map)->SetBG(player->GetBattleGround());
+        }
+        if(!((BattleGroundMap*)map)->GetBG())
+        {
+            sLog.outError("The bg-class couldn't be assigned (very early) to the battlegroundmap, it's possible, that some db-spawned creatures are now not handled right this is related to battleground alterac valley (av) - please post bugreport, and add information how this bg was created (if you don't have information, report it also) Player: %s (%u) in map:%u requested map:%u", player->GetName(), player->GetGUIDLow(), player->GetMapId(), GetId());
+            if(player->GetBattleGround())
+            {
+                sLog.outError("somehow the battleground was found, but please report also - i end this bg now..");
+                ((BattleGroundMap*)map)->SetBG(player->GetBattleGround());
+                player->GetBattleGround()->EndBattleGround(0); //to avoid the assert
+            }
+            //assert(false);
+        }
     }
     else
     {

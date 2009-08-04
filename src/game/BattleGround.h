@@ -65,6 +65,12 @@ enum BattleGroundMarksCount
     ITEM_LOSER_COUNT                = 1
 };
 
+enum BattleGroundCreatures
+{
+    BG_CREATURE_ENTRY_A_SPIRITGUIDE      = 13116,           // alliance
+    BG_CREATURE_ENTRY_H_SPIRITGUIDE      = 13117,           // horde
+};
+
 enum BattleGroundSpells
 {
     SPELL_WAITING_FOR_RESURRECT     = 2584,                 // Waiting to Resurrect
@@ -185,10 +191,7 @@ enum ScoreType
     SCORE_GRAVEYARDS_DEFENDED   = 12,
     SCORE_TOWERS_ASSAULTED      = 13,
     SCORE_TOWERS_DEFENDED       = 14,
-    SCORE_MINES_CAPTURED        = 15,
-    SCORE_LEADERS_KILLED        = 16,
-    SCORE_SECONDARY_OBJECTIVES  = 17
-    // TODO : implement them
+    SCORE_SECONDARY_OBJECTIVES  = 15
 };
 
 enum ArenaType
@@ -291,6 +294,10 @@ class BattleGround
         virtual void StartingEventCloseDoors() {}
         virtual void StartingEventOpenDoors() {}
 
+        /* achievement req. */
+        virtual bool IsAllNodesConrolledByTeam(uint32 /*team*/) const { return false; }
+        bool IsTeamScoreInRange(uint32 team, uint32 minScore, uint32 maxScore) const;
+
         /* Battleground */
         // Get methods:
         char const* GetName() const         { return m_Name; }
@@ -388,7 +395,7 @@ class BattleGround
         void SetTeamStartLoc(uint32 TeamID, float X, float Y, float Z, float O);
         void GetTeamStartLoc(uint32 TeamID, float &X, float &Y, float &Z, float &O) const
         {
-            uint8 idx = GetTeamIndexByTeamId(TeamID);
+            BattleGroundTeamId idx = GetTeamIndexByTeamId(TeamID);
             X = m_TeamStartLocX[idx];
             Y = m_TeamStartLocY[idx];
             Z = m_TeamStartLocZ[idx];
@@ -420,10 +427,12 @@ class BattleGround
         void BlockMovement(Player *plr);
 
         void SendMessageToAll(int32 entry, ChatMsg type, Player const* source = NULL);
+        void SendYellToAll(int32 entry, uint32 language, uint64 const& guid);
         void PSendMessageToAll(int32 entry, ChatMsg type, Player const* source, ...  );
 
         // specialized version with 2 string id args
         void SendMessage2ToAll(int32 entry, ChatMsg type, Player const* source, int32 strId1 = 0, int32 strId2 = 0);
+        void SendYell2ToAll(int32 entry, uint32 language, uint64 const& guid, int32 arg1, int32 arg2);
 
         /* Raid Group */
         Group *GetBgRaid(uint32 TeamID) const { return TeamID == ALLIANCE ? m_BgRaids[BG_TEAM_ALLIANCE] : m_BgRaids[BG_TEAM_HORDE]; }
@@ -431,7 +440,7 @@ class BattleGround
 
         virtual void UpdatePlayerScore(Player *Source, uint32 type, uint32 value);
 
-        uint8 GetTeamIndexByTeamId(uint32 Team) const { return Team == ALLIANCE ? BG_TEAM_ALLIANCE : BG_TEAM_HORDE; }
+        static BattleGroundTeamId GetTeamIndexByTeamId(uint32 Team) { return Team == ALLIANCE ? BG_TEAM_ALLIANCE : BG_TEAM_HORDE; }
         uint32 GetPlayersCountByTeam(uint32 Team) const { return m_PlayersCount[GetTeamIndexByTeamId(Team)]; }
         uint32 GetAlivePlayersCountByTeam(uint32 Team) const;   // used in arenas to correctly handle death in spirit of redemption / last stand etc. (killer = killed) cases
         void UpdatePlayersCountByTeam(uint32 Team, bool remove)
@@ -454,6 +463,7 @@ class BattleGround
         virtual void HandleAreaTrigger(Player* /*Source*/, uint32 /*Trigger*/) {}
         // must be implemented in BG subclass if need AND call base class generic code
         virtual void HandleKillPlayer(Player *player, Player *killer);
+        virtual void HandleKillUnit(Creature* /*unit*/, Player* /*killer*/) { return; };
 
         /* Battleground events */
         virtual void EventPlayerDroppedFlag(Player* /*player*/) {}
@@ -472,6 +482,10 @@ class BattleGround
         virtual void RemovePlayerAtLeave(uint64 guid, bool Transport, bool SendPacket);
                                                             // can be extended in in BG subclass
 
+        virtual void OnObjectDBLoad(Creature* /*creature*/) {}
+        virtual void OnObjectDBLoad(GameObject* /*gameobject*/) {}
+        virtual void OnCreatureRespawn(Creature* /*creature*/) {}
+
         void HandleTriggerBuff(uint64 const& go_guid);
 
         // TODO: make this protected:
@@ -479,16 +493,16 @@ class BattleGround
         typedef std::vector<uint64> BGCreatures;
         BGObjects m_BgObjects;
         BGCreatures m_BgCreatures;
-        void SpawnBGObject(uint32 type, uint32 respawntime);
+        void SpawnBGObject(uint64 const& guid, uint32 respawntime);
         bool AddObject(uint32 type, uint32 entry, float x, float y, float z, float o, float rotation0, float rotation1, float rotation2, float rotation3, uint32 respawnTime = 0);
-//        void SpawnBGCreature(uint32 type, uint32 respawntime);
+        void SpawnBGCreature(uint64 const& guid, uint32 respawntime);
         Creature* AddCreature(uint32 entry, uint32 type, uint32 teamval, float x, float y, float z, float o, uint32 respawntime = 0);
         bool DelCreature(uint32 type);
         bool DelObject(uint32 type);
         bool AddSpiritGuide(uint32 type, float x, float y, float z, float o, uint32 team);
 
-        void DoorOpen(uint32 type);
-        void DoorClose(uint32 type);
+        void DoorOpen(uint64 const& guid);
+        void DoorClose(uint64 const& guid);
 
         virtual bool HandlePlayerUnderMap(Player * /*plr*/) { return false; }
 
@@ -498,6 +512,9 @@ class BattleGround
         bool IsPlayerInBattleGround(uint64 guid);
 
         void SetDeleteThis() {m_SetDeleteThis = true;}
+
+        /* virtual score-array - get's used in bg-subclasses */
+        int32 m_TeamScores[BG_TEAMS_COUNT];
 
     protected:
         //this method is called, when BG cannot spawn its own spirit guide, or something is wrong, It correctly ends BattleGround

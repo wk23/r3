@@ -39,7 +39,7 @@ char const* petTypeSuffix[MAX_PET_TYPE] =
 
 Pet::Pet(PetType type) :
 Creature(), m_removed(false), m_petType(type), m_happinessTimer(7500), m_duration(0), m_resetTalentsCost(0),
-m_bonusdamage(0), m_resetTalentsTime(0), m_usedTalentCount(0), m_auraUpdateMask(0), m_loading(false),
+m_bonusdamage(0), m_resetTalentsTime(0), m_usedTalentCount(0), m_loading(false),
 m_declinedname(NULL)
 {
     m_isPet = true;
@@ -204,6 +204,11 @@ bool Pet::LoadPetFromDB( Player* owner, uint32 petentry, uint32 petnumber, bool 
 
             SetUInt32Value(UNIT_FIELD_BYTES_0, 2048);
             SetUInt32Value(UNIT_FIELD_FLAGS, UNIT_FLAG_PVP_ATTACKABLE);
+
+             // If pet is deathknight's ghoul
+            if (GetEntry() == 26125)
+                // then he must have energy bar instead of mana
+                setPowerType(POWER_ENERGY);
                                                             // this enables popup window (pet dismiss, cancel)
             break;
         case HUNTER_PET:
@@ -777,7 +782,7 @@ bool Pet::CreateBaseAtCreature(Creature* creature)
     setPowerType(POWER_FOCUS);
     SetUInt32Value(UNIT_FIELD_PET_NAME_TIMESTAMP, 0);
     SetUInt32Value(UNIT_FIELD_PETEXPERIENCE, 0);
-    SetUInt32Value(UNIT_FIELD_PETNEXTLEVELEXP, objmgr.GetXPForLevel(creature->getLevel())/4);
+    SetUInt32Value(UNIT_FIELD_PETNEXTLEVELEXP, objmgr.GetXPForLevel(creature->getLevel())/10);
     SetUInt32Value(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_NONE);
 
     if(CreatureFamilyEntry const* cFamily = sCreatureFamilyStore.LookupEntry(cinfo->family))
@@ -922,7 +927,7 @@ bool Pet::InitStatsForLevel(uint32 petlevel, Unit* owner)
         }
         case HUNTER_PET:
         {
-            SetUInt32Value(UNIT_FIELD_PETNEXTLEVELEXP, objmgr.GetXPForLevel(petlevel)/4);
+            SetUInt32Value(UNIT_FIELD_PETNEXTLEVELEXP, objmgr.GetXPForLevel(petlevel)/10);
             //these formula may not be correct; however, it is designed to be close to what it should be
             //this makes dps 0.5 of pets level
             SetBaseWeaponDamage(BASE_ATTACK, MINDAMAGE, float(petlevel - (petlevel / 4)) );
@@ -1775,6 +1780,20 @@ void Pet::ToggleAutocast(uint32 spellid, bool apply)
     if(IsPassiveSpell(spellid))
         return;
 
+       // Sacrifice is not autocastable
+       switch(spellid) {
+              case 7812:     // Sacrifice Rank 1
+              case 19438:    // Sacrifice Rank 2
+              case 19440:    // Sacrifice Rank 3
+              case 19441:    // Sacrifice Rank 4
+              case 19442:    // Sacrifice Rank 5
+              case 19443:    // Sacrifice Rank 6
+              case 27273:    // Sacrifice Rank 7
+              case 47985:    // Sacrifice Rank 8
+              case 47986:    // Sacrifice Rank 9
+                     return;
+       }
+
     PetSpellMap::iterator itr = m_spells.find(spellid);
 
     int i;
@@ -1909,13 +1928,37 @@ void Pet::CastPetAura(PetAura const* aura)
     if(!auraId)
         return;
 
-    if(auraId == 35696)                                       // Demonic Knowledge
+    switch (auraId)
     {
-        int32 basePoints = int32(aura->GetDamage() * (GetStat(STAT_STAMINA) + GetStat(STAT_INTELLECT)) / 100);
-        CastCustomSpell(this, auraId, &basePoints, NULL, NULL, true);
-    }
-    else
-        CastSpell(this, auraId, true);
+        case 35696: // Demonic Knowledge
+        {
+            int32 basePoints = int32(aura->GetDamage() * (GetStat(STAT_STAMINA) + GetStat(STAT_INTELLECT)) / 100);
+            CastCustomSpell(this, auraId, &basePoints, NULL, NULL, true);
+            break;
+        }
+        case 54566: // Ravenous Dead
+        {
+            Unit* owner = GetOwner();
+            if (owner)
+            {
+                // We must give x% bonus to base bonus from owner's stamina to ghoul stamina
+                int32 basePoints0 =
+                    int32(owner->GetStat(STAT_STAMINA)*0.3f*(aura->GetDamage()+100.0f)/100.0f
+                    - (GetStat(STAT_STAMINA)-GetCreateStat(STAT_STAMINA)));
+                // We must give x% bonus to base bonus from owner's strength to ghoul strength
+                int32 basePoints1 =
+                    int32(owner->GetStat(STAT_STRENGTH)*0.3f*(aura->GetDamage()+100.0f)/100.0f
+                    - (GetStat(STAT_STRENGTH)-GetCreateStat(STAT_STRENGTH)));
+                CastCustomSpell(this, auraId, &basePoints0, &basePoints1, NULL, true);
+            }
+            break;
+        }
+        default:
+        {
+            CastSpell(this, auraId, true);
+            break;
+        }
+     }
 }
 
 struct DoPetLearnSpell
@@ -1950,7 +1993,7 @@ void Pet::SynchronizeLevelWithOwner()
             if(getLevel() > owner->getLevel())
             {
                 GivePetLevel(owner->getLevel());
-                SetUInt32Value(UNIT_FIELD_PETNEXTLEVELEXP, objmgr.GetXPForLevel(owner->getLevel())/4);
+                SetUInt32Value(UNIT_FIELD_PETNEXTLEVELEXP, objmgr.GetXPForLevel(owner->getLevel())/10);
                 SetUInt32Value(UNIT_FIELD_PETEXPERIENCE, GetUInt32Value(UNIT_FIELD_PETNEXTLEVELEXP)-1);
             }
             break;

@@ -51,6 +51,7 @@ class UpdateMask;
 class SpellCastTargets;
 class PlayerSocial;
 class Vehicle;
+class OutdoorPvP;
 
 typedef std::deque<Mail*> PlayerMails;
 
@@ -269,7 +270,7 @@ struct Areas
 };
 
 #define MAX_RUNES       6
-#define RUNE_COOLDOWN   5                                   // 5*2=10 sec
+#define RUNE_COOLDOWN   10000                               // msec
 
 enum RuneType
 {
@@ -284,13 +285,14 @@ struct RuneInfo
 {
     uint8 BaseRune;
     uint8 CurrentRune;
-    uint8 Cooldown;
+    uint16 Cooldown;                                        // msec
 };
 
 struct Runes
 {
     RuneInfo runes[MAX_RUNES];
     uint8 runeState;                                        // mask of available runes
+    uint8 usedRunes;                                         // mask of available runes
 
     void SetRuneState(uint8 index, bool set = true)
     {
@@ -784,6 +786,16 @@ struct MovementInfo
     bool HasMovementFlag(MovementFlags f) const { return flags & f; }
     MovementFlags GetMovementFlags() const { return MovementFlags(flags); }
     void SetMovementFlags(MovementFlags f) { flags = f; }
+};
+
+ //here stored last safe player's position
+struct SafePosition
+{
+    float x, y, z;
+    SafePosition()
+    {
+        x = y = z = 0.0f;
+    }
 };
 
 // flags that use in movement check for example at spell casting
@@ -1335,7 +1347,6 @@ class MANGOS_DLL_SPEC Player : public Unit
 
         bool LoadFromDB(uint32 guid, SqlQueryHolder *holder);
 
-        bool MinimalLoadFromDB(QueryResult *result, uint32 guid);
         static bool   LoadValuesArrayFromDB(Tokens& data,uint64 guid);
         static uint32 GetUInt32ValueFromArray(Tokens const& data, uint16 index);
         static float  GetFloatValueFromArray(Tokens const& data, uint16 index);
@@ -1370,8 +1381,8 @@ class MANGOS_DLL_SPEC Player : public Unit
         void SendPetSkillWipeConfirm();
         void CalcRage( uint32 damage,bool attacker );
         void RegenerateAll();
-        void Regenerate(Powers power);
-        void RegenerateHealth();
+        void Regenerate(Powers power, uint32 diff);
+        void RegenerateHealth(uint32 diff);
         void setRegenTimer(uint32 time) {m_regenTimer = time;}
         void setWeaponChangeTimer(uint32 time) {m_weaponChangeTimer = time;}
 
@@ -1656,7 +1667,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         void ApplySpellHealingBonus(int32 amount, bool apply);
         void UpdateSpellDamageAndHealingBonus();
 
-        void CalculateMinMaxDamage(WeaponAttackType attType, bool normalized, float& min_damage, float& max_damage);
+        void CalculateMinMaxDamage(WeaponAttackType attType, bool normalized, bool addTotalPct, float& min_damage, float& max_damage);
 
         void UpdateDefenseBonusesMod();
         void ApplyRatingMod(CombatRating cr, int32 value, bool apply);
@@ -1880,8 +1891,6 @@ class MANGOS_DLL_SPEC Player : public Unit
         void SendUpdateWorldState(uint32 Field, uint32 Value);
         void SendDirectMessage(WorldPacket *data);
 
-        void SendAurasForTarget(Unit *target);
-
         PlayerMenu* PlayerTalkClass;
         std::vector<ItemSetEffect *> ItemSetEff;
 
@@ -2002,6 +2011,14 @@ class MANGOS_DLL_SPEC Player : public Unit
         bool CanCaptureTowerPoint();
 
         /*********************************************************/
+        /***               OUTDOOR PVP SYSTEM                  ***/
+        /*********************************************************/
+
+        OutdoorPvP * GetOutdoorPvP() const;
+        // returns true if the player is in active state for outdoor pvp objective capturing, false otherwise
+        bool IsOutdoorPvPActive();
+
+        /*********************************************************/
         /***                    REST SYSTEM                    ***/
         /*********************************************************/
 
@@ -2028,15 +2045,23 @@ class MANGOS_DLL_SPEC Player : public Unit
         /***                 VARIOUS SYSTEMS                   ***/
         /*********************************************************/
         MovementInfo m_movementInfo;
+        SafePosition m_safeposition;
         bool HasMovementFlag(MovementFlags f) const;        // for script access to m_movementInfo.HasMovementFlag
+
         void UpdateFallInformationIfNeed(MovementInfo const& minfo,uint16 opcode);
         Unit *m_mover;
+        Unit *m_mover_in_queve;
+
+        void SetMoverInQueve(Unit* pet) {m_mover_in_queve = pet ? pet : this; }
+
         void SetFallInformation(uint32 time, float z)
         {
             m_lastFallTime = time;
             m_lastFallZ = z;
         }
         void HandleFall(MovementInfo const& movementInfo);
+
+        RedirectThreatMap* getRedirectThreatMap() { return &m_redirectMap; }
 
         void BuildTeleportAckMsg( WorldPacket *data, float x, float y, float z, float ang) const;
 
@@ -2050,8 +2075,8 @@ class MANGOS_DLL_SPEC Player : public Unit
         void SetClientControl(Unit* target, uint8 allowMove);
         void SetMover(Unit* target) { m_mover = target ? target : this; }
 
-        void EnterVehicle(Vehicle *vehicle);
-        void ExitVehicle(Vehicle *vehicle);
+        // vehicle system
+        void SendEnterVehicle(Vehicle *vehicle);
 
         uint64 GetFarSight() const { return GetUInt64Value(PLAYER_FARSIGHT); }
         void SetFarSightGUID(uint64 guid) { SetUInt64Value(PLAYER_FARSIGHT, guid); }
@@ -2098,7 +2123,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         void UpdateVisibilityOf(WorldObject* target);
 
         template<class T>
-            void UpdateVisibilityOf(T* target, UpdateData& data, UpdateDataMapType& data_updates, std::set<WorldObject*>& visibleNow);
+            void UpdateVisibilityOf(T* target, UpdateData& data, std::set<Unit*>& visibleNow);
 
         // Stealth detection system
         void HandleStealthedUnitsDetection();
@@ -2155,8 +2180,6 @@ class MANGOS_DLL_SPEC Player : public Unit
         uint8 GetSubGroup() const { return m_group.getSubGroup(); }
         uint32 GetGroupUpdateFlag() const { return m_groupUpdateMask; }
         void SetGroupUpdateFlag(uint32 flag) { m_groupUpdateMask |= flag; }
-        const uint64& GetAuraUpdateMask() const { return m_auraUpdateMask; }
-        void SetAuraUpdateMask(uint8 slot) { m_auraUpdateMask |= (uint64(1) << slot); }
         Player* GetNextRandomRaidMember(float radius);
         PartyResult CanUninviteFromGroup() const;
         // BattleGround Group System
@@ -2176,10 +2199,13 @@ class MANGOS_DLL_SPEC Player : public Unit
         uint8 GetRunesState() const { return m_runes->runeState; }
         uint8 GetBaseRune(uint8 index) const { return m_runes->runes[index].BaseRune; }
         uint8 GetCurrentRune(uint8 index) const { return m_runes->runes[index].CurrentRune; }
-        uint8 GetRuneCooldown(uint8 index) const { return m_runes->runes[index].Cooldown; }
+        uint8 GetLastUsedRuneIndex(uint8 runeType) const { return (m_runes->usedRunes & (1 << (runeType*2))) ? runeType*2 : (m_runes->usedRunes & (1 << (runeType*2+1))) ? runeType*2+1 : -1; }
+        uint16 GetRuneCooldown(uint8 index) const { return m_runes->runes[index].Cooldown; }
         void SetBaseRune(uint8 index, uint8 baseRune) { m_runes->runes[index].BaseRune = baseRune; }
         void SetCurrentRune(uint8 index, uint8 currentRune) { m_runes->runes[index].CurrentRune = currentRune; }
-        void SetRuneCooldown(uint8 index, uint8 cooldown) { m_runes->runes[index].Cooldown = cooldown; m_runes->SetRuneState(index, (cooldown == 0) ? true : false); }
+        void SetRuneCooldown(uint8 index, uint16 cooldown) { m_runes->runes[index].Cooldown = cooldown; m_runes->SetRuneState(index, (cooldown == 0) ? true : false); }
+        void ResetLastUsedRunes() { m_runes->usedRunes = 0; }
+        void SetLastUsedRune(uint8 index) { m_runes->usedRunes |= (1 << index); }
         void ConvertRune(uint8 index, uint8 newType);
         void ResyncRunes(uint8 count);
         void AddRunePower(uint8 index);
@@ -2384,6 +2410,29 @@ class MANGOS_DLL_SPEC Player : public Unit
         float m_rest_bonus;
         RestType rest_type;
         ////////////////////Rest System/////////////////////
+        //movement anticheat
+        uint32 m_anti_LastClientTime;     //last movement client time
+        uint32 m_anti_LastServerTime;     //last movement server time
+        uint32 m_anti_DeltaClientTime;    //client side session time
+        uint32 m_anti_DeltaServerTime;    //server side session time
+        uint32 m_anti_MistimingCount;     //mistiming counts before kick
+
+        uint32 m_anti_LastSpeedChangeTime;//last speed change time
+        uint32 m_anti_BeginFallTime;      //alternative falling begin time (obsolete)
+
+        float  m_anti_Last_HSpeed;        //horizontal speed, default RUN speed
+        float  m_anti_Last_VSpeed;        //vertical speed, default max jump height
+
+        uint64 m_anti_TransportGUID;      //current transport GUID
+
+        uint32 m_anti_JustTeleported;     //seted when player was teleported
+        uint32 m_anti_TeleToPlane_Count;  //Teleport To Plane alarm counter
+
+        uint64 m_anti_AlarmCount;         //alarm counter
+
+        uint32 m_anti_JustJumped;         //Jump already began, anti air jump check
+        float  m_anti_JumpBaseZ;           //Z coord before jump
+        // << movement anticheat
 
         // Transports
         Transport * m_transport;
@@ -2401,7 +2450,6 @@ class MANGOS_DLL_SPEC Player : public Unit
         GroupReference m_originalGroup;
         Group *m_groupInvite;
         uint32 m_groupUpdateMask;
-        uint64 m_auraUpdateMask;
 
         uint64 m_miniPet;
 
@@ -2462,6 +2510,9 @@ class MANGOS_DLL_SPEC Player : public Unit
 
         AchievementMgr m_achievementMgr;
         ReputationMgr  m_reputationMgr;
+
+        // Map used to control threat redirection effects
+        RedirectThreatMap m_redirectMap;
 };
 
 void AddItemsSetItem(Player*player,Item *item);

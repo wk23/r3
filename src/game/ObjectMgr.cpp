@@ -812,6 +812,92 @@ void ObjectMgr::ConvertCreatureAddonAuras(CreatureDataAddon* addon, char const* 
     endAura.effect_idx = 0;
 }
 
+void ObjectMgr::ConvertCreatureAddonPassengers(CreatureDataAddon* addon, char const* table, char const* guidEntryStr)
+{
+    // Now add the auras, format "spellid effectindex spellid effectindex..."
+    char *p,*s;
+    std::vector<int> val;
+    s=p=(char*)reinterpret_cast<char const*>(addon->passengers);
+    if(p)
+    {
+        while (p[0]!=0)
+        {
+            ++p;
+            if (p[0]==' ')
+            {
+                val.push_back(atoi(s));
+                s=++p;
+            }
+        }
+        if (p!=s)
+            val.push_back(atoi(s));
+
+        // free char* loaded memory
+        delete[] (char*)reinterpret_cast<char const*>(addon->passengers);
+
+        // wrong list
+        if (val.size()%2)
+        {
+            addon->passengers = NULL;
+            sLog.outErrorDb("Creature (%s: %u) has wrong `passengers` data in `%s`.",guidEntryStr,addon->guidOrEntry,table);
+            return;
+        }
+    }
+
+    // empty list
+    if(val.empty())
+    {
+        addon->passengers = NULL;
+        return;
+    }
+
+    // replace by new structures array
+    const_cast<CreatureDataAddonPassengers*&>(addon->passengers) = new CreatureDataAddonPassengers[val.size()/2+1];
+
+    int i=0;
+    for(int j=0;j<val.size()/2;++j)
+    {
+        CreatureDataAddonPassengers& cPas = const_cast<CreatureDataAddonPassengers&>(addon->passengers[i]);
+        if(guidEntryStr == "Entry")
+            cPas.guidOrEntry = (-1)*(int32)val[2*j+0];
+        else
+            cPas.guidOrEntry = (-1)*(int32)val[2*j+0];
+        cPas.seat_idx = (int32)val[2*j+1];
+        if ( cPas.seat_idx > 7 )
+        {
+            sLog.outErrorDb("Creature (%s: %u) has wrong seat %u for creature %u in `passengers` field in `%s`.",guidEntryStr,addon->guidOrEntry,cPas.seat_idx,cPas.guidOrEntry,table);
+            continue;
+        }
+        if(cPas.guidOrEntry == 0)
+        {
+            sLog.outErrorDb("Creature (%s: %u) has wrong creature entry/guid %u `passengers` field in `%s`.",guidEntryStr,addon->guidOrEntry,cPas.guidOrEntry,table);
+            continue;
+        }
+        if(cPas.guidOrEntry < 0)
+        {
+            if(!sCreatureStorage.LookupEntry<CreatureInfo>((-1)*cPas.guidOrEntry))
+            {
+                sLog.outErrorDb("Creature (%s: %u) has wrong creature entry/guid %u `passengers` field in `%s`.",guidEntryStr,addon->guidOrEntry,cPas.guidOrEntry,table);
+                continue;
+            }
+        }
+        else
+        {
+            if(mCreatureDataMap.find(cPas.guidOrEntry)==mCreatureDataMap.end())
+            {
+                sLog.outErrorDb("Creature (%s: %u) has wrong creature entry/guid %u `passengers` field in `%s`.",guidEntryStr,addon->guidOrEntry,cPas.guidOrEntry,table);
+                continue;
+            }
+        }
+        ++i;
+    }
+
+    // fill terminator element (after last added)
+    CreatureDataAddonPassengers& endPassenger = const_cast<CreatureDataAddonPassengers&>(addon->passengers[i]);
+    endPassenger.guidOrEntry = 0;
+    endPassenger.seat_idx = 0;
+}
+
 void ObjectMgr::LoadCreatureAddons(SQLStorage& creatureaddons, char const* entryName, char const* comment)
 {
     creatureaddons.Load();
@@ -845,6 +931,7 @@ void ObjectMgr::LoadCreatureAddons(SQLStorage& creatureaddons, char const* entry
         }
 
         ConvertCreatureAddonAuras(const_cast<CreatureDataAddon*>(addon), creatureaddons.GetTableName(), entryName);
+		ConvertCreatureAddonPassengers(const_cast<CreatureDataAddon*>(addon), creatureaddons.GetTableName(), entryName);
     }
 }
 
@@ -1249,14 +1336,16 @@ void ObjectMgr::LoadGameobjects()
         }
 
         data.animprogress   = fields[12].GetUInt32();
-
         uint32 go_state     = fields[13].GetUInt32();
+
         if (go_state >= MAX_GO_STATE)
         {
             sLog.outErrorDb("Table `gameobject` have gameobject (GUID: %u Entry: %u) with invalid `state` (%u) value, skip",guid,data.id,go_state);
             continue;
         }
+
         data.go_state       = GOState(go_state);
+        data.ArtKit         = 0;
 
         data.spawnMask      = fields[14].GetUInt8();
         data.phaseMask      = fields[15].GetUInt16();
@@ -4841,8 +4930,8 @@ void ObjectMgr::LoadAreaTriggerScripts()
     sLog.outString();
     sLog.outString( ">> Loaded %u areatrigger scripts", count );
 }
-
-uint32 ObjectMgr::GetNearestTaxiNode( float x, float y, float z, uint32 mapid, uint32 team )
+//use searched_node for search some known node
+uint32 ObjectMgr::GetNearestTaxiNode( float x, float y, float z, uint32 mapid, uint32 team, uint32 searched_node )
 {
     bool found = false;
     float dist;
@@ -4851,8 +4940,22 @@ uint32 ObjectMgr::GetNearestTaxiNode( float x, float y, float z, uint32 mapid, u
     for(uint32 i = 1; i < sTaxiNodesStore.GetNumRows(); ++i)
     {
         TaxiNodesEntry const* node = sTaxiNodesStore.LookupEntry(i);
-        if(!node || node->map_id != mapid || !node->MountCreatureID[team == ALLIANCE ? 1 : 0])
+
+        if (!node || node->map_id != mapid)
             continue;
+
+        float dist2 = (node->x - x)*(node->x - x)+(node->y - y)*(node->y - y)+(node->z - z)*(node->z - z);
+
+        if (searched_node != 0 && i == searched_node){
+            id = i;
+            dist = dist2;
+            break;
+        }
+
+        if(!node->MountCreatureID[team == ALLIANCE ? 1 : 0])
+            continue;
+
+       // float dist2 = (node->x - x)*(node->x - x)+(node->y - y)*(node->y - y)+(node->z - z)*(node->z - z);
 
         uint8  field   = (uint8)((i - 1) / 32);
         uint32 submask = 1<<((i-1)%32);
@@ -4861,7 +4964,6 @@ uint32 ObjectMgr::GetNearestTaxiNode( float x, float y, float z, uint32 mapid, u
         if((sTaxiNodesMask[field] & submask)==0)
             continue;
 
-        float dist2 = (node->x - x)*(node->x - x)+(node->y - y)*(node->y - y)+(node->z - z)*(node->z - z);
         if(found)
         {
             if(dist2 < dist)
@@ -4877,6 +4979,11 @@ uint32 ObjectMgr::GetNearestTaxiNode( float x, float y, float z, uint32 mapid, u
             id = i;
         }
     }
+
+    //movement anticheat fix
+    if (dist > 3600)
+       id = 0;
+    //movement anticheat fix
 
     return id;
 }
@@ -5198,6 +5305,54 @@ bool ObjectMgr::AddGraveYardLink(uint32 id, uint32 zoneId, uint32 team, bool inD
 
     return true;
 }
+
+void ObjectMgr::RemoveGraveYardLink(uint32 id, uint32 zoneId, uint32 team, bool inDB)
+{
+    GraveYardMap::iterator graveLow  = mGraveYardMap.lower_bound(zoneId);
+    GraveYardMap::iterator graveUp   = mGraveYardMap.upper_bound(zoneId);
+    if(graveLow==graveUp)
+    {
+        //sLog.outErrorDb("Table `game_graveyard_zone` incomplete: Zone %u Team %u does not have a linked graveyard.",zoneId,team);
+        return;
+    }
+
+    bool found = false;
+
+    GraveYardMap::iterator itr;
+
+    for(itr = graveLow; itr != graveUp; ++itr)
+    {
+        GraveYardData & data = itr->second;
+
+        // skip not matching safezone id
+        if(data.safeLocId != id)
+            continue;
+
+        // skip enemy faction graveyard at same map (normal area, city, or battleground)
+        // team == 0 case can be at call from .neargrave
+        if(data.team != 0 && team != 0 && data.team != team)
+            continue;
+
+        found = true;
+        break;
+    }
+
+    // no match, return
+    if(!found)
+        return;
+
+    // remove from links
+    mGraveYardMap.erase(itr);
+
+    // remove link from DB
+    if(inDB)
+    {
+        WorldDatabase.PExecute("DELETE FROM game_graveyard_zone WHERE id = '%u' AND ghost_zone = '%u' AND faction = '%u'",id,zoneId,team);
+    }
+
+    return;
+}
+
 
 void ObjectMgr::LoadAreaTriggerTeleports()
 {
@@ -6953,6 +7108,46 @@ const char *ObjectMgr::GetMangosString(int32 entry, int locale_idx) const
     return "<error>";
 }
 
+void ObjectMgr::LoadSpellDisabledEntrys()
+{
+    m_spell_disabled.clear();                                // need for reload case
+    QueryResult *result = WorldDatabase.Query("SELECT entry, ischeat_spell FROM spell_disabled where active=1");
+
+    uint32 total_count = 0;
+	uint32 cheat_spell_count=0;
+
+    if( !result )
+    {
+        barGoLink bar( 1 );
+        bar.step();
+
+        sLog.outString();
+        sLog.outString( ">> Loaded %u disabled spells", total_count );
+        return;
+    }
+
+    barGoLink bar( result->GetRowCount() );
+
+    Field* fields;
+    do
+    {
+        bar.step();
+        fields = result->Fetch();
+        uint32 spellid = fields[0].GetUInt32();
+		bool ischeater = fields[1].GetBool();
+        m_spell_disabled[spellid] = ischeater;
+        ++total_count;
+		if(ischeater)
+		++cheat_spell_count;
+
+   } while ( result->NextRow() );
+
+    delete result;
+
+    sLog.outString();
+    sLog.outString( ">> Loaded %u disabled spells ( %u - is cheaters spells)", total_count, cheat_spell_count);
+}
+
 void ObjectMgr::LoadFishingBaseSkillLevel()
 {
     mFishingBaseForArea.clear();                            // for reload case
@@ -7021,8 +7216,14 @@ uint16 ObjectMgr::GetConditionId( ConditionType condition, uint32 value1, uint32
     return mConditions.size() - 1;
 }
 
-bool ObjectMgr::CheckDeclinedNames( std::wstring mainpart, DeclinedName const& names )
+bool ObjectMgr::CheckDeclinedNames( std::wstring w_ownname, DeclinedName const& names )
 {
+	// get main part of the name
+	std::wstring mainpart = GetMainPartOfName(w_ownname, 0);
+	// prepare flags
+	bool x = true;
+	bool y = true;
+	// check declined names
     for(int i =0; i < MAX_DECLINED_NAME_CASES; ++i)
     {
         std::wstring wname;
@@ -7030,9 +7231,12 @@ bool ObjectMgr::CheckDeclinedNames( std::wstring mainpart, DeclinedName const& n
             return false;
 
         if(mainpart!=GetMainPartOfName(wname,i+1))
-            return false;
+            x = false;
+
+		if(w_ownname!=wname)
+			y = false;
     }
-    return true;
+    return (x||y);
 }
 
 uint32 ObjectMgr::GetAreaTriggerScriptId(uint32 trigger_id)
@@ -7900,6 +8104,126 @@ ObjectMgr::ScriptNameMap & GetScriptNames()
 CreatureInfo const* GetCreatureTemplateStore(uint32 entry)
 {
     return sCreatureStorage.LookupEntry<CreatureInfo>(entry);
+}
+
+void ObjectMgr::LoadVehicleData()
+{
+    mVehicleData.clear();
+
+    QueryResult *result = WorldDatabase.Query("SELECT entry, flags, Spell1, Spell2, Spell3, Spell4, Spell5, Spell6, Spell7, Spell8, Spell9, Spell10, req_aura FROM vehicle_data");
+    if(!result)
+    {
+        barGoLink bar( 1 );
+        bar.step();
+
+        sLog.outString();
+        sLog.outString( ">> Loaded 0 vehicle data" );
+        sLog.outErrorDb("`vehicle_data` table is empty!");
+        return;
+    }
+
+    uint32 count = 0;
+
+    barGoLink bar( result->GetRowCount() );
+    do
+    {
+        bar.step();
+
+        Field* fields = result->Fetch();
+
+        VehicleDataStructure VDS;
+        // NOTE : we can use spellid or creature id
+        uint32 v_entry      = fields[0].GetUInt32();
+        VDS.v_flags         = fields[1].GetUInt32();
+        for(uint8 j = 0; j < MAX_VEHICLE_SPELLS; j++)
+        {
+            VDS.v_spells[j] = fields[j+2].GetUInt32();
+        }
+        VDS.req_aura        = fields[12].GetUInt32();
+
+        VehicleEntry const *vehicleInfo = sVehicleStore.LookupEntry(v_entry);
+        if(!vehicleInfo)
+        {
+            sLog.outErrorDb("Vehicle id %u listed in `vehicle_data` does not exist",v_entry);
+            continue;
+        }
+        for(uint8 j = 0; j < MAX_VEHICLE_SPELLS; j++)
+        {
+            if(VDS.v_spells[j])
+            {
+                SpellEntry const* j_spell = sSpellStore.LookupEntry(VDS.v_spells[j]);
+                if(!j_spell)
+                {
+                    sLog.outErrorDb("Spell %u listed in `vehicle_data` does not exist, skipped",VDS.v_spells[j]);
+                    VDS.v_spells[j] = 0;
+                }
+            }
+        }
+        if(VDS.req_aura)
+        {
+            SpellEntry const* i_spell = sSpellStore.LookupEntry(VDS.req_aura);
+            if(!i_spell)
+            {
+                sLog.outErrorDb("Spell %u listed in `vehicle_data` does not exist, skipped",VDS.req_aura);
+                VDS.req_aura = 0;
+            }
+        }
+
+        mVehicleData[v_entry] = VDS;
+        ++count;
+    }
+    while (result->NextRow());
+
+    delete result;
+
+    sLog.outString();
+    sLog.outString( ">> Loaded %u vehicle data", count );
+}
+
+void ObjectMgr::LoadVehicleSeatData()
+{
+    mVehicleSeatData.clear();
+
+    QueryResult *result = WorldDatabase.Query("SELECT seat,flags FROM vehicle_seat_data");
+
+    if( !result )
+    {
+        barGoLink bar( 1 );
+
+        bar.step();
+
+        sLog.outString();
+        sLog.outString( ">> Loaded 0 vehicle seat data" );
+        sLog.outErrorDb("`vehicle_seat_data` table is empty!");
+        return;
+    }
+    uint32 count = 0;
+
+    barGoLink bar( result->GetRowCount() );
+    do
+    {
+        bar.step();
+
+        Field *fields = result->Fetch();
+        uint32 entry  = fields[0].GetUInt32();
+        uint32 flag   = fields[1].GetUInt32();
+
+        VehicleSeatEntry const *vsInfo = sVehicleSeatStore.LookupEntry(entry);
+        if(!vsInfo)
+        {
+            sLog.outErrorDb("Vehicle seat %u listed in `vehicle_seat_data` does not exist",entry);
+            continue;
+        }
+
+        mVehicleSeatData[entry] = flag;
+        ++count;
+    }
+    while (result->NextRow());
+
+    delete result;
+
+    sLog.outString();
+    sLog.outString( ">> Loaded %u vehicle seat data", count );
 }
 
 Quest const* GetQuestTemplateStore(uint32 entry)

@@ -211,6 +211,8 @@ class MANGOS_DLL_SPEC Aura
         void HandleAuraIncreaseBaseHealthPercent(bool Apply, bool Real);
         void HandleNoReagentUseAura(bool Apply, bool Real);
         void HandlePhase(bool Apply, bool Real);
+        void HandleAllowOnlyAbility(bool Apply, bool Real);
+        void HandleAddCreatureImmunity(bool apply, bool Real);
 
         virtual ~Aura();
 
@@ -274,6 +276,7 @@ class MANGOS_DLL_SPEC Aura
 
         void SetAura(bool remove) { m_target->SetVisibleAura(m_auraSlot, remove ? 0 : GetId()); }
         void SendAuraUpdate(bool remove);
+        void SendFakeAuraUpdate(uint32 auraId, bool remove);
 
         int8 GetStackAmount() {return m_stackAmount;}
         void SetStackAmount(uint8 num);
@@ -292,12 +295,16 @@ class MANGOS_DLL_SPEC Aura
         bool IsDeathPersistent() const { return m_isDeathPersist; }
         bool IsRemovedOnShapeLost() const { return m_isRemovedOnShapeLost; }
         bool IsInUse() const { return m_in_use;}
+        bool IsStacking() const { return m_stacking;}
 
         virtual void Update(uint32 diff);
         void ApplyModifier(bool apply, bool Real = false);
 
+        void SetDamageDoneBySpell(int32 damage) { m_damageDoneBySpell = damage; }
+        void SetHealingDoneBySpell(int32 healing) { m_healingDoneBySpell = healing; }
+
         void _AddAura();
-        void _RemoveAura();
+        bool _RemoveAura();
 
         bool IsUpdated() { return m_updated; }
         void SetUpdated(bool val) { m_updated = val; }
@@ -311,6 +318,7 @@ class MANGOS_DLL_SPEC Aura
 
         // add/remove SPELL_AURA_MOD_SHAPESHIFT (36) linked auras
         void HandleShapeshiftBoosts(bool apply);
+        void HandleSpellSpecificBoosts(bool apply);
 
         // Allow Apply Aura Handler to modify and access m_AuraDRGroup
         void setDiminishGroup(DiminishingGroup group) { m_AuraDRGroup = group; }
@@ -336,6 +344,9 @@ class MANGOS_DLL_SPEC Aura
         uint64 m_caster_guid;
         uint64 m_castItemGuid;                              // it is NOT safe to keep a pointer to the item because it may get deleted
         time_t m_applyTime;
+
+        int32 m_damageDoneBySpell;
+        int32 m_healingDoneBySpell;
 
         int32 m_currentBasePoints;                          // cache SpellEntry::EffectBasePoints and use for set custom base points
         int32 m_maxduration;                                // Max aura duration
@@ -364,6 +375,7 @@ class MANGOS_DLL_SPEC Aura
         bool m_updated:1;                                   // Prevent remove aura by stack if set
         bool m_in_use:1;                                    // true while in Aura::ApplyModifier call
         bool m_isSingleTargetAura:1;                        // true if it's a single target spell and registered at caster - can change at spell steal for example
+        bool m_stacking:1;                                  // Aura is not overwritten, but effects are not cumulative with similar effects
 
     private:
         void CleanupTriggeredSpells();

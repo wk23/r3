@@ -308,6 +308,78 @@ GmLogPerAccount = 0
 RaLogFile = ""
 LogColors = ""
 
+# Chat log parameters
+ChatLogEnable = 0
+
+# If this is enabled, all $d in file names are replaced with current date
+# This does include innormative lexics log
+ChatLogDateSplit = 1
+
+# If this is enabled, UTF8 header is written into new files
+ChatLogUTFHeader = 1
+
+# If this is enabled, chat log will ignore messages with unprintable chars
+ChatLogIgnoreUnprintable = 1
+
+# Chat log files
+ChatLogChatFile = main_chat-$d.log
+ChatLogPartyFile = party_chat-$d.log
+ChatLogGuildFile = guild_chat-$d.log
+ChatLogWhisperFile = whisper_chat-$d.log
+ChatLogChannelFile = channel_chat-$d.log
+ChatLogRaidFile = raid_chat-$d.log
+ChatLogBattleGroundFile = bg_chat-$d.log
+
+# Chat log screen logging
+ChatLogChatScreen = 0
+ChatLogPartyScreen = 0
+ChatLogGuildScreen = 0
+ChatLogWhisperScreen = 0
+ChatLogChannelScreen = 0
+ChatLogRaidScreen = 0
+ChatLogBattleGroundScreen = 0
+
+# Lexics cutter parameters
+LexicsCutterEnable = 1
+
+LexicsCutterInnormativeCut = 1
+LexicsCutterCutReplacement = &!@^%!^&*!!!
+LexicsCutterLogFile = innormative-$d.log
+LexicsCutterScreenLog = 0
+LexicsCutterAnalogsFile = letter_analogs.txt
+LexicsCutterWordsFile = innormative_words.txt
+
+# Where to cut lexics
+LexicsCutInChat = 1
+LexicsCutInParty = 1
+LexicsCutInGuild = 1
+LexicsCutInWhisper = 1
+LexicsCutInChannel = 1
+LexicsCutInRaid = 1
+LexicsCutInBattleGround = 1
+
+# Ignore word spaces like: W O R D
+LexicsCutterIgnoreSpaces = 1
+
+# Ignore repeats like: WWOOOORRRRRD
+LexicsCutterIgnoreRepeats = 1
+
+# --- Action:
+# ---   0: log only
+# ---   1: sheep
+# ---   2: stun
+# ---   3: kill
+# ---   4: leave 5 health
+# ---   5: disable chat
+# ---   6: stuck (works as stun + 50% health) [by KAPATEJIb]
+# ---   7: resurrection sickness [by Koshei]
+# ---   8: shear [by Koshei]
+LexicsCutterAction = 0
+LexicsCutterActionDuration = 60000
+
+# Do not perform action on GM if this is enabled
+LexicsCutterNoActionOnGM = 1
+
 ###################################################################################################################
 # SERVER SETTINGS
 #
@@ -928,12 +1000,13 @@ GM.AllowAchievementGain  = 1
 #                 1 (raid members 100% auto detect invisible player from same raid)
 #                 2 (players from same team can 100% auto detect invisible player)
 #
-#    Visibility.Distance.Creature
-#    Visibility.Distance.Player
-#        Visibility distance for different in game object
+#    Visibility.Distance.Continents
+#    Visibility.Distance.Instances
+#    Visibility.Distance.BGArenas
+#        Visibility distance for different ingame object in different maps.
+#		 Visibility on continents on offy ~90 yards. In BG/Arenas ~180. For instances default ~120.
 #        Max limited by active player zone: ~ 333
-#        Min limit dependent from objects
-#        Default: 132 (cell size)
+#        Default: 90 (visibility on continents)
 #        Min limit is max aggro radius (45) * Rate.Creature.Aggro
 #
 #    Visibility.Distance.Object
@@ -959,12 +1032,17 @@ GM.AllowAchievementGain  = 1
 ###################################################################################################################
 
 Visibility.GroupMode = 0
-Visibility.Distance.Creature      = 100
-Visibility.Distance.Player        = 100
+Visibility.Distance.Continents    = 90
+Visibility.Distance.Instances     = 120
+Visibility.Distance.BGArenas	  = 180
 Visibility.Distance.Object        = 100
 Visibility.Distance.InFlight      = 100
 Visibility.Distance.Grey.Unit   = 1
 Visibility.Distance.Grey.Object = 10
+
+Visibility.Notify.Period.OnContinents = 600
+Visibility.Notify.Period.InInctances  = 600
+Visibility.Notify.Period.InBGArenas   = 600
 
 ###################################################################################################################
 # SERVER RATES
@@ -1270,6 +1348,30 @@ Network.Threads = 1
 Network.OutKBuff = -1
 Network.OutUBuff = 65536
 Network.TcpNodelay = 1
+
+###################################################################################################################
+# MOVEMENT ANTICHEAT
+#
+#    Anticheat.Movement.Enable
+#        Enable Movement Anticheat
+#        Default: 1 - on
+#                 0 - off
+#
+#    Anticheat.Movement.TeleportToPlaneAlarms
+#        maximum alarms before player will be kicked (default 50, allowed 20 - 100)
+#
+#    Anticheat.Movement.MistimingDelta
+#        mistiming intelval between client and serverside (default 10000 ms, allowed 1000 - 15000 ms)
+#
+#    Anticheat.Movement.MistimingAlarms
+#        mistiming alarms before player will be kicked (default 20, allowed 10 - 50)
+#
+###################################################################################################################
+
+Anticheat.Movement.Enable = 1
+Anticheat.Movement.TeleportToPlaneAlarms = 50
+Anticheat.Movement.MistimingDelta = 10000
+Anticheat.Movement.MistimingAlarms = 20
 
 ###################################################################################################################
 # CONSOLE AND REMOTE ACCESS

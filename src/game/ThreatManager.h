@@ -33,6 +33,8 @@ class Creature;
 class ThreatManager;
 struct SpellEntry;
 
+#define THREAT_UPDATE_INTERVAL 1 * IN_MILISECONDS    // Server should send threat update to client periodically each second
+
 //==============================================================
 // Class to calculate the real threat based
 
@@ -43,6 +45,23 @@ class ThreatCalcHelper
 };
 
 //==============================================================
+// Data structures to handle threat redirection cases
+
+struct RedirectThreatEntry
+{
+    RedirectThreatEntry() : m_redirectTo(0), m_redirectPct(0)
+    {}
+    RedirectThreatEntry(Unit* redirectTo, float redirectPct)
+        : m_redirectTo(redirectTo), m_redirectPct(redirectPct)
+    {}
+
+    Unit* m_redirectTo;
+    float m_redirectPct;
+};
+typedef std::map<uint32,RedirectThreatEntry*> RedirectThreatMap;
+
+//==============================================================
+
 class MANGOS_DLL_SPEC HostilReference : public Reference<Unit, ThreatManager>
 {
     public:
@@ -185,6 +204,8 @@ class MANGOS_DLL_SPEC ThreatManager
 
         void processThreatEvent(ThreatRefStatusChangeEvent* threatRefStatusChangeEvent);
 
+        bool isNeedUpdateToClient(uint32 time);
+
         HostilReference* getCurrentVictim() { return iCurrentVictim; }
 
         Unit*  getOwner() { return iOwner; }
@@ -207,6 +228,7 @@ class MANGOS_DLL_SPEC ThreatManager
     private:
         HostilReference* iCurrentVictim;
         Unit* iOwner;
+        uint32 iUpdateTimer;
         ThreatContainer iThreatContainer;
         ThreatContainer iThreatOfflineContainer;
 };

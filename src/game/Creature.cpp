@@ -41,6 +41,8 @@
 #include "GridNotifiers.h"
 #include "GridNotifiersImpl.h"
 #include "CellImpl.h"
+#include "OutdoorPvPMgr.h"
+#include "Vehicle.h"
 
 // apply implementation of the singletons
 #include "Policies/SingletonImp.h"
@@ -125,6 +127,8 @@ m_creatureInfo(NULL), m_isActiveObject(false), m_monsterMoveFlags(MONSTER_MOVE_W
     m_GlobalCooldown = 0;
 
     m_monsterMoveFlags = MONSTER_MOVE_WALK;
+
+    ResetObtainedDamage();
 }
 
 Creature::~Creature()
@@ -153,7 +157,7 @@ void Creature::RemoveFromWorld()
 
 void Creature::RemoveCorpse()
 {
-    if( getDeathState()!=CORPSE && !m_isDeadByDefault || getDeathState()!=ALIVE && m_isDeadByDefault )
+    if( (getDeathState()!=CORPSE && getDeathState()!=GHOULED) && !m_isDeadByDefault || getDeathState()!=ALIVE && m_isDeadByDefault )
         return;
 
     m_deathTimer = 0;
@@ -245,6 +249,7 @@ bool Creature::InitEntry(uint32 Entry, uint32 team, const CreatureData *data )
     SetSpeed(MOVE_WALK,     cinfo->speed );
     SetSpeed(MOVE_RUN,      cinfo->speed );
     SetSpeed(MOVE_SWIM,     cinfo->speed );
+    SetSpeed(MOVE_FLIGHT,   cinfo->speed );
 
     SetFloatValue(OBJECT_FIELD_SCALE_X, cinfo->scale);
 
@@ -302,6 +307,9 @@ bool Creature::UpdateEntry(uint32 Entry, uint32 team, const CreatureData *data )
                 SetPvP(true);
     }
 
+    if (GetCreatureInfo()->unit_flags & UNIT_FLAG_PVP || GetCreatureInfo()->unit_flags & UNIT_FLAG_PVP_ATTACKABLE)
+        SetPvP(true);
+
     for(int i=0; i < CREATURE_MAX_SPELLS; ++i)
         m_spells[i] = GetCreatureInfo()->spells[i];
 
@@ -352,6 +360,9 @@ void Creature::Update(uint32 diff)
                 else
                     setDeathState( JUST_ALIVED );
 
+                if(GetMap()->IsBattleGround() && ((BattleGroundMap*)GetMap())->GetBG())
+                    ((BattleGroundMap*)GetMap())->GetBG()->OnCreatureRespawn(this); // for alterac valley needed to adjust the correct level again
+
                 //Call AI respawn virtual function
                 i_AI->JustRespawned();
 
@@ -363,6 +374,7 @@ void Creature::Update(uint32 diff)
             }
             break;
         }
+        case GHOULED:
         case CORPSE:
         {
             if (m_isDeadByDefault)
@@ -534,7 +546,7 @@ void Creature::DoFleeToGetAssistance()
         TypeContainerVisitor<MaNGOS::CreatureLastSearcher<MaNGOS::NearestAssistCreatureInCreatureRangeCheck>, GridTypeMapContainer > grid_creature_searcher(searcher);
 
         CellLock<GridReadGuard> cell_lock(cell, p);
-        cell_lock->Visit(cell_lock, grid_creature_searcher, *GetMap());
+        cell_lock->Visit(cell_lock, grid_creature_searcher, *GetMap(), *this, radius);
 
         SetNoSearchAssistance(true);
         if(!pCreature)
@@ -804,6 +816,10 @@ void Creature::prepareGossipMenu( Player *pPlayer,uint32 gossipid )
                     case GOSSIP_OPTION_TABARDDESIGNER:
                     case GOSSIP_OPTION_AUCTIONEER:
                         break;                              // no checks
+                    case GOSSIP_OPTION_OUTDOORPVP:
+                        if ( !sOutdoorPvPMgr.CanTalkTo(pPlayer,this,(*gso)) )
+                             cantalking = false;
+                         break;
                     default:
                         sLog.outErrorDb("Creature %u (entry: %u) have unknown gossip option %u",GetDBTableGUIDLow(),GetEntry(),gso->Action);
                         break;
@@ -895,6 +911,9 @@ void Creature::OnGossipSelect(Player* player, uint32 option)
             player->PlayerTalkClass->SendTalking(textid);
             break;
         }
+        case GOSSIP_OPTION_OUTDOORPVP:
+            sOutdoorPvPMgr.HandleGossipOption(player, GetGUID(), gossip->GossipId);
+            break;
         case GOSSIP_OPTION_SPIRITHEALER:
             if (player->isDead())
                 CastSpell(this,17251,true,NULL,NULL,player->GetGUID());
@@ -1528,6 +1547,7 @@ void Creature::setDeathState(DeathState s)
     {
         SetHealth(GetMaxHealth());
         SetLootRecipient(NULL);
+        ResetObtainedDamage();
         Unit::setDeathState(ALIVE);
         CreatureInfo const *cinfo = GetCreatureInfo();
         SetUInt32Value(UNIT_DYNAMIC_FLAGS, 0);
@@ -1614,6 +1634,32 @@ bool Creature::IsImmunedToSpellEffect(SpellEntry const* spellInfo, uint32 index)
         // Spell effect taunt check
         else if (spellInfo->Effect[index] == SPELL_EFFECT_ATTACK_ME)
             return true;
+    }
+
+    // Heal immunity
+    if (isVehicle() && !(((Vehicle*)this)->GetVehicleFlags() & VF_CAN_BE_HEALED))
+    {
+        switch(spellInfo->Effect[index])
+        {
+            case SPELL_EFFECT_APPLY_AURA:
+                switch(spellInfo->EffectApplyAuraName[index])
+                {
+                    case SPELL_AURA_PERIODIC_HEAL:
+                    case SPELL_AURA_OBS_MOD_HEALTH:
+                    case SPELL_AURA_PERIODIC_HEALTH_FUNNEL:
+                    case SPELL_AURA_MOD_REGEN:
+                        return true;
+                    default: break;
+                }
+                break;
+            case SPELL_EFFECT_HEAL:
+            case SPELL_EFFECT_HEAL_MAX_HEALTH:
+            // NOTE : this too?
+            case SPELL_EFFECT_HEAL_MECHANICAL:
+            case SPELL_EFFECT_HEAL_PCT:
+                return true;
+            default : break;
+        }
     }
 
     return Unit::IsImmunedToSpellEffect(spellInfo, index);
@@ -1776,7 +1822,7 @@ void Creature::CallAssistance()
                 TypeContainerVisitor<MaNGOS::CreatureListSearcher<MaNGOS::AnyAssistCreatureInRangeCheck>, GridTypeMapContainer >  grid_creature_searcher(searcher);
 
                 CellLock<GridReadGuard> cell_lock(cell, p);
-                cell_lock->Visit(cell_lock, grid_creature_searcher, *GetMap());
+                cell_lock->Visit(cell_lock, grid_creature_searcher, *GetMap(), *this, radius);
             }
 
             if (!assistList.empty())
@@ -1810,7 +1856,7 @@ void Creature::CallForHelp(float fRadius)
     TypeContainerVisitor<MaNGOS::CreatureWorker<MaNGOS::CallOfHelpCreatureInRangeDo>, GridTypeMapContainer >  grid_creature_searcher(worker);
 
     CellLock<GridReadGuard> cell_lock(cell, p);
-    cell_lock->Visit(cell_lock, grid_creature_searcher, *GetMap());
+    cell_lock->Visit(cell_lock, grid_creature_searcher, *GetMap(), *this, fRadius);
 }
 
 bool Creature::CanAssistTo(const Unit* u, const Unit* enemy, bool checkfaction /*= true*/) const
@@ -2067,6 +2113,29 @@ bool Creature::HasSpellCooldown(uint32 spell_id) const
 bool Creature::IsInEvadeMode() const
 {
     return !i_motionMaster.empty() && i_motionMaster.GetCurrentMovementGeneratorType() == HOME_MOTION_TYPE;
+}
+
+float Creature::GetBaseSpeed() const
+{
+    if( isPet() )
+    {
+        switch( ((Pet*)this)->getPetType() )
+        {
+            case SUMMON_PET:
+            case HUNTER_PET:
+            {
+                //fixed speed fur hunter (and summon!?) pets
+                return 1.15;
+            }
+            case GUARDIAN_PET:
+            case MINI_PET:
+            {
+                //speed of CreatureInfo for guardian- and minipets
+                break;
+            }
+        }
+    }
+    return m_creatureInfo->speed;
 }
 
 bool Creature::HasSpell(uint32 spellID) const

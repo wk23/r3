@@ -640,6 +640,63 @@ enum MangosStrings
     LANG_ARENA_FIFTEEN_SECONDS          = 703,
     LANG_ARENA_HAS_BEGUN                = 704,
 
+    // opvp hp
+    LANG_OPVP_HP_CAPTURE_OVERLOOK_H     = 9001,
+    LANG_OPVP_HP_CAPTURE_OVERLOOK_A     = 9002,
+    LANG_OPVP_HP_CAPTURE_STADIUM_H      = 9003,
+    LANG_OPVP_HP_CAPTURE_STADIUM_A      = 9004,
+    LANG_OPVP_HP_CAPTURE_BROKENHILL_H   = 9005,
+    LANG_OPVP_HP_CAPTURE_BROKENHILL_A   = 9006,
+    LANG_OPVP_HP_LOOSE_OVERLOOK_H       = 9007,
+    LANG_OPVP_HP_LOOSE_OVERLOOK_A       = 9008,
+    LANG_OPVP_HP_LOOSE_STADIUM_H        = 9009,
+    LANG_OPVP_HP_LOOSE_STADIUM_A        = 9010,
+    LANG_OPVP_HP_LOOSE_BROKENHILL_H     = 9011,
+    LANG_OPVP_HP_LOOSE_BROKENHILL_A     = 9012,
+    // opvp zm
+    LANG_OPVP_ZM_CAPTURE_WEST_H         = 9013,
+    LANG_OPVP_ZM_CAPTURE_WEST_A         = 9014,
+    LANG_OPVP_ZM_CAPTURE_EAST_H         = 9015,
+    LANG_OPVP_ZM_CAPTURE_EAST_A         = 9016,
+    LANG_OPVP_ZM_CAPTURE_GY_H           = 9017,
+    LANG_OPVP_ZM_CAPTURE_GY_A           = 9018,
+    LANG_OPVP_ZM_LOOSE_WEST_H           = 9019,
+    LANG_OPVP_ZM_LOOSE_WEST_A           = 9020,
+    LANG_OPVP_ZM_LOOSE_EAST_H           = 9021,
+    LANG_OPVP_ZM_LOOSE_EAST_A           = 9022,
+    LANG_OPVP_ZM_LOOSE_GY_H             = 9023,
+    LANG_OPVP_ZM_LOOSE_GY_A             = 9024,
+    // opvp na
+    LANG_OPVP_NA_CAPTURE_H              = 9025,
+    LANG_OPVP_NA_CAPTURE_A              = 9026,
+    LANG_OPVP_NA_LOOSE_H                = 9027,
+    LANG_OPVP_NA_LOOSE_A                = 9028,
+    // opvp tf
+    LANG_OPVP_TF_CAPTURE_H              = 9029,
+    LANG_OPVP_TF_CAPTURE_A              = 9030,
+    LANG_OPVP_TF_LOOSE_H                = 9031,
+    LANG_OPVP_TF_LOOSE_A                = 9032,
+    // opvp ep
+    LANG_OPVP_EP_CAPTURE_NPT_H          = 9033,
+    LANG_OPVP_EP_CAPTURE_NPT_A          = 9034,
+    LANG_OPVP_EP_CAPTURE_EWT_H          = 9035,
+    LANG_OPVP_EP_CAPTURE_EWT_A          = 9036,
+    LANG_OPVP_EP_CAPTURE_CGT_H          = 9037,
+    LANG_OPVP_EP_CAPTURE_CGT_A          = 9038,
+    LANG_OPVP_EP_CAPTURE_PWT_H          = 9039,
+    LANG_OPVP_EP_CAPTURE_PWT_A          = 9040,
+    LANG_OPVP_EP_LOOSE_NPT_H            = 9041,
+    LANG_OPVP_EP_LOOSE_NPT_A            = 9042,
+    LANG_OPVP_EP_LOOSE_EWT_H            = 9043,
+    LANG_OPVP_EP_LOOSE_EWT_A            = 9044,
+    LANG_OPVP_EP_LOOSE_CGT_H            = 9045,
+    LANG_OPVP_EP_LOOSE_CGT_A            = 9046,
+    LANG_OPVP_EP_LOOSE_PWT_H            = 9047,
+    LANG_OPVP_EP_LOOSE_PWT_A            = 9048,
+    // opvp si
+    LANG_OPVP_SI_CAPTURE_H              = 9049,
+    LANG_OPVP_SI_CAPTURE_A              = 9050,
+
     LANG_WAIT_BEFORE_SPEAKING           = 705,
     LANG_NOT_EQUIPPED_ITEM              = 706,
     LANG_PLAYER_DND                     = 707,
@@ -694,7 +751,46 @@ enum MangosStrings
 //  LANG_BG_WS_START_TWO_MINUTES        = 753, - defined above
 //  LANG_BG_AB_START_TWO_MINUTES        = 754, - defined above
 //  LANG_BG_EY_START_TWO_MINUTES        = 755, - defined above
-    // Room for batleground/arena strings 756-799 not used
+
+    LANG_BG_AV_ALLY                     = 757,
+    LANG_BG_AV_HORDE                    = 758,
+    LANG_BG_AV_TOWER_TAKEN              = 759,
+    LANG_BG_AV_TOWER_ASSAULTED          = 760,
+    LANG_BG_AV_TOWER_DEFENDED           = 761,
+    LANG_BG_AV_GRAVE_TAKEN              = 762,
+    LANG_BG_AV_GRAVE_DEFENDED           = 763,
+    LANG_BG_AV_GRAVE_ASSAULTED          = 764,
+    LANG_BG_AV_MINE_TAKEN               = 765,
+    LANG_BG_AV_MINE_NORTH               = 766,
+    LANG_BG_AV_MINE_SOUTH               = 767,
+
+    LANG_BG_AV_NODE_GRAVE_STORM_AID     = 768,
+    LANG_BG_AV_NODE_TOWER_DUN_S         = 769,
+    LANG_BG_AV_NODE_TOWER_DUN_N         = 770,
+    LANG_BG_AV_NODE_GRAVE_STORMPIKE     = 771,
+    LANG_BG_AV_NODE_TOWER_ICEWING       = 772,
+    LANG_BG_AV_NODE_GRAVE_STONE         = 773,
+    LANG_BG_AV_NODE_TOWER_STONE         = 774,
+    LANG_BG_AV_NODE_GRAVE_SNOW          = 775,
+    LANG_BG_AV_NODE_TOWER_ICE           = 776,
+    LANG_BG_AV_NODE_GRAVE_ICE           = 777,
+    LANG_BG_AV_NODE_TOWER_POINT         = 778,
+    LANG_BG_AV_NODE_GRAVE_FROST         = 779,
+    LANG_BG_AV_NODE_TOWER_FROST_E       = 780,
+    LANG_BG_AV_NODE_TOWER_FROST_W       = 781,
+    LANG_BG_AV_NODE_GRAVE_FROST_HUT     = 782,
+
+    LANG_BG_AV_START_TWO_MINUTES        = 783,
+    LANG_BG_AV_START_ONE_MINUTE         = 784,
+    LANG_BG_AV_START_HALF_MINUTE        = 785,
+    LANG_BG_AV_HAS_BEGUN                = 786,
+    LANG_BG_AV_A_NEAR_LOSE              = 787,
+    LANG_BG_AV_H_NEAR_LOSE              = 788,
+    LANG_BG_AV_H_GENERAL_DEAD           = 789,
+    LANG_BG_AV_A_GENERAL_DEAD           = 790,
+
+
+    // Room for batleground/arena strings 790-799 not used
 
     // in game strings
     //                                  = 800, not used

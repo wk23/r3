@@ -56,7 +56,7 @@ AggressorAI::MoveInLineOfSight(Unit *u)
             if(!m_creature->getVictim())
             {
                 AttackStart(u);
-                u->RemoveSpellsCausingAura(SPELL_AURA_MOD_STEALTH);
+                //u->RemoveSpellsCausingAura(SPELL_AURA_MOD_STEALTH);
             }
             else if(sMapStore.LookupEntry(m_creature->GetMapId())->IsDungeon())
             {
@@ -103,7 +103,7 @@ void AggressorAI::EnterEvadeMode()
         //i_tracker.Reset(TIME_INTERVAL_LOOK);
     }
 
-    if(!m_creature->isCharmed())
+    if(!m_creature->isCharmed() && !m_creature->GetVehicleGUID())
     {
         m_creature->RemoveAllAuras();
 
@@ -116,6 +116,7 @@ void AggressorAI::EnterEvadeMode()
     i_victimGuid = 0;
     m_creature->CombatStop(true);
     m_creature->SetLootRecipient(NULL);
+    m_creature->ResetObtainedDamage();
 }
 
 void

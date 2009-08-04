@@ -41,6 +41,7 @@ class WorldPacket;
 class InstanceData;
 class Group;
 class InstanceSave;
+class BattleGround;
 struct ScriptInfo;
 struct ScriptAction;
 
@@ -71,10 +72,11 @@ typedef MaNGOS::SingleThreaded<GridRWLock>::Lock NullGuard;
 #define MAP_MAGIC             'SPAM'
 #define MAP_VERSION_MAGIC     '0.1w'
 #define MAP_AREA_MAGIC        'AERA'
-#define MAP_HEIGTH_MAGIC      'TGHM'
+#define MAP_HEIGHT_MAGIC      'TGHM'
 #define MAP_LIQUID_MAGIC      'QILM'
 
-struct map_fileheader{
+struct map_fileheader
+{
     uint32 mapMagic;
     uint32 versionMagic;
     uint32 areaMapOffset;
@@ -86,17 +88,20 @@ struct map_fileheader{
 };
 
 #define MAP_AREA_NO_AREA      0x0001
-struct map_areaHeader{
+
+struct map_areaHeader
+{
     uint32 fourcc;
     uint16 flags;
     uint16 gridArea;
 };
 
-#define MAP_HEIGHT_NO_HIGHT   0x0001
+#define MAP_HEIGHT_NO_HEIGHT  0x0001
 #define MAP_HEIGHT_AS_INT16   0x0002
 #define MAP_HEIGHT_AS_INT8    0x0004
 
-struct map_heightHeader{
+struct map_heightHeader
+{
     uint32 fourcc;
     uint32 flags;
     float  gridHeight;
@@ -104,8 +109,10 @@ struct map_heightHeader{
 };
 
 #define MAP_LIQUID_NO_TYPE    0x0001
-#define MAP_LIQUID_NO_HIGHT   0x0002
-struct map_liquidHeader{
+#define MAP_LIQUID_NO_HEIGHT  0x0002
+
+struct map_liquidHeader
+{
     uint32 fourcc;
     uint16 flags;
     uint16 liquidType;
@@ -116,7 +123,8 @@ struct map_liquidHeader{
     float  liquidLevel;
 };
 
-enum ZLiquidStatus{
+enum ZLiquidStatus
+{
     LIQUID_MAP_NO_WATER     = 0x00000000,
     LIQUID_MAP_ABOVE_WATER  = 0x00000001,
     LIQUID_MAP_WATER_WALK   = 0x00000002,
@@ -135,7 +143,8 @@ enum ZLiquidStatus{
 #define MAP_LIQUID_TYPE_DARK_WATER  0x10
 #define MAP_LIQUID_TYPE_WMO_WATER   0x20
 
-struct LiquidData{
+struct LiquidData
+{
     uint32 type;
     float  level;
     float  depth_level;
@@ -271,6 +280,10 @@ class MANGOS_DLL_SPEC Map : public GridRefManager<NGridType>, public MaNGOS::Obj
         void MessageDistBroadcast(Player *, WorldPacket *, float dist, bool to_self, bool own_team_only = false);
         void MessageDistBroadcast(WorldObject *, WorldPacket *, float dist);
 
+        float GetVisibilityDistance() const { return m_VisibleDistance; }
+        //function for setting up visibility distance for maps on per-type/per-Id basis
+        virtual void InitVisibilityDistance();
+
         void PlayerRelocation(Player *, float x, float y, float z, float angl);
         void CreatureRelocation(Creature *creature, float x, float y, float, float);
 
@@ -301,6 +314,7 @@ class MANGOS_DLL_SPEC Map : public GridRefManager<NGridType>, public MaNGOS::Obj
 
         static void InitStateMachine();
         static void DeleteStateMachine();
+        void InitializeNotifyTimers();
 
         Map const * GetParent() const { return m_parentMap; }
 
@@ -415,8 +429,14 @@ class MANGOS_DLL_SPEC Map : public GridRefManager<NGridType>, public MaNGOS::Obj
         void LoadMap(int gx,int gy, bool reload = false);
         GridMap *GetGrid(float x, float y);
 
+        //these functions used to process player/mob aggro reactions and
+        //visibility calculations. Highly optimized for massive calculations
+        void ProcessObjectsVisibility();
+        void ProcesssPlayersVisibility();
+        void ProcessRelocationNotifies();
+        void ResetNotifies(uint16 notify_mask);
+
         void SetTimer(uint32 t) { i_gridExpiry = t < MIN_GRID_DELAY ? MIN_GRID_DELAY : t; }
-        //uint64 CalculateGridMask(const uint32 &y) const;
 
         void SendInitSelf( Player * player );
 
@@ -443,6 +463,8 @@ class MANGOS_DLL_SPEC Map : public GridRefManager<NGridType>, public MaNGOS::Obj
 
         NGridType* getNGrid(uint32 x, uint32 y) const
         {
+            ASSERT(x < MAX_NUMBER_OF_GRIDS);
+            ASSERT(y < MAX_NUMBER_OF_GRIDS);
             return i_grids[x][y];
         }
 
@@ -462,6 +484,11 @@ class MANGOS_DLL_SPEC Map : public GridRefManager<NGridType>, public MaNGOS::Obj
         uint32 i_id;
         uint32 i_InstanceId;
         uint32 m_unloadTimer;
+        float m_VisibleDistance;
+
+        PeriodicTimer m_ObjectVisibilityNotifyTimer;
+        PeriodicTimer m_PlayerVisibilityNotifyTimer;
+        PeriodicTimer m_RelocationNotifyTimer;
 
         MapRefManager m_mapRefManager;
         MapRefManager::iterator m_mapRefIter;
@@ -549,6 +576,9 @@ class MANGOS_DLL_SPEC InstanceMap : public Map
         void SendResetWarnings(uint32 timeLeft) const;
         void SetResetSchedule(bool on);
         uint32 GetMaxPlayers() const;
+
+        void InitVisibilityDistance();
+        void InitializeNotifyTimers();
     private:
         bool m_resetAfterUnload;
         bool m_unloadWhenEmpty;
@@ -567,6 +597,13 @@ class MANGOS_DLL_SPEC BattleGroundMap : public Map
         bool CanEnter(Player* player);
         void SetUnload();
         void UnloadAll(bool pForce);
+
+        void InitVisibilityDistance();
+        void InitializeNotifyTimers();
+        BattleGround* GetBG() { return m_bg; }
+        void SetBG(BattleGround* bg) { m_bg = bg; }
+    private:
+        BattleGround* m_bg;
 };
 
 /*inline
