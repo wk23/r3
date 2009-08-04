@@ -54,14 +54,7 @@ Makefile
 *~
 *.bak
 *.orig
-*.patch
 callgrind.out.*
-
-#
-# Git stuff
-#
-# stgit directories
-patches-*
 
 #
 # VS binaries output
