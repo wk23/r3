@@ -371,7 +371,10 @@ void Loot::AddItem(LootStoreItem const & item)
     }
     else if (items.size() < MAX_NR_LOOT_ITEMS)              // Non-quest drop
     {
-        items.push_back(LootItem(item));
+        //1
+        int tempcount=urand(1, sWorld.getRate(RATE_DROP_ITEM_POOR));
+        for (int i = 0; i < tempcount; ++i)
+              items.push_back(LootItem(item))
 
         // non-conditional one-player only items are counted here,
         // free for all items are counted in FillFFALoot(),
