@@ -1588,7 +1588,24 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
                      spellInfo_1->Id > spellInfo_2->Id)
                     return true;
             }
-             break;
+            if (spellInfo_2->SpellFamilyName == SPELLFAMILY_DEATHKNIGHT)
+            {
+                // Frost Presence and Frost Presence (triggered)
+                if( spellInfo_1->SpellIconID == 2632 && spellInfo_2->SpellIconID == 2632 )
+                    return false;
+
+                // Unholy Presence and Unholy Presence (triggered)
+                if( spellInfo_1->SpellIconID == 2633 && spellInfo_2->SpellIconID == 2633 )
+                    return false;
+            }
+            if (spellInfo_2->SpellFamilyName == SPELLFAMILY_DEATHKNIGHT)
+            {
+                // Desecration (speed reduction aura) and Desecration (owner's damage bonus aura)
+                if (spellInfo_1->SpellIconID==2296 && spellInfo_2->SpellIconID==2296 &&
+                    spellInfo_1->SpellFamilyFlags == spellInfo_2->SpellFamilyFlags)
+                    return false;
+            }
+            break;
         case SPELLFAMILY_SHAMAN:
             if( spellInfo_2->SpellFamilyName == SPELLFAMILY_SHAMAN )
             {
@@ -1604,27 +1621,6 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
             // Bloodlust and Bloodthirst (multi-family check)
             if( spellInfo_1->Id == 2825 && spellInfo_2->SpellIconID == 38 && spellInfo_2->SpellVisual[0] == 0 )
                 return false;
-            break;
-        case SPELLFAMILY_DEATHKNIGHT:
-            if (spellInfo_2->SpellFamilyName == SPELLFAMILY_DEATHKNIGHT)
-            {
-                // Frost Presence and Frost Presence (triggered)
-                if( spellInfo_1->SpellIconID == 2632 && spellInfo_2->SpellIconID == 2632 )
-                    return false;
-
-                // Unholy Presence and Unholy Presence (triggered)
-                if( spellInfo_1->SpellIconID == 2633 && spellInfo_2->SpellIconID == 2633 )
-                    return false;
-            }
-            break;
-        case SPELLFAMILY_DEATHKNIGHT:
-            if (spellInfo_2->SpellFamilyName == SPELLFAMILY_DEATHKNIGHT)
-            {
-                // Desecration (speed reduction aura) and Desecration (owner's damage bonus aura)
-                if (spellInfo_1->SpellIconID==2296 && spellInfo_2->SpellIconID==2296 &&
-                    spellInfo_1->SpellFamilyFlags == spellInfo_2->SpellFamilyFlags)
-                    return false;
-            }
             break;
         default:
             break;
