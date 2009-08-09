@@ -203,7 +203,7 @@ void SpellCastTargets::Update(Unit* caster)
     }
 }
 
-bool SpellCastTargets::read ( WorldPacket * data, Unit *caster, SpellEntry const* spell )
+bool SpellCastTargets::read ( WorldPacket * data, Unit *caster )
 {
     if(data->rpos() + 4 > data->size())
         return false;
@@ -215,20 +215,8 @@ bool SpellCastTargets::read ( WorldPacket * data, Unit *caster, SpellEntry const
         m_destX = caster->GetPositionX();
         m_destY = caster->GetPositionY();
         m_destZ = caster->GetPositionZ();
-        bool skiptarget = false;
-        if(spell)
-        {
-            for(int j=0;j<3;j++)
-            {
-                // this is requiered, otherwise it will return SPELL_FAILED_BAD_TARGETS
-                skiptarget |= (spell->EffectImplicitTargetA[j] == TARGET_IN_FRONT_OF_CASTER || spell->EffectImplicitTargetA[j] == TARGET_SCRIPT || spell->EffectImplicitTargetA[j] == TARGET_EFFECT_SELECT);
-            }
-        }
-        if(!skiptarget)
-        {
-            m_unitTarget = caster;
-            m_unitTargetGUID = caster->GetGUID();
-        }
+        m_unitTarget = caster;
+        m_unitTargetGUID = caster->GetGUID();
         return true;
     }
 
@@ -1331,11 +1319,21 @@ void Spell::DoSpellHitOnUnit(Unit *unit, const uint32 effectMask)
                 return;
             }
 
-            if(m_spellInfo->Effect[0] != SPELL_EFFECT_DISTRACT && m_spellInfo->SpellIconID != 686)
+            // not break stealth by cast targeting
+            if (!(m_spellInfo->AttributesEx & SPELL_ATTR_EX_NOT_BREAK_STEALTH))
                 unit->RemoveSpellsCausingAura(SPELL_AURA_MOD_STEALTH);
 
-            if (!(m_spellInfo->AttributesEx3 & SPELL_ATTR_EX3_NO_INITIAL_AGGRO))
+            // can cause back attack (if detected)
+            if (!(m_spellInfo->AttributesEx & SPELL_ATTR_EX_NO_INITIAL_AGGRO) &&
+                m_caster->isVisibleForOrDetect(unit,false)) // stealth removed at Spell::cast if spell break it
             {
+                // use speedup check to avoid re-remove after above lines
+                if (m_spellInfo->AttributesEx & SPELL_ATTR_EX_NOT_BREAK_STEALTH)
+                    unit->RemoveSpellsCausingAura(SPELL_AURA_MOD_STEALTH);
+
+                // caster can be detected but have stealth aura
+                m_caster->RemoveSpellsCausingAura(SPELL_AURA_MOD_STEALTH);
+
                 if (!unit->IsStandState() && !unit->hasUnitState(UNIT_STAT_STUNNED))
                     unit->SetStandState(UNIT_STAND_STATE_STAND);
 
@@ -1363,7 +1361,7 @@ void Spell::DoSpellHitOnUnit(Unit *unit, const uint32 effectMask)
             if (unit->hasUnitState(UNIT_STAT_ATTACK_PLAYER))
                 realCaster->SetContestedPvP();
 
-            if (unit->isInCombat() && !(m_spellInfo->AttributesEx3 & SPELL_ATTR_EX3_NO_INITIAL_AGGRO))
+            if (unit->isInCombat() && !(m_spellInfo->AttributesEx & SPELL_ATTR_EX_NO_INITIAL_AGGRO))
             {
                 realCaster->SetInCombatState(unit->GetCombatTimer() > 0);
                 unit->getHostilRefManager().threatAssist(realCaster, 0.0f);
@@ -1567,16 +1565,11 @@ void Spell::SetTargetMap(uint32 i,uint32 cur,UnitList& TagUnitMap)
         case TARGET_DEST_CASTER_RIGHT:
         case TARGET_DEST_CASTER_LEFT:
         case TARGET_DYNAMIC_OBJECT:
+        case TARGET_AREAEFFECT_CUSTOM_2:
         case TARGET_SUMMON:
         case TARGET_EFFECT_SELECT:
             TagUnitMap.push_back(m_caster);
             break;
-        case TARGET_AREAEFFECT_CUSTOM_2:
-        {
-            // used for targeting gameobjects
-            TagUnitMap.push_back(m_caster);
-            break;
-        }
         case TARGET_AREAEFFECT_CUSTOM:
         {
             switch (m_spellInfo->SpellFamilyName)
@@ -4156,16 +4149,11 @@ SpellCastResult Spell::CheckCast(bool strict)
         return locRes;
 
     // not let players cast spells at mount (and let do it to creatures)
-    if( (m_caster->IsMounted() || m_caster->GetVehicleGUID()) && m_caster->GetTypeId()==TYPEID_PLAYER && !m_IsTriggeredSpell &&
+    if( m_caster->IsMounted() && m_caster->GetTypeId()==TYPEID_PLAYER && !m_IsTriggeredSpell &&
         !IsPassiveSpell(m_spellInfo->Id) && !(m_spellInfo->Attributes & SPELL_ATTR_CASTABLE_WHILE_MOUNTED) )
     {
         if(m_caster->isInFlight())
             return SPELL_FAILED_NOT_FLYING;
-        else if(m_caster->GetVehicleGUID())
-        {
-            if(!(m_caster->m_SeatData.s_flags & SF_CAN_CAST))
-                return SPELL_FAILED_NOT_MOUNTED;
-        }
         else
             return SPELL_FAILED_NOT_MOUNTED;
     }
@@ -4824,26 +4812,6 @@ SpellCastResult Spell::CheckCast(bool strict)
 
                 break;
             }
-            //SPELL_AURA_FLY means player can fly without a mount. Here we check only for flying shapeshifting
-            //If spell is shapeshifting we will go to SPELL_AURA_MOD_INCREASE_FLIGHT_SPEED check.
-            case SPELL_AURA_FLY:
-            {
-                if((m_spellInfo->AttributesEx4 & SPELL_ATTR_EX4_CAST_ONLY_IN_OUTLAND) == 0)
-                break;    //Perhaps this is not a mount
-            }
-            //check for flying mounts. mount, that has SPELL_AURA_MOD_INCREASE_FLIGHT_SPEED also has SPELL_AURA_MOUNTED
-            //exception is spell 49851, wich is Blizz internal and not used
-            case SPELL_AURA_MOD_INCREASE_FLIGHT_SPEED:
-            {
-                // not allow cast mount spells at old maps by players (all spells are self target)
-                if(m_caster->GetTypeId() == TYPEID_PLAYER)
-                {
-                     if( !((Player*)m_caster)->IsAllowUseFlyMountsHere() )
-                        return SPELL_FAILED_NOT_HERE;
-                }
-
-                break;
-            }
             case SPELL_AURA_MOUNTED:
             {
                 if (m_caster->IsInWater())
@@ -4874,6 +4842,18 @@ SpellCastResult Spell::CheckCast(bool strict)
                 if(m_caster->IsFriendlyTo(m_targets.getUnitTarget()))
                     return SPELL_FAILED_TARGET_FRIENDLY;
 
+                break;
+            }
+            case SPELL_AURA_FLY:
+            case SPELL_AURA_MOD_INCREASE_FLIGHT_SPEED:
+            {
+                // not allow cast fly spells if not have req. skills  (all spells is self target)
+                // allow always ghost flight spells
+                if (m_caster->GetTypeId() == TYPEID_PLAYER && m_caster->isAlive())
+                {
+                    if (!((Player*)m_caster)->IsKnowHowFlyIn(m_caster->GetMapId(),zone))
+                        return m_IsTriggeredSpell ? SPELL_FAILED_DONT_REPORT : SPELL_FAILED_NOT_HERE;
+                }
                 break;
             }
             case SPELL_AURA_PERIODIC_MANA_LEECH:
@@ -4951,7 +4931,7 @@ SpellCastResult Spell::CheckPetCast(Unit* target)
                                                             //TARGET_DUELVSPLAYER is positive AND negative
                     duelvsplayertar |= (m_spellInfo->EffectImplicitTargetA[j] == TARGET_DUELVSPLAYER);
                 }
-                if(m_caster->IsFriendlyTo(_target) && !duelvsplayertar)
+                if(m_caster->IsFriendlyTo(target) && !duelvsplayertar)
                 {
                     return SPELL_FAILED_BAD_TARGETS;
                 }
@@ -4962,7 +4942,6 @@ SpellCastResult Spell::CheckPetCast(Unit* target)
             return SPELL_FAILED_NOT_READY;
     }
 
-    // NOTE : this is done twice, also in spell->prepare(&(spell->m_targets));
     return CheckCast(true);
 }
 
@@ -5794,8 +5773,9 @@ bool Spell::CheckTargetCreatureType(Unit* target) const
     uint32 spellCreatureTargetMask = m_spellInfo->TargetCreatureType;
 
     // Curse of Doom & Exorcism: not find another way to fix spell target check :/
-    if(m_spellInfo->SpellFamilyName==SPELLFAMILY_WARLOCK && m_spellInfo->SpellFamilyFlags == UI64LIT(0x0200000000)
-        || m_spellInfo->SpellFamilyName==SPELLFAMILY_PALADIN && m_spellInfo->SpellFamilyFlags == UI64LIT(0x0200000000))
+    if (m_spellInfo->SpellFamilyName==SPELLFAMILY_WARLOCK && m_spellInfo->Category == 1179 ||
+        // TODO: will be removed in 3.2.x
+        m_spellInfo->SpellFamilyName==SPELLFAMILY_PALADIN && m_spellInfo->Category == 19)
     {
         // not allow cast at player
         if(target->GetTypeId()==TYPEID_PLAYER)
@@ -5856,8 +5836,7 @@ bool Spell::CheckTarget( Unit* target, uint32 eff )
         // in case TARGET_SCRIPT target selected by server always and can't be cheated
         if( target->HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE) &&
             m_spellInfo->EffectImplicitTargetA[eff] != TARGET_SCRIPT &&
-            m_spellInfo->EffectImplicitTargetB[eff] != TARGET_SCRIPT &&
-            m_spellInfo->EffectImplicitTargetA[eff] != TARGET_MASTER )
+            m_spellInfo->EffectImplicitTargetB[eff] != TARGET_SCRIPT )
             return false;
     }
 

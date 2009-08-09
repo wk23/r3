@@ -62,7 +62,6 @@ VisibleNotifier::SendToSelf()
     {   //player guids processed in Player2PlayerNotifier
         if(IS_PLAYER_GUID(*it))
             continue;
-       i_player.BuildVehicleInfo((Unit*)(*it));
 
         i_player.m_clientGUIDs.erase(*it);
         i_data.AddOutOfRangeGUID(*it);

@@ -55,7 +55,6 @@
 #include "ScriptCalls.h"
 #include "SkillDiscovery.h"
 #include "Formulas.h"
-#include "Vehicle.h"
 
 pEffect SpellEffects[TOTAL_SPELL_EFFECTS]=
 {
@@ -146,7 +145,7 @@ pEffect SpellEffects[TOTAL_SPELL_EFFECTS]=
     &Spell::EffectStuck,                                    // 84 SPELL_EFFECT_STUCK
     &Spell::EffectSummonPlayer,                             // 85 SPELL_EFFECT_SUMMON_PLAYER
     &Spell::EffectActivateObject,                           // 86 SPELL_EFFECT_ACTIVATE_OBJECT
-    &Spell::EffectDamageBuilding,                           // 87 SPELL_EFFECT_WMO_DAMAGE
+    &Spell::EffectUnused,                                   // 87 SPELL_EFFECT_WMO_DAMAGE
     &Spell::EffectUnused,                                   // 88 SPELL_EFFECT_WMO_REPAIR
     &Spell::EffectUnused,                                   // 89 SPELL_EFFECT_WMO_CHANGE
     &Spell::EffectUnused,                                   // 90 SPELL_EFFECT_KILL_CREDIT
@@ -2024,12 +2023,6 @@ void Spell::EffectDummy(uint32 i)
                 m_caster->CastSpell(unitTarget,55741,true);
                 return;
             }
-            // Hungering Cold
-            else if (m_spellInfo->SpellFamilyFlags & UI64LIT(0x0000100000000000))
-            {
-                m_caster->CastSpell(m_caster, 51209, true);
-                return;
-            }
             switch(m_spellInfo->Id)
             {
                 // Death Grip
@@ -2056,6 +2049,34 @@ void Spell::EffectDummy(uint32 i)
 
                     return;
                 }
+            }
+            // Hungering Cold
+            else if (m_spellInfo->SpellFamilyFlags & UI64LIT(0x0000100000000000))
+            {
+                m_caster->CastSpell(m_caster, 51209, true);
+                return;
+            }
+            // Death Strike
+            else if (m_spellInfo->SpellFamilyFlags & UI64LIT(0x0000000000000010))
+            {
+                uint32 count = 0;
+                Unit::AuraMap const& auras = unitTarget->GetAuras();
+                for(Unit::AuraMap::const_iterator itr = auras.begin(); itr!=auras.end(); ++itr)
+                {
+                    if(itr->second->GetSpellProto()->Dispel == DISPEL_DISEASE &&
+                        itr->second->GetCasterGUID() == m_caster->GetGUID() &&
+                        IsSpellLastAuraEffect(itr->second->GetSpellProto(), itr->second->GetEffIndex()))
+                    {
+                        ++count;
+                        // max. 15%
+                        if(count == 3)
+                            break;
+                    }
+                }
+
+                int32 bp = count * m_caster->GetMaxHealth() * m_spellInfo->DmgMultiplier[0] / 100;
+                m_caster->CastCustomSpell(m_caster, 45470, &bp, NULL, NULL, true);
+                return;
             }
             break;
     }
@@ -2564,7 +2585,7 @@ void Spell::EffectApplyAura(uint32 i)
         return;
 
     // ghost spell check, allow apply any auras at player loading in ghost mode (will be cleanup after load)
-    if( !unitTarget->isAlive() && m_spellInfo->Id != 20584 && m_spellInfo->Id != 8326 &&
+    if( !unitTarget->isAlive() && !IsDeathPersistentSpell(m_spellInfo) &&
         (unitTarget->GetTypeId()!=TYPEID_PLAYER || !((Player*)unitTarget)->GetSession()->PlayerLoading()) )
         return;
 
@@ -2599,11 +2620,6 @@ void Spell::EffectApplyAura(uint32 i)
 
     // Aura not added and deleted in AddAura call;
     if (!added)
-        return;
-
-    // found crash at character loading, broken pointer to Aur...
-    // Aur was deleted in AddAura()...
-    if(!Aur)
         return;
 
     // Prayer of Mending (jump animation), we need formal caster instead original for correct animation
@@ -3550,21 +3566,6 @@ void Spell::EffectSummonType(uint32 i)
         case SUMMON_TYPE_TOTEM2:
             EffectSummonTotem(i);
             break;
-        case SUMMON_TYPE_VEHICLE1:
-        case SUMMON_TYPE_VEHICLE2:
-        case SUMMON_TYPE_VEHICLE3:
-        case SUMMON_TYPE_VEHICLE4:
-        case SUMMON_TYPE_VEHICLE5:
-        case SUMMON_TYPE_VEHICLE6:
-        case SUMMON_TYPE_VEHICLE7:
-        case SUMMON_TYPE_VEHICLE8:
-        case SUMMON_TYPE_VEHICLE9:
-        case SUMMON_TYPE_VEHICLE10:
-        case SUMMON_TYPE_VEHICLE11:
-        case SUMMON_TYPE_VEHICLE12:
-        case SUMMON_TYPE_VEHICLE13:
-            EffectSummonVehicle(i);
-            break;
         case SUMMON_TYPE_UNKNOWN1:
         case SUMMON_TYPE_UNKNOWN2:
         case SUMMON_TYPE_UNKNOWN3:
@@ -3575,57 +3576,6 @@ void Spell::EffectSummonType(uint32 i)
             sLog.outError("EffectSummonType: Unhandled summon type %u", m_spellInfo->EffectMiscValueB[i]);
             break;
     }
-
-    SummonPropertiesEntry const *properties = sSummonPropertiesStore.LookupEntry(m_spellInfo->EffectMiscValueB[i]);
-    if(!properties)
-    {
-        sLog.outError("EffectSummonType: Unknow summon properties %u", m_spellInfo->EffectMiscValueB[i]);
-        return;
-    }
-
-    // more generic way, but incorrect in some cases
-    switch(properties->Group)
-    {
-        case SUMMON_CATEGORY_WILD:
-            EffectSummonWild(i);
-            break;
-        case SUMMON_CATEGORY_PET:
-            switch(properties->Type)
-            {
-                case SUMMON_MASK_SUMMON:
-                    EffectSummon(i);
-                    break;
-                default:
-                    EffectSummonGuardian(i);
-                    break;
-            }
-            break;
-        case SUMMON_CATEGORY_ALLY:
-        case SUMMON_CATEGORY_POSSESSED:
-            switch(properties->Type)
-            {
-                case SUMMON_MASK_NONE:
-                    EffectSummonWild(i);
-                    break;
-                case SUMMON_MASK_TOTEM:
-                    EffectSummonTotem(i);
-                    break;
-                case (SUMMON_MASK_SUMMON | SUMMON_MASK_TOTEM):
-                    EffectSummonCritter(i);
-                    break;
-                default:
-                    EffectSummonGuardian(i);
-                    break;
-            }
-            break;
-        case SUMMON_CATEGORY_VEHICLE:
-            // probably more types of vehicles here
-            EffectSummonVehicle(i);
-            break;
-        default:
-            break;
-   }
-
 }
 
 void Spell::EffectSummon(uint32 i)
@@ -4809,6 +4759,38 @@ void Spell::EffectWeaponDmg(uint32 i)
                     }
                 }
             }
+            break;
+        }
+        case SPELLFAMILY_DEATHKNIGHT:
+        {
+            // Blood Strike, Heart Strike, Obliterate
+            // Blood-Caked Strike, Scourge Strike
+            if (m_spellInfo->SpellFamilyFlags & UI64LIT(0x0002000001400000) ||
+                m_spellInfo->SpellIconID == 1736 || m_spellInfo->SpellIconID == 3143)
+            {
+                uint32 count = 0;
+                Unit::AuraMap const& auras = unitTarget->GetAuras();
+                for(Unit::AuraMap::const_iterator itr = auras.begin(); itr!=auras.end(); ++itr)
+                {
+                    if(itr->second->GetSpellProto()->Dispel == DISPEL_DISEASE &&
+                        itr->second->GetCasterGUID() == m_caster->GetGUID() &&
+                        IsSpellLastAuraEffect(itr->second->GetSpellProto(), itr->second->GetEffIndex()))
+                        ++count;
+                }
+
+                if (count)
+                {
+                    // Effect 1(for Blood-Caked Strike)/3(other) damage is bonus
+                    double bonus = count * CalculateDamage(m_spellInfo->SpellIconID == 1736 ? 0 : 2, unitTarget) / 100.0f;
+                    // Blood Strike, Blood-Caked Strike and Obliterate store bonus*2
+                    if (m_spellInfo->SpellFamilyFlags & UI64LIT(0x0002000000400000) ||
+                        m_spellInfo->SpellIconID == 1736)
+                        bonus /= 2.0f;
+
+                    totalDamagePercentMod += bonus;
+                }
+            }
+            break;
         }
     }
 
@@ -5023,39 +5005,40 @@ void Spell::EffectSummonObjectWild(uint32 i)
     }
 
     int32 duration = GetSpellDuration(m_spellInfo);
+
     pGameObj->SetRespawnTime(duration > 0 ? duration/IN_MILISECONDS : 0);
     pGameObj->SetSpellId(m_spellInfo->Id);
 
-    if(pGameObj->GetGoType() != GAMEOBJECT_TYPE_FLAGDROP)   // make dropped flag clickable for other players (not set owner guid (created by) for this)...
-        m_caster->AddGameObject(pGameObj);
+    // Wild object not have owner and check clickable by players
     map->Add(pGameObj);
 
-    if(pGameObj->GetMapId() == 489 && pGameObj->GetGoType() == GAMEOBJECT_TYPE_FLAGDROP)  //WS
+    if(pGameObj->GetGoType() == GAMEOBJECT_TYPE_FLAGDROP && m_caster->GetTypeId() == TYPEID_PLAYER)
     {
-        if(m_caster->GetTypeId() == TYPEID_PLAYER)
+        Player *pl = (Player*)m_caster;
+        BattleGround* bg = ((Player *)m_caster)->GetBattleGround();
+
+        switch(pGameObj->GetMapId())
         {
-            Player *pl = (Player*)m_caster;
-            BattleGround* bg = ((Player *)m_caster)->GetBattleGround();
-            if(bg && bg->GetTypeID()==BATTLEGROUND_WS && bg->GetStatus() == STATUS_IN_PROGRESS)
+            case 489:                                       //WS
             {
-                 uint32 team = ALLIANCE;
+                if(bg && bg->GetTypeID()==BATTLEGROUND_WS && bg->GetStatus() == STATUS_IN_PROGRESS)
+                {
+                    uint32 team = ALLIANCE;
 
-                 if(pl->GetTeam() == team)
-                     team = HORDE;
+                    if(pl->GetTeam() == team)
+                        team = HORDE;
 
-                ((BattleGroundWS*)bg)->SetDroppedFlagGUID(pGameObj->GetGUID(),team);
+                    ((BattleGroundWS*)bg)->SetDroppedFlagGUID(pGameObj->GetGUID(),team);
+                }
+                break;
             }
-        }
-    }
-
-    if(pGameObj->GetMapId() == 566 && pGameObj->GetGoType() == GAMEOBJECT_TYPE_FLAGDROP)  //EY
-    {
-        if(m_caster->GetTypeId() == TYPEID_PLAYER)
-        {
-            BattleGround* bg = ((Player *)m_caster)->GetBattleGround();
-            if(bg && bg->GetTypeID()==BATTLEGROUND_EY && bg->GetStatus() == STATUS_IN_PROGRESS)
+            case 566:                                       //EY
             {
-                ((BattleGroundEY*)bg)->SetDroppedFlagGUID(pGameObj->GetGUID());
+                if(bg && bg->GetTypeID()==BATTLEGROUND_EY && bg->GetStatus() == STATUS_IN_PROGRESS)
+                {
+                    ((BattleGroundEY*)bg)->SetDroppedFlagGUID(pGameObj->GetGUID());
+                }
+                break;
             }
         }
     }
@@ -5069,7 +5052,7 @@ void Spell::EffectSummonObjectWild(uint32 i)
             linkedGO->SetRespawnTime(duration > 0 ? duration/IN_MILISECONDS : 0);
             linkedGO->SetSpellId(m_spellInfo->Id);
 
-            m_caster->AddGameObject(linkedGO);
+            // Wild object not have owner and check clickable by players
             map->Add(linkedGO);
         }
         else
@@ -5619,8 +5602,8 @@ void Spell::EffectScriptEffect(uint32 effIndex)
         }
         case SPELLFAMILY_PALADIN:
         {
-            // Judgement
-            if (m_spellInfo->Category == 1210 )
+            // Judgement (seal trigger)
+            if (m_spellInfo->Category == SPELLCATEGORY_JUDGEMENT)
             {
                 if(!unitTarget || !unitTarget->isAlive())
                     return;
@@ -5630,12 +5613,12 @@ void Spell::EffectScriptEffect(uint32 effIndex)
                 // Judgement self add switch
                 switch (m_spellInfo->Id)
                 {
-                    case 41467: break;                      // Judgement
                     case 53407: spellId1 = 20184; break;    // Judgement of Justice
                     case 20271:                             // Judgement of Light
                     case 57774: spellId1 = 20185; break;    // Judgement of Light
                     case 53408: spellId1 = 20186; break;    // Judgement of Wisdom
                     default:
+                        sLog.outError("Unsupported Judgement (seal trigger) spell (Id: %u) in Spell::EffectScriptEffect",m_spellInfo->Id);
                         return;
                 }
                 // all seals have aura dummy in 2 effect
@@ -6642,12 +6625,8 @@ void Spell::EffectKnockBack(uint32 i)
     if(!unitTarget || !m_caster)
         return;
 
-    Unit* target = unitTarget->GetCharmer();
-    if(!target)
-        target = unitTarget;
-
     // Effect only works on players
-    if(target->GetTypeId()!=TYPEID_PLAYER)
+    if(unitTarget->GetTypeId()!=TYPEID_PLAYER)
         return;
 
     float vsin = sin(m_caster->GetAngle(unitTarget));
@@ -6661,7 +6640,7 @@ void Spell::EffectKnockBack(uint32 i)
     data << float(m_spellInfo->EffectMiscValue[i])/10;      // Horizontal speed
     data << float(damage/-10);                              // Z Movement speed (vertical)
 
-    ((Player*)target)->GetSession()->SendPacket(&data);
+    ((Player*)unitTarget)->GetSession()->SendPacket(&data);
 }
 
 void Spell::EffectSendTaxi(uint32 i)
@@ -7230,54 +7209,6 @@ void Spell::EffectRenamePet(uint32 /*eff_idx*/)
         return;
 
     unitTarget->SetByteValue(UNIT_FIELD_BYTES_2, 2, UNIT_RENAME_ALLOWED);
-}
-
-void Spell::EffectSummonVehicle(uint32 i)
-{
-    uint32 creature_entry = m_spellInfo->EffectMiscValue[i];
-    if(!creature_entry)
-        return;
-
-    float px, py, pz;
-    // If dest location if present
-    if (m_targets.m_targetMask & TARGET_FLAG_DEST_LOCATION)
-    {
-        // Summon unit in dest location
-        px = m_targets.m_destX;
-        py = m_targets.m_destY;
-        pz = m_targets.m_destZ;
-    }
-    // Summon if dest location not present near caster
-    else
-        m_caster->GetClosePoint(px,py,pz,3.0f);
-
-    Vehicle *v = m_caster->SummonVehicle(creature_entry, px, py, pz, m_caster->GetOrientation());
-    if(!v)
-        return;
-
-    v->SetUInt32Value(UNIT_CREATED_BY_SPELL, m_spellInfo->Id);
-    v->SetCreatorGUID(m_caster->GetGUID());
-
-    if(damage)
-    {
-        m_caster->CastSpell(v, damage, true);
-        m_caster->EnterVehicle(v, 0);
-    }
-    int32 duration = GetSpellMaxDuration(m_spellInfo);
-    if(duration > 0)
-        v->SetSpawnDuration(duration);
-}
-
-void Spell::EffectDamageBuilding(uint32 i)
-{
-    if(!gameObjTarget)
-        return;
-
-    if(gameObjTarget->GetGoType() != GAMEOBJECT_TYPE_DESTRUCTIBLE_BUILDING)
-        return;
-
-    // NOTE : this can be increased by scaling stat system in vehicles
-    gameObjTarget->DealSiegeDamage(damage);
 }
 
 void Spell::EffectPlayMusic(uint32 i)
