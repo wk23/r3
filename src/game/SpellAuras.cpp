@@ -4417,12 +4417,12 @@ void Aura::HandleModMechanicImmunity(bool apply, bool /*Real*/)
         ((Player*)m_target)->RemoveSpellCooldown(20252,true);
 
     // Lichborne - apply shapeshift (only at first aura apply/remove)
-    if (spellInfo->Id == 49039 && GetEffIndex() == 0)
+    if (GetId() == 49039 && GetEffIndex() == 0)
     {
         if (apply)
-            target->CastSpell(target,50397,true);
+            m_target->CastSpell(target,50397,true);
         else
-            target->RemoveAurasDueToSpell(50397);
+            m_target->RemoveAurasDueToSpell(50397);
     }
 }
 
