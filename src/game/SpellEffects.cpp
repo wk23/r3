@@ -1928,6 +1928,33 @@ void Spell::EffectDummy(uint32 i)
             }
             break;
         case SPELLFAMILY_DEATHKNIGHT:
+            switch(m_spellInfo->Id)
+            {
+                // Death Grip
+                case 49560:
+                case 49576:
+                {
+                    if (!unitTarget || !m_caster)
+                        return;
+
+                    float x = m_caster->GetPositionX();
+                    float y = m_caster->GetPositionY();
+                    float z = m_caster->GetPositionZ()+1;
+                    float orientation = unitTarget->GetOrientation();
+
+                    m_caster->CastSpell(unitTarget,51399,true,NULL);                
+                    
+                    if(unitTarget->GetTypeId() != TYPEID_PLAYER)
+                        {
+                        unitTarget->GetMap()->CreatureRelocation((Creature*)unitTarget,x,y,z,orientation);
+                        ((Creature*)unitTarget)->SendMonsterMove(x, y, z, orientation, MONSTER_MOVE_UNK12, 1);
+                        }
+                    else
+                        unitTarget->NearTeleportTo(x,y,z,orientation,false);
+
+                    return;
+                }
+            }
             // Corpse Explosion
             if(m_spellInfo->SpellIconID == 1737)
             {
@@ -2022,33 +2049,6 @@ void Spell::EffectDummy(uint32 i)
                 // "Desecrated land" visual effect
                 m_caster->CastSpell(unitTarget,55741,true);
                 return;
-            }
-            switch(m_spellInfo->Id)
-            {
-                // Death Grip
-                case 49560:
-                case 49576:
-                {
-                    if (!unitTarget || !m_caster)
-                        return;
-
-                    float x = m_caster->GetPositionX();
-                    float y = m_caster->GetPositionY();
-                    float z = m_caster->GetPositionZ()+1;
-                    float orientation = unitTarget->GetOrientation();
-
-                    m_caster->CastSpell(unitTarget,51399,true,NULL);                
-                    
-                    if(unitTarget->GetTypeId() != TYPEID_PLAYER)
-                        {
-                        unitTarget->GetMap()->CreatureRelocation((Creature*)unitTarget,x,y,z,orientation);
-                        ((Creature*)unitTarget)->SendMonsterMove(x, y, z, orientation, MONSTER_MOVE_UNK12, 1);
-                        }
-                    else
-                        unitTarget->NearTeleportTo(x,y,z,orientation,false);
-
-                    return;
-                }
             }
             // Hungering Cold
             else if (m_spellInfo->SpellFamilyFlags & UI64LIT(0x0000100000000000))
