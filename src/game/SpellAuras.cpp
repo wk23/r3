@@ -4420,7 +4420,7 @@ void Aura::HandleModMechanicImmunity(bool apply, bool /*Real*/)
     if (GetId() == 49039 && GetEffIndex() == 0)
     {
         if (apply)
-            m_target->CastSpell(target,50397,true);
+            m_target->CastSpell(m_target,50397,true);
         else
             m_target->RemoveAurasDueToSpell(50397);
     }
