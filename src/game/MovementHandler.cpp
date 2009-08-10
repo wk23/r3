@@ -517,7 +517,7 @@ sLog.outError("delta_z: %f, movementInfo.z: %f ",delta_z, movementInfo.z);
                 #endif
                 check_passed = false;
             }
-        if((movementInfo.HasMovementFlag(MOVEMENTFLAG_SWIMMING) || movementInfo.HasMovementFlag(MOVEMENTFLAG_WALK_MODE)|| movementInfo.HasMovementFlag(MOVEMENTFLAG_FLYING)) && (delta_z > 4.3f || delta_z < -4.3f) && (delta_z < GetPlayer()->m_anti_last_vspeed) && opcode!=MSG_MOVE_HEARTBEAT 
+        if((movementInfo.HasMovementFlag(MOVEMENTFLAG_SWIMMING) || movementInfo.HasMovementFlag(MOVEMENTFLAG_WALK_MODE)|| movementInfo.HasMovementFlag(MOVEMENTFLAG_FLYING)) && (delta_z > 4.3f || delta_z < -4.3f) && (delta_z < plMover->m_anti_Last_VSpeed) && opcode!=MSG_MOVE_HEARTBEAT 
 && !(plMover->HasAuraType(SPELL_AURA_FLY) || plMover->HasAuraType(SPELL_AURA_MOD_INCREASE_FLIGHT_SPEED) )
 && !plMover->isGameMaster()) {
             sLog.outError("Movement anticheat: %s is Nudge/Blink cheater at MAP %u. ", plMover->GetName(), plMover->GetMapId());
