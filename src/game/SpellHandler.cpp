@@ -582,14 +582,14 @@ void WorldSession::HandleMirrrorImageDataRequest( WorldPacket & recv_data )
     if (creator->GetTypeId() == TYPEID_PLAYER)
     {
         Player* pCreator = (Player *)creator;
-        data << (uint8)creator->getRace();                         // race
-        data << (uint8)creator->getGender();                       // gender
-        data << (uint8)creator->getClass();                        // class
-        data << (uint8)creator->GetByteValue(PLAYER_BYTES, 0);     // skin
-        data << (uint8)creator->GetByteValue(PLAYER_BYTES, 1);     // face
-        data << (uint8)creator->GetByteValue(PLAYER_BYTES, 2);     // hair
-        data << (uint8)creator->GetByteValue(PLAYER_BYTES, 3);     // haircolor
-        data << (uint8)creator->GetByteValue(PLAYER_BYTES_2, 0);   // facialhair
+        data << (uint8)pCreator->getRace();                         // race
+        data << (uint8)pCreator->getGender();                       // gender
+        data << (uint8)pCreator->getClass();                        // class
+        data << (uint8)pCreator->GetByteValue(PLAYER_BYTES, 0);     // skin
+        data << (uint8)pCreator->GetByteValue(PLAYER_BYTES, 1);     // face
+        data << (uint8)pCreator->GetByteValue(PLAYER_BYTES, 2);     // hair
+        data << (uint8)pCreator->GetByteValue(PLAYER_BYTES, 3);     // haircolor
+        data << (uint8)pCreator->GetByteValue(PLAYER_BYTES_2, 0);   // facialhair
 
         data << (uint32)0;                                          // unknown
 
@@ -611,7 +611,7 @@ void WorldSession::HandleMirrrorImageDataRequest( WorldPacket & recv_data )
 
         // Display items in visible slots
         for (EquipmentSlots const* itr = &ItemSlots[0]; *itr != EQUIPMENT_SLOT_END; ++itr)
-            if (Item const* item =  creator->GetItemByPos(INVENTORY_SLOT_BAG_0, *itr))
+            if (Item const* item =  pCreator->GetItemByPos(INVENTORY_SLOT_BAG_0, *itr))
                 data << (uint32)item->GetProto()->DisplayInfoID;    // display id
             else
                 data << (uint32)0;                                  // no item found, so no id
