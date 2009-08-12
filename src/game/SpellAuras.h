@@ -56,18 +56,9 @@ class MANGOS_DLL_SPEC Aura
 
     public:
         //aura handlers
-        void HandleNULL(bool, bool)
-        {
-            // NOT IMPLEMENTED
-        }
-        void HandleUnused(bool, bool)
-        {
-            // NOT USED BY ANY SPELL OR USELESS
-        }
-        void HandleNoImmediateEffect(bool, bool)
-        {
-            // aura not have immediate effect at add/remove and handled by ID in other code place
-        }
+        void HandleNULL(bool, bool) { /* Not implemented. */ }
+        void HandleUnused(bool, bool) { /* Not used or useless. */ }
+        void HandleNoImmediateEffect(bool, bool) { /* Aura does not have immediate effect at add/remove and handled by ID in other place. */ }
         void HandleBindSight(bool Apply, bool Real);
         void HandleModPossess(bool Apply, bool Real);
         void HandlePeriodicDamage(bool Apply, bool Real);
@@ -211,6 +202,8 @@ class MANGOS_DLL_SPEC Aura
         void HandleAuraIncreaseBaseHealthPercent(bool Apply, bool Real);
         void HandleNoReagentUseAura(bool Apply, bool Real);
         void HandlePhase(bool Apply, bool Real);
+        void HandleAuraInitializeImages(bool Apply, bool Real);
+        void HandleAuraCloneCaster(bool Apply, bool Real);
         void HandleAllowOnlyAbility(bool Apply, bool Real);
         void HandleAddCreatureImmunity(bool apply, bool Real);
 
