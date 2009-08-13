@@ -580,7 +580,7 @@ uint32 Unit::DealDamage(Unit *pVictim, uint32 damage, CleanDamage const* cleanDa
         bool bRewardIsAllowed = true;
         if(pVictim->GetTypeId() == TYPEID_UNIT)
         {
-            bRewardIsAllowed = ((Creature*)pVictim)->AreLootAndRewardAllowed();
+            bRewardIsAllowed =GetMap()->IsDungeon() || ((Creature*)pVictim)->AreLootAndRewardAllowed();
             if(!bRewardIsAllowed)
                 ((Creature*)pVictim)->SetLootRecipient(NULL);
         }
