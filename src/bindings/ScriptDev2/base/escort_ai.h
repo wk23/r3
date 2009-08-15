@@ -26,14 +26,12 @@ struct Escort_Waypoint
 struct MANGOS_DLL_DECL npc_escortAI : public ScriptedAI
 {
     public:
-        explicit npc_escortAI(Creature* pCreature) : ScriptedAI(pCreature),
-            IsBeingEscorted(false), IsOnHold(false), PlayerGUID(0), m_uiPlayerCheckTimer(1000), m_uiWPWaitTimer(2500),
-            m_bIsReturning(false), m_bIsActiveAttacker(true), m_bIsRunning(false),
-            m_pQuestForEscort(NULL), m_bCanInstantRespawn(false), m_bCanReturnToStart(false) {}
+        explicit npc_escortAI(Creature* pCreature);
         ~npc_escortAI() {}
 
         // Pure Virtual Functions
-        virtual void WaypointReached(uint32) = 0;
+        virtual void WaypointReached(uint32 uiPointId) = 0;
+        virtual void WaypointStart(uint32 uiPointId) {}
 
         virtual void Aggro(Unit*);
 
@@ -62,6 +60,13 @@ struct MANGOS_DLL_DECL npc_escortAI : public ScriptedAI
         // EscortAI functions
         //void AddWaypoint(uint32 id, float x, float y, float z, uint32 WaitTimeMs = 0);
 
+        bool IsPlayerOrGroupInRange();
+
+        Player* GetPlayerForEscort()
+        {
+            return (Player*)Unit::GetUnit(*m_creature, m_uiPlayerGUID);
+        }
+
         void FillPointMovementListForCreature();
 
         void Start(bool bIsActiveAttacker = true, bool bRun = false, uint64 uiPlayerGUID = 0, const Quest* pQuest = NULL, bool bInstantRespawn = false, bool bCanLoopPath = false);
@@ -70,11 +75,11 @@ struct MANGOS_DLL_DECL npc_escortAI : public ScriptedAI
 
     // EscortAI variables
     protected:
-        uint64 PlayerGUID;
         bool IsBeingEscorted;
         bool IsOnHold;
 
     private:
+        uint64 m_uiPlayerGUID;
         uint32 m_uiWPWaitTimer;
         uint32 m_uiPlayerCheckTimer;
 

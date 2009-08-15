@@ -724,7 +724,7 @@ struct MANGOS_DLL_DECL npc_koltira_deathweaverAI : public npc_escortAI
 
     void JustSummoned(Creature* pSummoned)
     {
-        if (Unit* pPlayer = Unit::GetUnit(*m_creature, PlayerGUID))
+        if (Unit* pPlayer = GetPlayerForEscort())
         {
             pSummoned->AI()->AttackStart(pPlayer);
             pSummoned->AddThreat(m_creature, 0.0f);

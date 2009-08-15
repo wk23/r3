@@ -56,7 +56,8 @@ enum Gossip_Option
     GOSSIP_OPTION_ARMORER           = 15,                   //UNIT_NPC_FLAG_ARMORER           = 16384,
     GOSSIP_OPTION_UNLEARNTALENTS    = 16,                   //UNIT_NPC_FLAG_TRAINER (bonus option for GOSSIP_OPTION_TRAINER)
     GOSSIP_OPTION_UNLEARNPETSKILLS  = 17,                   //UNIT_NPC_FLAG_TRAINER (bonus option for GOSSIP_OPTION_TRAINER)
-    GOSSIP_OPTION_OUTDOORPVP        = 18                    //UNIT_NPC_FLAG_OUTDOORPVP (option for outdoor pvp creatures)
+    GOSSIP_OPTION_OUTDOORPVP        = 18,                    //UNIT_NPC_FLAG_OUTDOORPVP (option for outdoor pvp creatures)
+    GOSSIP_OPTION_LEARNDUALSPEC     = 19                    //UNIT_NPC_FLAG_TRAINER (bonus option for GOSSIP_OPTION_TRAINER)
 };
 
 enum Gossip_Guard
@@ -300,6 +301,12 @@ struct CreatureDataAddonAura
     uint8 effect_idx;
 };
 
+struct CreatureDataAddonPassengers
+{
+    int32 guidOrEntry;                                      // entry - negative, guid positive
+    int8 seat_idx;
+};
+
 // from `creature_addon` table
 struct CreatureDataAddon
 {
@@ -309,6 +316,8 @@ struct CreatureDataAddon
     uint32 bytes2;
     uint32 emote;
     uint32 move_flags;
+    uint32 vehicle_id;
+    CreatureDataAddonPassengers const* passengers;          // loaded as char* "entry1 seatid1 entry2 seatid2 ... "
     CreatureDataAddonAura const* auras;                     // loaded as char* "spell1 eff1 spell2 eff2 ... "
 };
 
@@ -630,6 +639,7 @@ class MANGOS_DLL_SPEC Creature : public Unit
 
         MovementGeneratorType GetDefaultMovementType() const { return m_defaultMovementType; }
         void SetDefaultMovementType(MovementGeneratorType mgt) { m_defaultMovementType = mgt; }
+        float GetBaseSpeed() const;
 
         // for use only in LoadHelper, Map::Add Map::CreatureCellRelocation
         Cell const& GetCurrentCell() const { return m_currentCell; }

@@ -442,10 +442,10 @@ enum ItemQualities
 #define SPELL_ATTR_EX6_UNK30                      0x40000000            // 30 not set in 3.0.3
 #define SPELL_ATTR_EX6_UNK31                      0x80000000            // 31 not set in 3.0.3
 
+#define MAX_TALENT_SPECS        2
 #define MAX_GLYPH_SLOT_INDEX    6
 
-enum SheathTypes
-{
+enum SheathTypes{
     SHEATHETYPE_NONE                   = 0,
     SHEATHETYPE_MAINHAND               = 1,
     SHEATHETYPE_OFFHAND                = 2,
@@ -1048,6 +1048,14 @@ enum Targets
     TARGET_UNK_1                       = 72,                // ImplicitTargetA[0] in Army of the Dead spell
     TARGET_DYNAMIC_OBJECT_COORDINATES  = 76,
     TARGET_SINGLE_ENEMY                = 77,
+    TARGET_POINT_AT_NORTH              = 78,                // 78-85 possible _COORDINATES at radius with pi/4 step around target in unknown order, N?
+    TARGET_POINT_AT_SOUTH              = 79,                // S?
+    TARGET_POINT_AT_EAST               = 80,                // 80/81 must be symmetric from line caster->target, E (base at 82/83, 84/85 order) ?
+    TARGET_POINT_AT_WEST               = 81,                // 80/81 must be symmetric from line caster->target, W (base at 82/83, 84/85 order) ?
+    TARGET_POINT_AT_NE                 = 82,                // from spell desc: "(NE)"
+    TARGET_POINT_AT_NW                 = 83,                // from spell desc: "(NW)"
+    TARGET_POINT_AT_SE                 = 84,                // from spell desc: "(SE)"
+    TARGET_POINT_AT_SW                 = 85,                // from spell desc: "(SW)"
     TARGET_UNK_2                       = 86,                // ImplicitTargetA[1] in Army of the Dead spell
     TARGET_SELF2                       = 87,
     TARGET_DIRECTLY_FORWARD            = 89,
@@ -1837,11 +1845,26 @@ enum CreatureFamily
 
 enum CreatureTypeFlags
 {
-    CREATURE_TYPEFLAGS_TAMEABLE        = 0x00001,
-    CREATURE_TYPEFLAGS_HERBLOOT        = 0x00100,
-    CREATURE_TYPEFLAGS_MININGLOOT      = 0x00200,
-    CREATURE_TYPEFLAGS_ENGINEERLOOT    = 0x08000,
-    CREATURE_TYPEFLAGS_EXOTIC          = 0x10000
+    CREATURE_TYPEFLAGS_TAMEABLE        = 0x00001,           //tameable by any hunter
+    CREATURE_TYPEFLAGS_UNK2            = 0x00002,           //? Related to spirits/ghosts in any form? Allow gossip interaction if player is also ghost? Visibility?
+    CREATURE_TYPEFLAGS_UNK3            = 0x00004,
+    CREATURE_TYPEFLAGS_UNK4            = 0x00008,
+    CREATURE_TYPEFLAGS_UNK5            = 0x00010,
+    CREATURE_TYPEFLAGS_UNK6            = 0x00020,
+    CREATURE_TYPEFLAGS_UNK7            = 0x00040,
+    CREATURE_TYPEFLAGS_UNK8            = 0x00080,
+    CREATURE_TYPEFLAGS_HERBLOOT        = 0x00100,           //can be looted by herbalist
+    CREATURE_TYPEFLAGS_MININGLOOT      = 0x00200,           //can be looted by miner
+    CREATURE_TYPEFLAGS_UNK11           = 0x00400,
+    CREATURE_TYPEFLAGS_UNK12           = 0x00800,           //? Related to mounts in some way. If mounted, fight mounted, mount appear as independant when rider dies?
+    CREATURE_TYPEFLAGS_UNK13           = 0x01000,           //? Can aid any player in combat if in range?
+    CREATURE_TYPEFLAGS_UNK14           = 0x02000,
+    CREATURE_TYPEFLAGS_UNK15           = 0x04000,           //? Possibly not in use
+    CREATURE_TYPEFLAGS_ENGINEERLOOT    = 0x08000,           //can be looted by engineer
+    CREATURE_TYPEFLAGS_EXOTIC          = 0x10000,           //can be tamed by hunter as exotic pet
+    CREATURE_TYPEFLAGS_UNK18           = 0x20000,           //? Related to veichles/pvp?
+    CREATURE_TYPEFLAGS_UNK19           = 0x40000,           //? Related to veichle/siege weapons?
+    CREATURE_TYPEFLAGS_UNK20           = 0x80000
 };
 
 enum CreatureEliteType
@@ -2364,36 +2387,91 @@ enum DungeonDifficulties
     TOTAL_DIFFICULTIES
 };
 
+enum SummonCategory
+{
+    SUMMON_CATEGORY_WILD        = 0,
+    SUMMON_CATEGORY_ALLY        = 1,
+    SUMMON_CATEGORY_PET         = 2,
+    SUMMON_CATEGORY_POSSESSED   = 3,
+    SUMMON_CATEGORY_VEHICLE     = 4
+};
+
+enum SummonMask
+{
+    SUMMON_MASK_NONE            = 0x00000000,
+    SUMMON_MASK_SUMMON          = 0x00000001,
+    SUMMON_MASK_GUARDIAN        = 0x00000002,
+    SUMMON_MASK_TOTEM           = 0x00000004,
+    SUMMON_MASK_PET             = 0x00000008,
+    SUMMON_MASK_VEHICLE         = 0x00000010
+};
+
 enum SummonType
 {
-    SUMMON_TYPE_CRITTER     = 41,
-    SUMMON_TYPE_GUARDIAN    = 61,
-    SUMMON_TYPE_TOTEM_SLOT1 = 63,
-    SUMMON_TYPE_WILD        = 64,
-    SUMMON_TYPE_POSESSED    = 65,
-    SUMMON_TYPE_DEMON       = 66,
-    SUMMON_TYPE_SUMMON      = 67,
-    SUMMON_TYPE_TOTEM_SLOT2 = 81,
-    SUMMON_TYPE_TOTEM_SLOT3 = 82,
-    SUMMON_TYPE_TOTEM_SLOT4 = 83,
-    SUMMON_TYPE_TOTEM       = 121,
-    SUMMON_TYPE_UNKNOWN3    = 181,
-    SUMMON_TYPE_UNKNOWN4    = 187,
-    SUMMON_TYPE_UNKNOWN1    = 247,
-    SUMMON_TYPE_CRITTER2    = 407,
-    SUMMON_TYPE_CRITTER3    = 307,
-    SUMMON_TYPE_UNKNOWN5    = 409,
-    SUMMON_TYPE_UNKNOWN2    = 427,
-    SUMMON_TYPE_POSESSED2   = 428,
+    SUMMON_TYPE_CRITTER         = 41,
+    SUMMON_TYPE_GUARDIAN        = 61,
+    SUMMON_TYPE_TOTEM_SLOT1     = 63,
+    SUMMON_TYPE_WILD            = 64,
+    SUMMON_TYPE_POSESSED        = 65,
+    SUMMON_TYPE_DEMON           = 66,
+    SUMMON_TYPE_SUMMON          = 67,
+    SUMMON_TYPE_TOTEM_SLOT2     = 81,
+    SUMMON_TYPE_TOTEM_SLOT3     = 82,
+    SUMMON_TYPE_TOTEM_SLOT4     = 83,
+    SUMMON_TYPE_TOTEM           = 121,
+    SUMMON_TYPE_UNKNOWN3        = 181,
+    SUMMON_TYPE_UNKNOWN4        = 187,
+    SUMMON_TYPE_UNKNOWN1        = 247,
+    SUMMON_TYPE_CRITTER2        = 407,
+    SUMMON_TYPE_CRITTER3        = 307,
+    SUMMON_TYPE_VEHICLE1        = 327,
+    SUMMON_TYPE_VEHICLE2        = 367,
+    SUMMON_TYPE_UNKNOWN5        = 409,
+    SUMMON_TYPE_UNKNOWN2        = 427,
+    SUMMON_TYPE_POSESSED2       = 428,
     SUMMON_TYPE_WILD2       = 429,
     SUMMON_TYPE_TOTEM2      = 647,
     SUMMON_TYPE_GHOUL_OF_THE_DEAD = 687,
     SUMMON_TYPE_GHOUL	= 829,
     SUMMON_TYPE_SCRAPBOT    = 832,
+    SUMMON_TYPE_VEHICLE3        = 488,
+    SUMMON_TYPE_VEHICLE4        = 493,
+    SUMMON_TYPE_VEHICLE5        = 607,
+    SUMMON_TYPE_VEHICLE6        = 708,
+    SUMMON_TYPE_VEHICLE7        = 710,
     SUMMON_TYPE_INFERNO     = 711,
-    SUMMON_TYPE_GUARDIAN2   = 1161,
-    SUMMON_TYPE_ELEMENTAL   = 1561,
-    SUMMON_TYPE_FORCE_OF_NATURE = 1562
+    SUMMON_TYPE_VEHICLE8        = 716,
+    SUMMON_TYPE_VEHICLE9        = 901,
+    SUMMON_TYPE_VEHICLE10       = 941,
+    SUMMON_TYPE_VEHICLE11       = 1081,
+    SUMMON_TYPE_GUARDIAN2       = 1161,
+    SUMMON_TYPE_VEHICLE12       = 1162,
+    SUMMON_TYPE_ELEMENTAL       = 1561,
+    SUMMON_TYPE_FORCE_OF_NATURE = 1562,
+    SUMMON_TYPE_VEHICLE13       = 25995
+};
+
+/* NOTE : vehicles and seats has their own flags in DBC,
+but for now, they are too unknown for us, to use them */
+enum CustomVehicleFLags
+{
+    VF_CANT_MOVE                    = 0x0001,                   // vehicle cant move, only turn, maybe handle by some auras?
+    VF_FACTION                      = 0x0002,                   // vehicle retain its own faction
+    VF_DESPAWN_NPC                  = 0x0004,                   // vehicle will delete npc on spellclick
+    VF_DESPAWN_AT_LEAVE             = 0x0008,                   // vehicle will be deleted when rider leaves
+    VF_CAN_BE_HEALED                = 0x0010,                   // vehicle can be healed
+    VF_GIVE_EXP                     = 0x0020,                   // vehicle will give exp for killing enemies
+    VF_MOVEMENT                     = 0x0040,                   // vehicle will move on its own, not depending on rider, however rider can cast spells
+    VF_NON_SELECTABLE               = 0x0080                    // vehicle will be not selectable after rider enter
+    //VF_HAS_FUEL                     = 0x0100,                   // TODO : find out what energy type is fuel and implement this
+};
+
+enum CustomVehicleSeatFLags
+{
+    SF_MAIN_RIDER                   = 0x0001,                   // the one who controlls vehicle, can also cast spells
+    SF_UNATTACKABLE                 = 0x0002,                   // hided inside, and unatackable until vehicle is destroyed
+    SF_CAN_CAST                     = 0x0004,                   // player/npc can rotate, and cast OWN spells
+    SF_UNACCESSIBLE                 = 0x0008                    // player cant enter this seat by normal way (only by script)
 };
 
 enum ResponseCodes

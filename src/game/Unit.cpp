@@ -45,6 +45,7 @@
 #include "CellImpl.h"
 #include "Path.h"
 #include "Traveller.h"
+#include "Vehicle.h"
 
 #include <math.h>
 
@@ -156,6 +157,9 @@ Unit::Unit()
     // remove aurastates allowing special moves
     for(int i=0; i < MAX_REACTIVE; ++i)
         m_reactiveTimer[i] = 0;
+
+    m_auraUpdateMask = 0;
+    m_vehicleGUID = 0;
 }
 
 Unit::~Unit()
@@ -472,9 +476,10 @@ uint32 Unit::DealDamage(Unit *pVictim, uint32 damage, CleanDamage const* cleanDa
         if(cInfo && cInfo->lootid)
             pVictim->SetUInt32Value(UNIT_DYNAMIC_FLAGS, UNIT_DYNFLAG_LOOTABLE);
 
-        // some critters required for quests
+        // some critters required for quests (need normal entry instead possible heroic in any cases)
         if(GetTypeId() == TYPEID_PLAYER)
-            ((Player*)this)->KilledMonster(cInfo ,pVictim->GetGUID());
+            if(CreatureInfo const* normalInfo = objmgr.GetCreatureTemplate(pVictim->GetEntry()))
+                ((Player*)this)->KilledMonster(normalInfo,pVictim->GetGUID());
 
         return damage;
     }
@@ -3687,9 +3692,14 @@ bool Unit::RemoveNoStackAurasDueToAura(Aura *Aur)
         if(i_spellId == spellId) continue;
 
         bool is_triggered_by_spell = false;
-        // prevent triggered aura of removing aura that triggered it
+        // prevent triggering aura of removing aura that triggered it
         for(int j = 0; j < 3; ++j)
-            if (i_spellProto->EffectTriggerSpell[j] == spellProto->Id)
+            if (i_spellProto->EffectTriggerSpell[j] == spellId)
+                is_triggered_by_spell = true;
+
+        // prevent triggered aura of removing aura that triggering it (triggered effect early some aura of parent spell
+        for(int j = 0; j < 3; ++j)
+            if (spellProto->EffectTriggerSpell[j] == i_spellId)
                 is_triggered_by_spell = true;
 
         if (is_triggered_by_spell)
@@ -4560,69 +4570,6 @@ void Unit::SendAttackStateUpdate(uint32 HitInfo, Unit *target, uint8 SwingType, 
     dmgInfo.TargetState = TargetState;
     dmgInfo.blocked_amount = BlockedAmount;
     SendAttackStateUpdate(&dmgInfo);
-}
-
-void Unit::SendInitialVisiblePackets(Player *player)
-{
-    SendAuras(player);
-    if(isAlive())
-    {
-        if(GetTypeId() == TYPEID_UNIT)
-            ((Creature*)this)->SendMonsterMoveWithSpeedToCurrentDestination(player);
-
-        if(hasUnitState(UNIT_STAT_MELEE_ATTACKING) && getVictim())
-            SendMeleeAttackStart(getVictim());
-    }
-}
-
-void Unit::SendAuras(Player *player)
-{
-    if(GetVisibleAuras()->empty())                  // speedup things
-        return;
-
-    WorldPacket data(SMSG_AURA_UPDATE_ALL);
-    data.append(GetPackGUID());
-
-    Unit::VisibleAuraMap const *visibleAuras = GetVisibleAuras();
-    for(Unit::VisibleAuraMap::const_iterator itr = visibleAuras->begin(); itr != visibleAuras->end(); ++itr)
-    {
-        for(uint32 j = 0; j < 3; ++j)
-        {
-            if(Aura *aura = GetAura(itr->second, j))
-            {
-                data << uint8(aura->GetAuraSlot());
-                data << uint32(aura->GetId());
-
-                if(aura->GetId())
-                {
-                    uint8 auraFlags = aura->GetAuraFlags();
-                    // flags
-                    data << uint8(auraFlags);
-                    // level
-                    data << uint8(aura->GetAuraLevel());
-                    // charges
-                    data << uint8(aura->GetAuraCharges());
-
-                    if(!(auraFlags & AFLAG_NOT_CASTER))
-                    {
-                        data << uint8(0);                   // packed GUID of someone (caster?)
-                    }
-
-                    if(auraFlags & AFLAG_DURATION)          // include aura duration
-                    {
-                        data << uint32(aura->GetAuraMaxDuration());
-                        data << uint32(aura->GetAuraDuration());
-                    }
-                }
-                break;
-            }
-        }
-    }
-
-    if (player)
-        player->GetSession()->SendPacket(&data);
-    else
-        SendMessageToSet(&data,true);
 }
 
 bool Unit::HandleHasteAuraProc(Unit *pVictim, uint32 damage, Aura* triggeredByAura, SpellEntry const * /*procSpell*/, uint32 /*procFlag*/, uint32 /*procEx*/, uint32 cooldown)
@@ -5962,6 +5909,10 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura* triggeredByAu
                 case 31876:
                 case 31877:
                 case 31878:
+                    // triggered only at casted Judgement spells, not at additional Judgement effects
+                    if(!procSpell || procSpell->Category != 1210)
+                        return false;
+
                     target = this;
                     triggered_spell_id = 31930;
 
@@ -7713,15 +7664,10 @@ void Unit::setPowerType(Powers new_powertype)
         if(((Player*)this)->GetGroup())
             ((Player*)this)->SetGroupUpdateFlag(GROUP_UPDATE_FLAG_POWER_TYPE);
     }
-    else if(((Creature*)this)->isPet())
+    else if(Unit* owner = GetCharmerOrOwner())
     {
-        Pet *pet = ((Pet*)this);
-        if(pet->isControlled())
-        {
-            Unit *owner = GetOwner();
-            if(owner && (owner->GetTypeId() == TYPEID_PLAYER) && ((Player*)owner)->GetGroup())
-                ((Player*)owner)->SetGroupUpdateFlag(GROUP_UPDATE_FLAG_PET_POWER_TYPE);
-        }
+        if((owner->GetTypeId() == TYPEID_PLAYER) && ((Player*)owner)->GetGroup())
+            ((Player*)owner)->SetGroupUpdateFlag(GROUP_UPDATE_FLAG_PET_POWER_TYPE);
     }
 
     switch(new_powertype)
@@ -8035,6 +7981,14 @@ bool Unit::Attack(Unit *victim, bool meleeAttack)
 
     // player cannot attack in mount state
     if(GetTypeId()==TYPEID_PLAYER && IsMounted())
+        return false;
+
+    // player (also npc?) cannot attack on vehicle
+    if(GetTypeId()==TYPEID_PLAYER && GetVehicleGUID())
+        return false;
+
+    // player (also npc?) cannot attack on vehicle
+    if(GetTypeId()==TYPEID_UNIT && ((Creature*)this)->isVehicle() && GetCharmerGUID())
         return false;
 
     // nobody can attack GM in GM-mode
@@ -10182,18 +10136,11 @@ void Unit::SetVisibility(UnitVisibility x)
     if(IsInWorld())
     {
         Map *m = GetMap();
-        CellPair p(MaNGOS::ComputeCellPair(GetPositionX(), GetPositionY()));
-        Cell cell(p);
- 
-        if(GetTypeId() == TYPEID_PLAYER)
-        {
-            m->UpdatePlayerVisibility((Player*)this, cell, p);
-            m->UpdateObjectsVisibilityFor((Player*)this, cell, p);
-        }
-        else
-            m->UpdateObjectVisibility(this, cell, p);
 
-        AddToNotify(NOTIFY_AI_RELOCATION);
+        if(GetTypeId()==TYPEID_PLAYER)
+            m->PlayerRelocation((Player*)this,GetPositionX(),GetPositionY(),GetPositionZ(),GetOrientation());
+        else
+            m->CreatureRelocation((Creature*)this,GetPositionX(),GetPositionY(),GetPositionZ(),GetOrientation());
     }
 }
 
@@ -10301,6 +10248,11 @@ void Unit::UpdateSpeed(UnitMoveType mtype, bool forced)
     }
 
     float bonus = non_stack_bonus > stack_bonus ? non_stack_bonus : stack_bonus;
+
+    //apply creature's base speed
+    if(GetTypeId() == TYPEID_UNIT)
+        bonus *= ((Creature*)this)->GetBaseSpeed();
+
     // now we ready for speed calculation
     float speed  = main_speed_mod ? bonus*(100.0f + main_speed_mod)/100.0f : bonus;
 
@@ -10475,6 +10427,7 @@ void Unit::setDeathState(DeathState s)
 
     if (s == JUST_DIED)
     {
+        ExitVehicle();
         RemoveAllAurasOnDeath();
         RemoveGuardians();
         UnsummonAllTotems();
@@ -10695,7 +10648,8 @@ bool Unit::SelectHostilTarget()
     }
 
     // enter in evade mode in other case
-    ((Creature*)this)->AI()->EnterEvadeMode();
+    if(!((Creature*)this)->isVehicle())
+        ((Creature*)this)->AI()->EnterEvadeMode();
 
     return false;
 }
@@ -11243,15 +11197,10 @@ void Unit::SetHealth(uint32 val)
         if(((Player*)this)->GetGroup())
             ((Player*)this)->SetGroupUpdateFlag(GROUP_UPDATE_FLAG_CUR_HP);
     }
-    else if(((Creature*)this)->isPet())
+    else if(Unit* owner = GetCharmerOrOwner())
     {
-        Pet *pet = ((Pet*)this);
-        if(pet->isControlled())
-        {
-            Unit *owner = GetOwner();
-            if(owner && (owner->GetTypeId() == TYPEID_PLAYER) && ((Player*)owner)->GetGroup())
-                ((Player*)owner)->SetGroupUpdateFlag(GROUP_UPDATE_FLAG_PET_CUR_HP);
-        }
+        if((owner->GetTypeId() == TYPEID_PLAYER) && ((Player*)owner)->GetGroup())
+            ((Player*)owner)->SetGroupUpdateFlag(GROUP_UPDATE_FLAG_PET_CUR_HP);
     }
 }
 
@@ -11266,15 +11215,10 @@ void Unit::SetMaxHealth(uint32 val)
         if(((Player*)this)->GetGroup())
             ((Player*)this)->SetGroupUpdateFlag(GROUP_UPDATE_FLAG_MAX_HP);
     }
-    else if(((Creature*)this)->isPet())
+    else if(Unit* owner = GetCharmerOrOwner())
     {
-        Pet *pet = ((Pet*)this);
-        if(pet->isControlled())
-        {
-            Unit *owner = GetOwner();
-            if(owner && (owner->GetTypeId() == TYPEID_PLAYER) && ((Player*)owner)->GetGroup())
-                ((Player*)owner)->SetGroupUpdateFlag(GROUP_UPDATE_FLAG_PET_MAX_HP);
-        }
+        if((owner->GetTypeId() == TYPEID_PLAYER) && ((Player*)owner)->GetGroup())
+            ((Player*)owner)->SetGroupUpdateFlag(GROUP_UPDATE_FLAG_PET_MAX_HP);
     }
 
     if(val < health)
@@ -11304,20 +11248,19 @@ void Unit::SetPower(Powers power, uint32 val)
         if(((Player*)this)->GetGroup())
             ((Player*)this)->SetGroupUpdateFlag(GROUP_UPDATE_FLAG_CUR_POWER);
     }
-    else if(((Creature*)this)->isPet())
+    else if(Unit* owner = GetCharmerOrOwner())
     {
-        Pet *pet = ((Pet*)this);
-        if(pet->isControlled())
-        {
-            Unit *owner = GetOwner();
-            if(owner && (owner->GetTypeId() == TYPEID_PLAYER) && ((Player*)owner)->GetGroup())
-                ((Player*)owner)->SetGroupUpdateFlag(GROUP_UPDATE_FLAG_PET_CUR_POWER);
-        }
+        if((owner->GetTypeId() == TYPEID_PLAYER) && ((Player*)owner)->GetGroup())
+            ((Player*)owner)->SetGroupUpdateFlag(GROUP_UPDATE_FLAG_PET_CUR_POWER);
 
-        // Update the pet's character sheet with happiness damage bonus
-        if(pet->getPetType() == HUNTER_PET && power == POWER_HAPPINESS)
+        if(((Creature*)this)->isPet())
         {
-            pet->UpdateDamagePhysical(BASE_ATTACK);
+            Pet *pet = ((Pet*)this);
+            // Update the pet's character sheet with happiness damage bonus
+            if(pet->getPetType() == HUNTER_PET && power == POWER_HAPPINESS)
+            {
+                pet->UpdateDamagePhysical(BASE_ATTACK);
+            }
         }
     }
 }
@@ -11333,15 +11276,10 @@ void Unit::SetMaxPower(Powers power, uint32 val)
         if(((Player*)this)->GetGroup())
             ((Player*)this)->SetGroupUpdateFlag(GROUP_UPDATE_FLAG_MAX_POWER);
     }
-    else if(((Creature*)this)->isPet())
+    else if(Unit* owner = GetCharmerOrOwner())
     {
-        Pet *pet = ((Pet*)this);
-        if(pet->isControlled())
-        {
-            Unit *owner = GetOwner();
-            if(owner && (owner->GetTypeId() == TYPEID_PLAYER) && ((Player*)owner)->GetGroup())
-                ((Player*)owner)->SetGroupUpdateFlag(GROUP_UPDATE_FLAG_PET_MAX_POWER);
-        }
+        if((owner->GetTypeId() == TYPEID_PLAYER) && ((Player*)owner)->GetGroup())
+            ((Player*)owner)->SetGroupUpdateFlag(GROUP_UPDATE_FLAG_PET_MAX_POWER);
     }
 
     if(val < cur_power)
@@ -11358,15 +11296,10 @@ void Unit::ApplyPowerMod(Powers power, uint32 val, bool apply)
         if(((Player*)this)->GetGroup())
             ((Player*)this)->SetGroupUpdateFlag(GROUP_UPDATE_FLAG_CUR_POWER);
     }
-    else if(((Creature*)this)->isPet())
+    else if(Unit* owner = GetCharmerOrOwner())
     {
-        Pet *pet = ((Pet*)this);
-        if(pet->isControlled())
-        {
-            Unit *owner = GetOwner();
-            if(owner && (owner->GetTypeId() == TYPEID_PLAYER) && ((Player*)owner)->GetGroup())
-                ((Player*)owner)->SetGroupUpdateFlag(GROUP_UPDATE_FLAG_PET_CUR_POWER);
-        }
+        if((owner->GetTypeId() == TYPEID_PLAYER) && ((Player*)owner)->GetGroup())
+            ((Player*)owner)->SetGroupUpdateFlag(GROUP_UPDATE_FLAG_PET_CUR_POWER);
     }
 }
 
@@ -11380,15 +11313,10 @@ void Unit::ApplyMaxPowerMod(Powers power, uint32 val, bool apply)
         if(((Player*)this)->GetGroup())
             ((Player*)this)->SetGroupUpdateFlag(GROUP_UPDATE_FLAG_MAX_POWER);
     }
-    else if(((Creature*)this)->isPet())
+    else if(Unit* owner = GetCharmerOrOwner())
     {
-        Pet *pet = ((Pet*)this);
-        if(pet->isControlled())
-        {
-            Unit *owner = GetOwner();
-            if(owner && (owner->GetTypeId() == TYPEID_PLAYER) && ((Player*)owner)->GetGroup())
-                ((Player*)owner)->SetGroupUpdateFlag(GROUP_UPDATE_FLAG_PET_MAX_POWER);
-        }
+        if((owner->GetTypeId() == TYPEID_PLAYER) && ((Player*)owner)->GetGroup())
+            ((Player*)owner)->SetGroupUpdateFlag(GROUP_UPDATE_FLAG_PET_MAX_POWER);
     }
 }
 
@@ -11438,6 +11366,7 @@ void Unit::RemoveFromWorld()
 
 void Unit::CleanupsBeforeDelete()
 {
+    ExitVehicle();                                          // make sure we always leave vehicle, otherwise it will crash
     if(m_uint32Values)                                      // only for fully created object
     {
         InterruptNonMeleeSpells(true);
@@ -11936,7 +11865,7 @@ void Unit::ProcDamageAndSpellFor( bool isVictim, Unit * pTarget, uint32 procFlag
                 sLog.outDebug("ProcDamageAndSpell: casting mending (triggered by %s dummy aura of spell %u)",
                     (isVictim?"a victim's":"an attacker's"),triggeredByAura->GetId());
 
-                HandleMeandingAuraProc(triggeredByAura);
+                HandleMendingAuraProc(triggeredByAura);
                 break;
             }
             case SPELL_AURA_PROC_TRIGGER_SPELL_WITH_VALUE:
@@ -12159,8 +12088,12 @@ void Unit::SetFeared(bool apply, uint64 casterGUID, uint32 spellID, uint32 time)
         }
     }
 
-    if (GetTypeId() == TYPEID_PLAYER)
+    if (GetTypeId() == TYPEID_PLAYER && !GetVehicleGUID())
         ((Player*)this)->SetClientControl(this, !apply);
+
+    if (Unit* owner = GetCharmer())
+        if (owner->GetTypeId() == TYPEID_PLAYER)
+            ((Player*)owner)->SetClientControl(this, !apply);
 }
 
 void Unit::SetConfused(bool apply, uint64 casterGUID, uint32 spellID)
@@ -12187,8 +12120,12 @@ void Unit::SetConfused(bool apply, uint64 casterGUID, uint32 spellID)
         }
     }
 
-    if(GetTypeId() == TYPEID_PLAYER)
+    if(GetTypeId() == TYPEID_PLAYER && !GetVehicleGUID())
         ((Player*)this)->SetClientControl(this, !apply);
+
+    if (Unit* owner = GetCharmer())
+        if (owner->GetTypeId() == TYPEID_PLAYER)
+            ((Player*)owner)->SetClientControl(this, !apply);
 }
 
 bool Unit::IsSitState() const
@@ -12230,13 +12167,9 @@ void Unit::SetDisplayId(uint32 modelId)
 {
     SetUInt32Value(UNIT_FIELD_DISPLAYID, modelId);
 
-    if(GetTypeId() == TYPEID_UNIT && ((Creature*)this)->isPet())
+    if(Unit *owner = GetCharmerOrOwner())
     {
-        Pet *pet = ((Pet*)this);
-        if(!pet->isControlled())
-            return;
-        Unit *owner = GetOwner();
-        if(owner && (owner->GetTypeId() == TYPEID_PLAYER) && ((Player*)owner)->GetGroup())
+        if((owner->GetTypeId() == TYPEID_PLAYER) && ((Player*)owner)->GetGroup())
             ((Player*)owner)->SetGroupUpdateFlag(GROUP_UPDATE_FLAG_PET_MODEL_ID);
     }
 }
@@ -12490,16 +12423,14 @@ void Unit::UpdateAuraForGroup(uint8 slot)
             player->SetAuraUpdateMask(slot);
         }
     }
-    else if(GetTypeId() == TYPEID_UNIT && ((Creature*)this)->isPet())
+    else if(GetTypeId() == TYPEID_UNIT)
     {
-        Pet *pet = ((Pet*)this);
-        if(pet->isControlled())
+        if(Unit *owner = GetCharmerOrOwner())
         {
-            Unit *owner = GetOwner();
-            if(owner && (owner->GetTypeId() == TYPEID_PLAYER) && ((Player*)owner)->GetGroup())
+            if((owner->GetTypeId() == TYPEID_PLAYER) && ((Player*)owner)->GetGroup())
             {
                 ((Player*)owner)->SetGroupUpdateFlag(GROUP_UPDATE_FLAG_PET_AURAS);
-                pet->SetAuraUpdateMask(slot);
+                SetAuraUpdateMask(slot);
             }
         }
     }
@@ -12716,7 +12647,7 @@ bool Unit::IsTriggeredAtSpellProcEvent(Unit *pVictim, Aura* aura, SpellEntry con
     return roll_chance_f(chance);
 }
 
-bool Unit::HandleMeandingAuraProc( Aura* triggeredByAura )
+bool Unit::HandleMendingAuraProc( Aura* triggeredByAura )
 {
     // aura can be deleted at casts
     SpellEntry const* spellProto = triggeredByAura->GetSpellProto();
@@ -12754,9 +12685,14 @@ bool Unit::HandleMeandingAuraProc( Aura* triggeredByAura )
                 mod->mask  = spellProto->SpellFamilyFlags;
                 mod->mask2 = spellProto->SpellFamilyFlags2;
 
+                // remove before apply next (locked against deleted)
+                triggeredByAura->SetInUse(true);
+                RemoveAurasByCasterSpell(spellProto->Id,caster->GetGUID());
+
                 caster->AddSpellMod(mod, true);
                 CastCustomSpell(target,spellProto->Id,&heal,NULL,NULL,true,NULL,triggeredByAura,caster->GetGUID());
                 caster->AddSpellMod(mod, false);
+                triggeredByAura->SetInUse(false);
             }
         }
     }
@@ -12807,12 +12743,142 @@ void Unit::NearTeleportTo( float x, float y, float z, float orientation, bool ca
         ((Player*)this)->TeleportTo(GetMapId(), x, y, z, orientation, TELE_TO_NOT_LEAVE_TRANSPORT | TELE_TO_NOT_LEAVE_COMBAT | TELE_TO_NOT_UNSUMMON_PET | (casting ? TELE_TO_SPELL : 0));
     else
     {
+        ExitVehicle();
         GetMap()->CreatureRelocation((Creature*)this, x, y, z, orientation);
 
         WorldPacket data;
         BuildHeartBeatMsg(&data);
         SendMessageToSet(&data, false);
     }
+}
+
+void Unit::EnterVehicle(Vehicle *vehicle, int8 seat_id, bool force)
+{
+    // dont allow multiple vehicles
+    ExitVehicle();
+
+    RemoveSpellsCausingAura(SPELL_AURA_MOUNTED);
+    // NOTE : shapeshift too?
+
+    Vehicle *v = vehicle->FindFreeSeat(&seat_id, force);
+    if(!v)
+        return;
+
+    VehicleEntry const *ve = sVehicleStore.LookupEntry(v->GetVehicleId());
+    if(!ve)
+        return;
+
+    VehicleSeatEntry const *veSeat = sVehicleSeatStore.LookupEntry(ve->m_seatID[seat_id]);
+    if(!veSeat)
+        return;
+
+    m_SeatData.OffsetX = (veSeat->m_attachmentOffsetX + v->GetObjectSize()) * GetFloatValue(OBJECT_FIELD_SCALE_X);      // transport offsetX
+    m_SeatData.OffsetY = (veSeat->m_attachmentOffsetY + v->GetObjectSize()) * GetFloatValue(OBJECT_FIELD_SCALE_X);      // transport offsetY
+    m_SeatData.OffsetZ = (veSeat->m_attachmentOffsetZ + v->GetObjectSize()) * GetFloatValue(OBJECT_FIELD_SCALE_X);      // transport offsetZ
+    m_SeatData.Orientation = veSeat->m_passengerYaw;                                                                    // NOTE : needs confirmation
+    m_SeatData.c_time = v->GetCreationTime();
+    m_SeatData.dbc_seat = veSeat->m_ID;
+    m_SeatData.seat = seat_id;
+    m_SeatData.s_flags = objmgr.GetSeatFlags(veSeat->m_ID);
+    m_SeatData.v_flags = v->GetVehicleFlags();
+
+    addUnitState(UNIT_STAT_ON_VEHICLE);
+    InterruptNonMeleeSpells(false);
+
+    if(Pet *pet = GetPet())
+        pet->Remove(PET_SAVE_AS_CURRENT);
+
+    if(GetTypeId() == TYPEID_PLAYER)
+        ((Player*)this)->SendEnterVehicle(v);
+
+    WorldPacket data(SMSG_MONSTER_MOVE_TRANSPORT, 60);
+    data.append(GetPackGUID());
+    data.append(v->GetPackGUID());
+    data << uint8(m_SeatData.seat);
+    data << uint8(0);                                       // new in 3.1
+    data << v->GetPositionX() << v->GetPositionY() << v->GetPositionZ();
+    data << uint32(getMSTime());
+
+    data << uint8(4);                                       // unknown
+    data << float(0);                                       // facing angle
+
+    data << uint32(MONSTER_MOVE_UNK6);
+
+    data << uint32(0);                                      // Time in between points
+    data << uint32(1);                                      // 1 single waypoint
+    data << m_SeatData.OffsetX;
+    data << m_SeatData.OffsetY;
+    data << m_SeatData.OffsetZ;
+    SendMessageToSet(&data, true);
+
+    v->AddPassenger(this, seat_id, force);
+}
+
+void Unit::ExitVehicle()
+{
+    if(uint64 vehicleGUID = GetVehicleGUID())
+    {
+        float v_size = 0.0f;
+        if(Vehicle *vehicle = ObjectAccessor::GetVehicle(vehicleGUID))
+        {
+            if(m_SeatData.s_flags & SF_MAIN_RIDER)
+            {
+                if(vehicle->GetVehicleFlags() & VF_DESPAWN_AT_LEAVE)
+                {
+                    // will be deleted at next update
+                    vehicle->SetSpawnDuration(1);
+                }
+            }
+            v_size = vehicle->GetObjectSize();
+            vehicle->RemovePassenger(this);
+        }
+        SetVehicleGUID(0);
+
+        clearUnitState(UNIT_STAT_ON_VEHICLE);
+
+        if(GetTypeId() == TYPEID_PLAYER)
+        {
+            ((Player*)this)->ResummonPetTemporaryUnSummonedIfAny();
+            ((Player*)this)->m_movementInfo.RemoveMovementFlag(MOVEMENTFLAG_ONTRANSPORT);
+            ((Player*)this)->m_movementInfo.RemoveMovementFlag(MOVEMENTFLAG_FLY_UNK1);
+        }
+
+        float x = GetPositionX();
+        float y = GetPositionY();
+        float z = GetPositionZ() + 2.0f;
+        GetClosePoint(x, y, z, 2.0f + v_size);
+        SendMonsterMove(x, y, z, 0, MONSTER_MOVE_WALK, 0);
+    }
+}
+
+void Unit::BuildVehicleInfo(Unit *target)
+{
+    if(!target)
+        return;
+
+    if(!target->GetVehicleGUID())
+        return;
+
+    uint32 veh_time = getMSTimeDiff(target->m_SeatData.c_time,getMSTime());
+    WorldPacket data(MSG_MOVE_HEARTBEAT, 100);
+    data.append(target->GetPackGUID());
+    data << uint32(MOVEMENTFLAG_ONTRANSPORT | MOVEMENTFLAG_FLY_UNK1);
+    data << uint16(0);
+    data << uint32(getMSTime());
+    data << float(target->GetPositionX());
+    data << float(target->GetPositionY());
+    data << float(target->GetPositionZ());
+    data << float(target->GetOrientation());
+    data.appendPackGUID(target->GetVehicleGUID());
+    data << float(target->m_SeatData.OffsetX);
+    data << float(target->m_SeatData.OffsetY);
+    data << float(target->m_SeatData.OffsetZ);
+    data << float(target->m_SeatData.Orientation);
+    data << uint32(veh_time);
+    data << uint8 (target->m_SeatData.seat);
+    data << uint32(0);
+    if(GetTypeId() == TYPEID_PLAYER)
+        ((Player*)this)->GetSession()->SendPacket(&data);
 }
 
 void Unit::SetPvP( bool state )

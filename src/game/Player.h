@@ -93,10 +93,15 @@ struct PlayerSpell
     bool disabled          : 1;                             // first rank has been learned in result talent learn but currently talent unlearned, save max learned ranks
 };
 
+struct PlayerTalent
+{
+    PlayerSpellState state : 8;
+    uint32 spec            : 8;
+};
+
 // Spell modifier (used for modify other spells)
 struct SpellModifier
-{
-    SpellModifier() : charges(0), lastAffected(NULL) {}
+{    SpellModifier() : charges(0), lastAffected(NULL) {}
     SpellModOp   op   : 8;
     SpellModType type : 8;
     int16 charges     : 16;
@@ -107,6 +112,7 @@ struct SpellModifier
     Spell const* lastAffected;
 };
 
+typedef UNORDERED_MAP<uint32, PlayerTalent*> PlayerTalentMap;
 typedef UNORDERED_MAP<uint32, PlayerSpell*> PlayerSpellMap;
 typedef std::list<SpellModifier*> SpellModList;
 
@@ -879,7 +885,9 @@ enum PlayerLoginQueryIndex
     PLAYER_LOGIN_QUERY_LOADCRITERIAPROGRESS     = 19,
     PLAYER_LOGIN_QUERY_LOADEQUIPMENTSETS        = 20,
     PLAYER_LOGIN_QUERY_LOADBGDATA               = 21,
-    MAX_PLAYER_LOGIN_QUERY                      = 22
+    PLAYER_LOGIN_QUERY_LOADGLYPHS               = 22,
+    PLAYER_LOGIN_QUERY_LOADTALENTS              = 23,
+    MAX_PLAYER_LOGIN_QUERY                      = 24
 };
 
 enum PlayerDelayedOperations
@@ -1292,7 +1300,6 @@ class MANGOS_DLL_SPEC Player : public Unit
         void IncompleteQuest( uint32 quest_id );
         void RewardQuest( Quest const *pQuest, uint32 reward, Object* questGiver, bool announce = true );
         void FailQuest( uint32 quest_id );
-        void FailTimedQuest( uint32 quest_id );
         bool SatisfyQuestSkillOrClass( Quest const* qInfo, bool msg );
         bool SatisfyQuestLevel( Quest const* qInfo, bool msg );
         bool SatisfyQuestLog( bool msg );
@@ -1530,6 +1537,9 @@ class MANGOS_DLL_SPEC Player : public Unit
         void LearnTalent(uint32 talentId, uint32 talentRank);
         void LearnPetTalent(uint64 petGuid, uint32 talentId, uint32 talentRank);
 
+        bool AddTalent(uint32 spell, uint32 spec, bool learning);
+        bool HasTalent(uint32 spell_id, uint32 spec) const;
+
         uint32 CalculateTalentsPoints() const;
 
         // Dual Spec
@@ -1537,13 +1547,18 @@ class MANGOS_DLL_SPEC Player : public Unit
         void SetActiveSpec(uint32 spec) { m_activeSpec = spec; }
         uint32 GetSpecsCount() { return m_specsCount; }
         void SetSpecsCount(uint32 count) { m_specsCount = count; }
-        void ActivateSpec(uint32 specNum);
+
+        void UpdateSpecCount(uint32 count);
+        void ActivateSpec(uint32 spec);
 
         void InitGlyphsForLevel();
         void SetGlyphSlot(uint8 slot, uint32 slottype) { SetUInt32Value(PLAYER_FIELD_GLYPH_SLOTS_1 + slot, slottype); }
         uint32 GetGlyphSlot(uint8 slot) { return GetUInt32Value(PLAYER_FIELD_GLYPH_SLOTS_1 + slot); }
-        void SetGlyph(uint8 slot, uint32 glyph) { SetUInt32Value(PLAYER_FIELD_GLYPHS_1 + slot, glyph); }
-        uint32 GetGlyph(uint8 slot) { return GetUInt32Value(PLAYER_FIELD_GLYPHS_1 + slot); }
+        void SetGlyph(uint8 slot, uint32 glyph) { 
+            m_Glyphs[m_activeSpec][slot] = glyph;
+            SetUInt32Value(PLAYER_FIELD_GLYPHS_1 + slot, glyph); 
+        }
+        uint32 GetGlyph(uint8 slot) { return m_Glyphs[m_activeSpec][slot]; }
 
         uint32 GetFreePrimaryProfessionPoints() const { return GetUInt32Value(PLAYER_CHARACTER_POINTS2); }
         void SetFreePrimaryProfessions(uint16 profs) { SetUInt32Value(PLAYER_CHARACTER_POINTS2, profs); }
@@ -1613,7 +1628,8 @@ class MANGOS_DLL_SPEC Player : public Unit
 
         ActionButton* addActionButton(uint8 button, uint32 action, uint8 type);
         void removeActionButton(uint8 button);
-        void SendInitialActionButtons() const;
+        void SendInitialActionButtons() const { SendActionButtons(0); }
+        void SendActionButtons(uint32 spec) const;
 
         PvPInfo pvpInfo;
         void UpdatePvP(bool state, bool ovrride=false);
@@ -1926,6 +1942,8 @@ class MANGOS_DLL_SPEC Player : public Unit
         void SendUpdateWorldState(uint32 Field, uint32 Value);
         void SendDirectMessage(WorldPacket *data);
 
+        void SendAurasForTarget(Unit *target);
+
         PlayerMenu* PlayerTalkClass;
         std::vector<ItemSetEffect *> ItemSetEff;
 
@@ -2082,6 +2100,10 @@ class MANGOS_DLL_SPEC Player : public Unit
 
         void UpdateFallInformationIfNeed(MovementInfo const& minfo,uint16 opcode);
         Unit *m_mover;
+        Unit *m_mover_in_queve;
+
+        void SetMoverInQueve(Unit* pet) {m_mover_in_queve = pet ? pet : this; }
+
         void SetFallInformation(uint32 time, float z)
         {
             m_lastFallTime = time;
@@ -2103,8 +2125,8 @@ class MANGOS_DLL_SPEC Player : public Unit
         void SetClientControl(Unit* target, uint8 allowMove);
         void SetMover(Unit* target) { m_mover = target ? target : this; }
 
-        void EnterVehicle(Vehicle *vehicle);
-        void ExitVehicle(Vehicle *vehicle);
+        // vehicle system
+        void SendEnterVehicle(Vehicle *vehicle);
 
         uint64 GetFarSight() const { return GetUInt64Value(PLAYER_FARSIGHT); }
         void SetFarSightGUID(uint64 guid) { SetUInt64Value(PLAYER_FARSIGHT, guid); }
@@ -2151,7 +2173,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         void UpdateVisibilityOf(WorldObject* target);
 
         template<class T>
-            void UpdateVisibilityOf(T* target, UpdateData& data, std::set<Unit*>& visibleNow);
+            void UpdateVisibilityOf(T* target, UpdateData& data, UpdateDataMapType& data_updates, std::set<WorldObject*>& visibleNow);
 
         // Stealth detection system
         void HandleStealthedUnitsDetection();
@@ -2208,8 +2230,6 @@ class MANGOS_DLL_SPEC Player : public Unit
         uint8 GetSubGroup() const { return m_group.getSubGroup(); }
         uint32 GetGroupUpdateFlag() const { return m_groupUpdateMask; }
         void SetGroupUpdateFlag(uint32 flag) { m_groupUpdateMask |= flag; }
-        const uint64& GetAuraUpdateMask() const { return m_auraUpdateMask; }
-        void SetAuraUpdateMask(uint8 slot) { m_auraUpdateMask |= (uint64(1) << slot); }
         Player* GetNextRandomRaidMember(float radius);
         PartyResult CanUninviteFromGroup() const;
         // BattleGround Group System
@@ -2300,6 +2320,8 @@ class MANGOS_DLL_SPEC Player : public Unit
         void _LoadArenaTeamInfo(QueryResult *result);
         void _LoadEquipmentSets(QueryResult *result);
         void _LoadBGData(QueryResult* result);
+        void _LoadGlyphs(QueryResult *result);
+        void _LoadTalents(QueryResult *result);
 
         /*********************************************************/
         /***                   SAVE SYSTEM                     ***/
@@ -2314,6 +2336,8 @@ class MANGOS_DLL_SPEC Player : public Unit
         void _SaveSpells();
         void _SaveEquipmentSets();
         void _SaveBGData();
+        void _SaveGlyphs();
+        void _SaveTalents();
 
         void _SetCreateBits(UpdateMask *updateMask, Player *target) const;
         void _SetUpdateBits(UpdateMask *updateMask, Player *target) const;
@@ -2362,11 +2386,14 @@ class MANGOS_DLL_SPEC Player : public Unit
 
         PlayerMails m_mail;
         PlayerSpellMap m_spells;
+        PlayerTalentMap *m_talents[MAX_TALENT_SPECS];
         SpellCooldowns m_spellCooldowns;
         uint32 m_lastPotionId;                              // last used health/mana potion in combat, that block next potion use
 
         uint32 m_activeSpec;
         uint32 m_specsCount;
+
+        uint32 m_Glyphs[MAX_TALENT_SPECS][MAX_GLYPH_SLOT_INDEX];
 
         ActionButtonList m_actionButtons;
 
@@ -2475,7 +2502,6 @@ class MANGOS_DLL_SPEC Player : public Unit
         GroupReference m_originalGroup;
         Group *m_groupInvite;
         uint32 m_groupUpdateMask;
-        uint64 m_auraUpdateMask;
 
         uint64 m_miniPet;
 
@@ -2558,6 +2584,9 @@ template <class T> T Player::ApplySpellMod(uint32 spellId, SpellModOp op, T &bas
     for (SpellModList::iterator itr = m_spellMods[op].begin(); itr != m_spellMods[op].end(); ++itr)
     {
         SpellModifier *mod = *itr;
+        
+        if (!mod)
+            continue;
 
         if(!IsAffectedBySpellmod(spellInfo,mod,spell))
             continue;

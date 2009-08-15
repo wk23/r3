@@ -42,6 +42,7 @@
 #include "GridNotifiersImpl.h"
 #include "CellImpl.h"
 #include "OutdoorPvPMgr.h"
+#include "Vehicle.h"
 
 // apply implementation of the singletons
 #include "Policies/SingletonImp.h"
@@ -248,6 +249,7 @@ bool Creature::InitEntry(uint32 Entry, uint32 team, const CreatureData *data )
     SetSpeed(MOVE_WALK,     cinfo->speed );
     SetSpeed(MOVE_RUN,      cinfo->speed );
     SetSpeed(MOVE_SWIM,     cinfo->speed );
+    SetSpeed(MOVE_FLIGHT,   cinfo->speed );
 
     SetFloatValue(OBJECT_FIELD_SCALE_X, cinfo->scale);
 
@@ -790,6 +792,10 @@ void Creature::prepareGossipMenu( Player *pPlayer,uint32 gossipid )
                         if(!isCanTrainingOf(pPlayer,false))
                             cantalking=false;
                         break;
+                    case GOSSIP_OPTION_LEARNDUALSPEC:
+                        if(!(pPlayer->GetSpecsCount() == 1 && isCanTrainingAndResetTalentsOf(pPlayer) && !(pPlayer->getLevel() < 40)))
+                            cantalking=false;
+                        break;
                     case GOSSIP_OPTION_UNLEARNTALENTS:
                         if(!isCanTrainingAndResetTalentsOf(pPlayer))
                             cantalking=false;
@@ -933,6 +939,29 @@ void Creature::OnGossipSelect(Player* player, uint32 option)
         case GOSSIP_OPTION_UNLEARNTALENTS:
             player->PlayerTalkClass->CloseGossip();
             player->SendTalentWipeConfirm(guid);
+            break;
+        case GOSSIP_OPTION_LEARNDUALSPEC:
+            if(player->GetSpecsCount() == 1 && !(player->getLevel() < 40))
+            {
+                if (player->GetMoney() < 10000000)
+                {
+                    player->SendBuyError( BUY_ERR_NOT_ENOUGHT_MONEY, 0, 0, 0);
+                    player->PlayerTalkClass->CloseGossip();
+                    break;
+                }
+                else
+                {
+                    player->ModifyMoney(-10000000);
+
+                    // Cast spells that teach dual spec
+                    // Both are also ImplicitTarget self and must be cast by player
+                    player->CastSpell(player,63680,true,NULL,NULL,player->GetGUID());
+                    player->CastSpell(player,63624,true,NULL,NULL,player->GetGUID());
+
+                    // Should show another Gossip text with "Congratulations..."
+                    player->PlayerTalkClass->CloseGossip();
+                }
+            }
             break;
         case GOSSIP_OPTION_UNLEARNPETSKILLS:
             player->PlayerTalkClass->CloseGossip();
@@ -1634,6 +1663,32 @@ bool Creature::IsImmunedToSpellEffect(SpellEntry const* spellInfo, uint32 index)
             return true;
     }
 
+    // Heal immunity
+    if (isVehicle() && !(((Vehicle*)this)->GetVehicleFlags() & VF_CAN_BE_HEALED))
+    {
+        switch(spellInfo->Effect[index])
+        {
+            case SPELL_EFFECT_APPLY_AURA:
+                switch(spellInfo->EffectApplyAuraName[index])
+                {
+                    case SPELL_AURA_PERIODIC_HEAL:
+                    case SPELL_AURA_OBS_MOD_HEALTH:
+                    case SPELL_AURA_PERIODIC_HEALTH_FUNNEL:
+                    case SPELL_AURA_MOD_REGEN:
+                        return true;
+                    default: break;
+                }
+                break;
+            case SPELL_EFFECT_HEAL:
+            case SPELL_EFFECT_HEAL_MAX_HEALTH:
+            // NOTE : this too?
+            case SPELL_EFFECT_HEAL_MECHANICAL:
+            case SPELL_EFFECT_HEAL_PCT:
+                return true;
+            default : break;
+        }
+    }
+
     return Unit::IsImmunedToSpellEffect(spellInfo, index);
 }
 
@@ -2085,6 +2140,29 @@ bool Creature::HasSpellCooldown(uint32 spell_id) const
 bool Creature::IsInEvadeMode() const
 {
     return !i_motionMaster.empty() && i_motionMaster.GetCurrentMovementGeneratorType() == HOME_MOTION_TYPE;
+}
+
+float Creature::GetBaseSpeed() const
+{
+    if( isPet() )
+    {
+        switch( ((Pet*)this)->getPetType() )
+        {
+            case SUMMON_PET:
+            case HUNTER_PET:
+            {
+                //fixed speed fur hunter (and summon!?) pets
+                return 1.15;
+            }
+            case GUARDIAN_PET:
+            case MINI_PET:
+            {
+                //speed of CreatureInfo for guardian- and minipets
+                break;
+            }
+        }
+    }
+    return m_creatureInfo->speed;
 }
 
 bool Creature::HasSpell(uint32 spellID) const

@@ -179,7 +179,7 @@ extern void AddSC_tirisfal_glades();
 extern void AddSC_undercity();
 extern void AddSC_western_plaguelands();
 extern void AddSC_westfall();
-//extern void AddSC_wetlands();
+extern void AddSC_wetlands();
 
 //kalimdor
 extern void AddSC_instance_blackfathom_deeps();             //blackfathom_deeps
@@ -276,13 +276,13 @@ extern void AddSC_grizzly_hills();
 extern void AddSC_icecrown();
 
 //outland
-extern void AddSC_boss_exarch_maladaar();                   //aunchindoun, auchenai_crypts
-extern void AddSC_boss_nexusprince_shaffar();               //aunchindoun, mana_tombs
+extern void AddSC_boss_exarch_maladaar();                   //auchindoun, auchenai_crypts
+extern void AddSC_boss_nexusprince_shaffar();               //auchindoun, mana_tombs
 extern void AddSC_boss_pandemonius();
-extern void AddSC_boss_darkweaver_syth();                   //aunchindoun, sethekk_halls
+extern void AddSC_boss_darkweaver_syth();                   //auchindoun, sethekk_halls
 extern void AddSC_boss_talon_king_ikiss();
 extern void AddSC_instance_sethekk_halls();
-extern void AddSC_boss_ambassador_hellmaw();                //aunchindoun, shadow_labyrinth
+extern void AddSC_boss_ambassador_hellmaw();                //auchindoun, shadow_labyrinth
 extern void AddSC_boss_blackheart_the_inciter();
 extern void AddSC_boss_grandmaster_vorpil();
 extern void AddSC_boss_murmur();
@@ -530,7 +530,7 @@ void AddScripts()
     AddSC_undercity();
     AddSC_western_plaguelands();
     AddSC_westfall();
-    //AddSC_wetlands();
+    AddSC_wetlands();
 
     //kalimdor
     AddSC_instance_blackfathom_deeps();                     //blackfathom_deeps
@@ -627,13 +627,13 @@ void AddScripts()
     AddSC_icecrown();
 
     //outland
-    AddSC_boss_exarch_maladaar();                           //aunchindoun, auchenai_crypts
-    AddSC_boss_nexusprince_shaffar();                       //aunchindoun, mana_tombs
+    AddSC_boss_exarch_maladaar();                           //auchindoun, auchenai_crypts
+    AddSC_boss_nexusprince_shaffar();                       //auchindoun, mana_tombs
     AddSC_boss_pandemonius();
-    AddSC_boss_darkweaver_syth();                           //aunchindoun, sethekk_halls
+    AddSC_boss_darkweaver_syth();                           //auchindoun, sethekk_halls
     AddSC_boss_talon_king_ikiss();
     AddSC_instance_sethekk_halls();
-    AddSC_boss_ambassador_hellmaw();                        //aunchindoun, shadow_labyrinth
+    AddSC_boss_ambassador_hellmaw();                        //auchindoun, shadow_labyrinth
     AddSC_boss_blackheart_the_inciter();
     AddSC_boss_grandmaster_vorpil();
     AddSC_boss_murmur();

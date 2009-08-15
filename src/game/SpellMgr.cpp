@@ -325,6 +325,15 @@ bool IsPositiveEffect(uint32 spellId, uint32 effIndex)
 
     switch(spellproto->Effect[effIndex])
     {
+        case SPELL_EFFECT_DUMMY:
+            // some explicitly required dummy effect sets
+            switch(spellId)
+            {
+                case 28441: return false;                   // AB Effect 000
+                default:
+                    break;
+            }
+            break;
         // consider dispel as always negative effect (explicit check will be performed later)
         case SPELL_EFFECT_DISPEL:
             return false;
@@ -367,15 +376,21 @@ bool IsPositiveEffect(uint32 spellId, uint32 effIndex)
                             break;
                     }
                 }   break;
-                case SPELL_AURA_MOD_STAT:
                 case SPELL_AURA_MOD_DAMAGE_DONE:            // dependent from bas point sign (negative -> negative)
+                case SPELL_AURA_MOD_STAT:
+                case SPELL_AURA_MOD_SKILL:
+                case SPELL_AURA_MOD_HEALING_PCT:
                 case SPELL_AURA_MOD_HEALING_DONE:
                     if(spellproto->CalculateSimpleValue(effIndex) < 0)
                         return false;
                     break;
+                case SPELL_AURA_MOD_DAMAGE_TAKEN:           // dependent from bas point sign (positive -> negative)
+                    if(spellproto->CalculateSimpleValue(effIndex) > 0)
+                        return false;
+                    break;
                 case SPELL_AURA_MOD_SPELL_CRIT_CHANCE:
                     if(spellproto->CalculateSimpleValue(effIndex) > 0)
-                        return true;                        // some expected possitive spells have SPELL_ATTR_EX_NEGATIVE
+                        return true;                        // some expected positive spells have SPELL_ATTR_EX_NEGATIVE
                     break;
                 case SPELL_AURA_ADD_TARGET_TRIGGER:
                     return true;
@@ -409,6 +424,10 @@ bool IsPositiveEffect(uint32 spellId, uint32 effIndex)
                     if(spellproto->Id == 17624)
                         return false;
                     break;
+                case SPELL_AURA_MOD_PACIFY_SILENCE:
+                    if(spellproto->Id == 24740)             // Wisp Costume
+                        return true;
+                    return false;
                 case SPELL_AURA_MOD_ROOT:
                 case SPELL_AURA_MOD_SILENCE:
                 case SPELL_AURA_GHOST:
@@ -416,11 +435,6 @@ bool IsPositiveEffect(uint32 spellId, uint32 effIndex)
                 case SPELL_AURA_MOD_STALKED:
                 case SPELL_AURA_PERIODIC_DAMAGE_PERCENT:
                     return false;
-                case SPELL_AURA_MOD_PACIFY_SILENCE:
-                    // part of positive spell if casted at self
-                    if(spellproto->EffectImplicitTargetA[effIndex] != TARGET_SELF)
-                        return false;
-                    break;
                 case SPELL_AURA_PERIODIC_DAMAGE:            // used in positive spells also.
                     // part of negative spell if casted at self (prevent cancel)
                     if(spellproto->EffectImplicitTargetA[effIndex] == TARGET_SELF)
@@ -482,14 +496,6 @@ bool IsPositiveEffect(uint32 spellId, uint32 effIndex)
                             break;
                     }
                 }   break;
-                case SPELL_AURA_MOD_HEALING_PCT:
-                    if(spellproto->CalculateSimpleValue(effIndex) < 0)
-                        return false;
-                    break;
-                case SPELL_AURA_MOD_SKILL:
-                    if(spellproto->CalculateSimpleValue(effIndex) < 0)
-                        return false;
-                    break;
                 case SPELL_AURA_FORCE_REACTION:
                     if(spellproto->Id==42792)               // Recently Dropped Flag (prevent cancel)
                         return false;
@@ -1486,6 +1492,10 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
 
                 // Survival Instincts and Survival Instincts
                 if( spellInfo_1->Id == 61336 && spellInfo_2->Id == 50322 || spellInfo_2->Id == 61336 && spellInfo_1->Id == 50322 )
+                    return false;
+
+                // Savage Roar and Savage Roar (triggered)
+                if (spellInfo_1->SpellIconID == 2865 && spellInfo_2->SpellIconID == 2865)
                     return false;
             }
 
@@ -2602,17 +2612,17 @@ void SpellMgr::LoadSpellAreas()
             SpellAreaMapBounds sa_bounds = GetSpellAreaMapBounds(spellArea.spellId);
             for(SpellAreaMap::const_iterator itr = sa_bounds.first; itr != sa_bounds.second; ++itr)
             {
-                if(spellArea.spellId && itr->second.spellId && spellArea.spellId != itr->second.spellId)
+                if (spellArea.spellId != itr->second.spellId)
                     continue;
-                if(spellArea.areaId && itr->second.areaId && spellArea.areaId!= itr->second.areaId)
+                if (spellArea.areaId != itr->second.areaId)
                     continue;
-                if(spellArea.questStart && itr->second.questStart && spellArea.questStart!= itr->second.questStart)
+                if (spellArea.questStart != itr->second.questStart)
                     continue;
-                if(spellArea.auraSpell && itr->second.auraSpell && spellArea.auraSpell!= itr->second.auraSpell)
+                if (spellArea.auraSpell != itr->second.auraSpell)
                     continue;
-                if(spellArea.raceMask && itr->second.raceMask && (spellArea.raceMask & itr->second.raceMask)==0)
+                if ((spellArea.raceMask & itr->second.raceMask) == 0)
                     continue;
-                if(spellArea.gender != GENDER_NONE && itr->second.gender != GENDER_NONE && spellArea.gender!= itr->second.gender)
+                if (spellArea.gender != itr->second.gender)
                     continue;
 
                 // duplicate by requirements
