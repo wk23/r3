@@ -935,7 +935,12 @@ uint32 Unit::DealDamage(Unit *pVictim, uint32 damage, CleanDamage const* cleanDa
     }
 
     DEBUG_LOG("DealDamageEnd returned %d damage", damage);
-
+    if (HasAura(48266)) {
+    uint32 damage_bp=(uint32)(damage*0.15);
+    uint32 addhealth_bp=(uint32)(damage*0.04);
+    damage+=damage_bp;
+    DealHeal(this, addhealth_bp, m_spellInfo);
+    }
     return damage;
 }
 
