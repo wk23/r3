@@ -939,7 +939,8 @@ uint32 Unit::DealDamage(Unit *pVictim, uint32 damage, CleanDamage const* cleanDa
     uint32 damage_bp=(uint32)(damage*0.15);
     uint32 addhealth_bp=(uint32)(damage*0.04);
     damage+=damage_bp;
-    DealHeal(this, addhealth_bp, m_spellInfo);
+    SpellEntry const *auraSpellInfo = sSpellStore.LookupEntry(48266);
+    DealHeal(this, addhealth_bp, auraSpellInfo);
     }
     return damage;
 }
