@@ -96,12 +96,13 @@ struct PlayerSpell
 struct PlayerTalent
 {
     PlayerSpellState state : 8;
-    uint32 spec            : 8;
+    uint8 spec             : 8;
 };
 
 // Spell modifier (used for modify other spells)
 struct SpellModifier
-{    SpellModifier() : charges(0), lastAffected(NULL) {}
+{
+    SpellModifier() : charges(0), lastAffected(NULL) {}
     SpellModOp   op   : 8;
     SpellModType type : 8;
     int16 charges     : 16;
@@ -1537,24 +1538,24 @@ class MANGOS_DLL_SPEC Player : public Unit
         void LearnTalent(uint32 talentId, uint32 talentRank);
         void LearnPetTalent(uint64 petGuid, uint32 talentId, uint32 talentRank);
 
-        bool AddTalent(uint32 spell, uint32 spec, bool learning);
-        bool HasTalent(uint32 spell_id, uint32 spec) const;
+        bool AddTalent(uint32 spell, uint8 spec, bool learning);
+        bool HasTalent(uint32 spell_id, uint8 spec) const;
 
         uint32 CalculateTalentsPoints() const;
 
         // Dual Spec
+        void UpdateSpecCount(uint8 count);
         uint32 GetActiveSpec() { return m_activeSpec; }
-        void SetActiveSpec(uint32 spec) { m_activeSpec = spec; }
-        uint32 GetSpecsCount() { return m_specsCount; }
-        void SetSpecsCount(uint32 count) { m_specsCount = count; }
-
-        void UpdateSpecCount(uint32 count);
-        void ActivateSpec(uint32 spec);
+        void SetActiveSpec(uint8 spec){ m_activeSpec = spec; }
+        uint8 GetSpecsCount() { return m_specsCount; }
+        void SetSpecsCount(uint8 count) { m_specsCount = count; }
+        void ActivateSpec(uint8 spec);
 
         void InitGlyphsForLevel();
         void SetGlyphSlot(uint8 slot, uint32 slottype) { SetUInt32Value(PLAYER_FIELD_GLYPH_SLOTS_1 + slot, slottype); }
         uint32 GetGlyphSlot(uint8 slot) { return GetUInt32Value(PLAYER_FIELD_GLYPH_SLOTS_1 + slot); }
-        void SetGlyph(uint8 slot, uint32 glyph) { 
+        void SetGlyph(uint8 slot, uint32 glyph)
+        { 
             m_Glyphs[m_activeSpec][slot] = glyph;
             SetUInt32Value(PLAYER_FIELD_GLYPHS_1 + slot, glyph); 
         }
@@ -1629,7 +1630,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         ActionButton* addActionButton(uint8 button, uint32 action, uint8 type);
         void removeActionButton(uint8 button);
         void SendInitialActionButtons() const { SendActionButtons(0); }
-        void SendActionButtons(uint32 spec) const;
+        void SendActionButtons(uint32 state) const;
 
         PvPInfo pvpInfo;
         void UpdatePvP(bool state, bool ovrride=false);
@@ -2392,7 +2393,7 @@ class MANGOS_DLL_SPEC Player : public Unit
 
         uint32 m_activeSpec;
         uint32 m_specsCount;
-
+		
         uint32 m_Glyphs[MAX_TALENT_SPECS][MAX_GLYPH_SLOT_INDEX];
 
         ActionButtonList m_actionButtons;
@@ -2584,9 +2585,6 @@ template <class T> T Player::ApplySpellMod(uint32 spellId, SpellModOp op, T &bas
     for (SpellModList::iterator itr = m_spellMods[op].begin(); itr != m_spellMods[op].end(); ++itr)
     {
         SpellModifier *mod = *itr;
-        
-        if (!mod)
-            continue;
 
         if(!IsAffectedBySpellmod(spellInfo,mod,spell))
             continue;

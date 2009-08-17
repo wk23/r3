@@ -170,8 +170,12 @@ struct MANGOS_DLL_DECL npc_a_special_surpriseAI : public ScriptedAI
 
         if (MeetQuestCondition(pWho))
             m_uiPlayerGUID = pWho->GetGUID();
+        else return;
     }
-
+    void Aggro(Unit* pWho)
+    {
+          return;
+    }
     void UpdateAI(const uint32 uiDiff) 
     {
         if (m_uiPlayerGUID && !m_creature->getVictim() && m_creature->isAlive())

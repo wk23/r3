@@ -224,7 +224,8 @@ pEffect SpellEffects[TOTAL_SPELL_EFFECTS]=
     &Spell::EffectActivateSpec,                             //162 SPELL_EFFECT_TALENT_SPEC_SELECT       activate primary/secondary spec
 };
 
-void Spell::EffectNULL(uint32 /*i*/){
+void Spell::EffectNULL(uint32 /*i*/)
+{
     sLog.outDebug("WORLD: Spell Effect DUMMY");
 }
 
@@ -7390,4 +7391,3 @@ void Spell::EffectActivateSpec(uint32 /*eff_idx*/)
 
     ((Player*)unitTarget)->ActivateSpec(damage-1);  // damage is 1 or 2, spec is 0 or 1
 }
-
