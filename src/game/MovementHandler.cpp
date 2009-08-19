@@ -937,12 +937,12 @@ void WorldSession::HandleRequestVehicleSwitchSeat(WorldPacket &recv_data)
 
     if(Vehicle *vehicle = ObjectAccessor::GetVehicle(vehicleGUID))
     {
-        CHECK_PACKET_SIZE(recv_data, recv_data.rpos()+1);
+        //11CHECK_PACKET_SIZE(recv_data, recv_data.rpos()+1);
         uint64 guid = 0;
         if(!recv_data.readPackGUID(guid))
             return;
 
-        CHECK_PACKET_SIZE(recv_data, recv_data.rpos()+1);
+        //11CHECK_PACKET_SIZE(recv_data, recv_data.rpos()+1);
         int8 seatId = 0;
         recv_data >> seatId;
 
@@ -988,12 +988,12 @@ void WorldSession::HandleChangeSeatsOnControlledVehicle(WorldPacket &recv_data)
         ReadMovementInfo(recv_data, &mi);
         //_player->m_movementInfo = mi;
 
-        CHECK_PACKET_SIZE(recv_data, recv_data.rpos()+1);
+        //11CHECK_PACKET_SIZE(recv_data, recv_data.rpos()+1);
         uint64 guid = 0;
         if(!recv_data.readPackGUID(guid))
             return;
 
-        CHECK_PACKET_SIZE(recv_data, recv_data.rpos()+1);
+        //11CHECK_PACKET_SIZE(recv_data, recv_data.rpos()+1);
         int8 seatId = 0;
         recv_data >> seatId;
         

@@ -596,7 +596,7 @@ void WorldSession::HandleSpellClick( WorldPacket & recv_data )
 void WorldSession::HandleMirrrorImageDataRequest( WorldPacket & recv_data )
 {
     sLog.outDebug("WORLD: CMSG_GET_MIRRORIMAGE_DATA");
-    CHECK_PACKET_SIZE(recv_data, 8);
+    //11CHECK_PACKET_SIZE(recv_data, 8);
     uint64 guid;
     recv_data >> guid;
 

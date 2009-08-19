@@ -926,7 +926,7 @@ void ObjectMgr::LoadCreatureAddons()
 
         ConvertCreatureAddonAuras(const_cast<CreatureDataAddon*>(addon), "creature_template_addon", "Entry");
 
-        ConvertCreatureAddonPassengers(const_cast<CreatureDataAddon*>(addon), sCreatureInfoAddonStorage.GetTableName(), entryName);
+        ConvertCreatureAddonPassengers(const_cast<CreatureDataAddon*>(addon), "creature_template_addon", "Entry");
 
         if(!sCreatureStorage.LookupEntry<CreatureInfo>(addon->guidOrEntry))
             sLog.outErrorDb("Creature (Entry: %u) does not exist but has a record in `creature_template_addon`",addon->guidOrEntry);
