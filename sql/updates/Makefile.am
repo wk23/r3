@@ -79,6 +79,12 @@ pkgdata_DATA = \
 	8332_01_realmd_realmcharacters.sql \
 	8339_01_characters_characters.sql \
 	8339_02_characters_character_battleground_data.sql \
+	8342_01_mangos_spell_proc_event.sql \
+	8361_01_mangos_spell_bonus_data.sql \
+	8364_01_mangos_db_version.sql \
+	8377_01_mangos_spell_area.sql \
+	8392_01_mangos_spell_proc_event.sql \
+	8392_02_mangos_spell_chain.sql \
 	README
 
 ## Additional files to include when running 'make dist'
@@ -138,4 +144,10 @@ EXTRA_DIST = \
 	8332_01_realmd_realmcharacters.sql \
 	8339_01_characters_characters.sql \
 	8339_02_characters_character_battleground_data.sql \
+	8342_01_mangos_spell_proc_event.sql \
+	8361_01_mangos_spell_bonus_data.sql \
+	8364_01_mangos_db_version.sql \
+	8377_01_mangos_spell_area.sql \
+	8392_01_mangos_spell_proc_event.sql \
+	8392_02_mangos_spell_chain.sql \
 	README
