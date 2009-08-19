@@ -474,7 +474,7 @@ void WorldSession::HandleMovementOpcodes( WorldPacket & recv_data )
             allowed_delta = allowed_delta * allowed_delta + 2;
             if (tg_z > 2.2)
                 allowed_delta = allowed_delta + (delta_z*delta_z)/2.37; // mountain fall allowed speed
-sLog.outError("delta_z: %f, movementInfo.z: %f ",delta_z, movementInfo.z);
+//sLog.outError("delta_z: %f, movementInfo.z: %f ",delta_z, movementInfo.z);
             if (movementInfo.time>plMover->m_anti_LastSpeedChangeTime)
             {
                 plMover->m_anti_Last_HSpeed = current_speed; // store current speed
@@ -561,10 +561,10 @@ sLog.outError("delta_z: %f, movementInfo.z: %f ",delta_z, movementInfo.z);
                 #endif
                 check_passed = false;
             }
-        if((movementInfo.HasMovementFlag(MOVEMENTFLAG_SWIMMING) || movementInfo.HasMovementFlag(MOVEMENTFLAG_WALK_MODE)|| movementInfo.HasMovementFlag(MOVEMENTFLAG_FLYING)) && (delta_z > 4.3f || delta_z < -4.3f) && (delta_z < plMover->m_anti_Last_VSpeed) && opcode!=MSG_MOVE_HEARTBEAT 
+        if((movementInfo.HasMovementFlag(MOVEMENTFLAG_SWIMMING) || movementInfo.HasMovementFlag(MOVEMENTFLAG_WALK_MODE)|| movementInfo.HasMovementFlag(MOVEMENTFLAG_FLYING)) && (delta_z > 2.8f || delta_z < -2.8f) && (delta_z < plMover->m_anti_Last_VSpeed) && opcode!=MSG_MOVE_HEARTBEAT 
 && !(plMover->HasAuraType(SPELL_AURA_FLY) || plMover->HasAuraType(SPELL_AURA_MOD_INCREASE_FLIGHT_SPEED) )
 && !plMover->isGameMaster()) {
-            sLog.outError("Movement anticheat: %s is Nudge/Blink cheater at MAP %u. ", plMover->GetName(), plMover->GetMapId());
+            //sLog.outError("Movement anticheat: %s is Nudge/Blink cheater at MAP %u. ", plMover->GetName(), plMover->GetMapId());
             check_passed = false;
         }
             //Teleport To Plane checks
@@ -575,7 +575,8 @@ sLog.outError("delta_z: %f, movementInfo.z: %f ",delta_z, movementInfo.z);
                 Map *map = plMover->GetMap();
                 if (map){
                     float plane_z = map->GetHeight(movementInfo.x, movementInfo.y, MAX_HEIGHT) - movementInfo.z;
-                    plane_z = (plane_z < -500.0f) ? 0 : plane_z; sLog.outError("MA-%s, plane_z: %f ",plMover->GetName(), plane_z);//check holes in heigth map
+                    plane_z = (plane_z < -500.0f) ? 0 : plane_z; 
+//sLog.outError("MA-%s, plane_z: %f ",plMover->GetName(), plane_z);//check holes in heigth map
                     if(plane_z > 0.1f || plane_z < -0.1f)
                     {
                         plMover->m_anti_TeleToPlane_Count++;
