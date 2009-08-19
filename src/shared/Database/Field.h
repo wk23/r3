@@ -1,6 +1,4 @@
 /*
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
- *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -23,6 +21,7 @@ class Field
 {
     public:
 
+        /// The various field types.
         enum DataTypes
         {
             DB_TYPE_UNKNOWN = 0x00,
@@ -32,26 +31,39 @@ class Field
             DB_TYPE_BOOL    = 0x04
         };
 
+        /// <summary>Constructor of the field class.</summary>
         Field();
+        /// <summary>Constructor of the field class.</summary>
+        /// <remarks>Used to make a copy of another Field object.</remarks>
+        /// <param name="f">The Field object to copy.</param>
         Field(Field &f);
+        /// <summary>Constructor of the field class.</summary>
+        /// <remarks>Used to construct a Field object with a custom
+        /// (non-database) string value.</remarks>
+        /// <param name="value">The string to use.</param>
+        /// <param name="type">The data type for the Field object.</param>
         Field(const char *value, enum DataTypes type);
 
+        /// <summary>The destructor of the field class.</summary>
         ~Field();
 
+        /// <summary>Gets the type of the field.</summary>
+        /// <returns>a value in the DataTypes enum.</returns>
         enum DataTypes GetType() const { return mType; }
 
+        /// <summary>Gets a C string.</summary>
+        /// <returns>the string, if any.</returns>
         const char *GetString() const { return mValue; }
-        std::string GetCppString() const
-        {
-            return mValue ? mValue : "";                    // std::string s = 0 have undefine result in C++
-        }
-        float GetFloat() const { return mValue ? static_cast<float>(atof(mValue)) : 0.0f; }
-        bool GetBool() const { return mValue ? atoi(mValue) > 0 : false; }
-        int32 GetInt32() const { return mValue ? static_cast<int32>(atol(mValue)) : int32(0); }
-        uint8 GetUInt8() const { return mValue ? static_cast<uint8>(atol(mValue)) : uint8(0); }
-        uint16 GetUInt16() const { return mValue ? static_cast<uint16>(atol(mValue)) : uint16(0); }
-        int16 GetInt16() const { return mValue ? static_cast<int16>(atol(mValue)) : int16(0); }
-        uint32 GetUInt32() const { return mValue ? static_cast<uint32>(atol(mValue)) : uint32(0); }
+        /// <summary>Gets a std::string.</summary>
+        /// <returns>the string, if any. If none, an empty string.</returns>
+        std::string GetCppString() const { return mValue ? mValue : ""; }
+        float GetFloat() const           { return mValue ? static_cast<float>(atof(mValue)) : 0.0f; }
+        bool GetBool() const             { return mValue ? atoi(mValue) > 0 : false; }
+        int32 GetInt32() const           { return mValue ? static_cast<int32>(atol(mValue)) : int32(0); }
+        uint8 GetUInt8() const           { return mValue ? static_cast<uint8>(atol(mValue)) : uint8(0); }
+        uint16 GetUInt16() const         { return mValue ? static_cast<uint16>(atol(mValue)) : uint16(0); }
+        int16 GetInt16() const           { return mValue ? static_cast<int16>(atol(mValue)) : int16(0); }
+        uint32 GetUInt32() const         { return mValue ? static_cast<uint32>(atol(mValue)) : uint32(0); }
         uint64 GetUInt64() const
         {
             if(mValue)

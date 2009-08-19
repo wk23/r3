@@ -23,7 +23,7 @@
 #include "Policies/SingletonImp.h"
 #include "Util.h"
 
-extern DatabaseType loginDatabase;
+extern Database loginDatabase;
 
 INSTANTIATE_SINGLETON_1(AccountMgr);
 

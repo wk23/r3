@@ -38,6 +38,8 @@
 #include "ArenaTeam.h"
 #include "Language.h"
 
+extern Database loginDatabase;
+
 class LoginQueryHolder : public SqlQueryHolder
 {
     private:

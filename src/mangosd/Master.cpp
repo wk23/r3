@@ -51,6 +51,8 @@
 extern int m_ServiceStatus;
 #endif
 
+extern Database loginDatabase;
+
 /// \todo Warning disabling not useful under VC++2005. Can somebody say on which compiler it is useful?
 #pragma warning(disable:4305)
 

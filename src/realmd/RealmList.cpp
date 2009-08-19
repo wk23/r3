@@ -27,7 +27,7 @@
 
 INSTANTIATE_SINGLETON_1( RealmList );
 
-extern DatabaseType loginDatabase;
+extern Database loginDatabase;
 
 RealmList::RealmList( ) : m_UpdateInterval(0), m_NextUpdateTime(time(NULL))
 {

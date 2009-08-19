@@ -30,6 +30,8 @@
 #include "revision_nr.h"
 #include "Util.h"
 
+extern Database loginDatabase;
+
 bool ChatHandler::HandleHelpCommand(const char* args)
 {
     char* cmd = strtok((char*)args, " ");

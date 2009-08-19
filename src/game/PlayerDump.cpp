@@ -330,42 +330,10 @@ void PlayerDumpWriter::DumpTable(std::string& dump, uint32 guid, char const*tabl
 std::string PlayerDumpWriter::GetDump(uint32 guid)
 {
     std::string dump;
-
-    dump += "IMPORTANT NOTE: This sql queries not created for apply directly, use '.pdump load' command in console or client chat instead.\n";
-    dump += "IMPORTANT NOTE: NOT APPLY ITS DIRECTLY to character DB or you will DAMAGE and CORRUPT character DB\n\n";
-
-    // revision check guard
-    QueryNamedResult* result = CharacterDatabase.QueryNamed("SELECT * FROM character_db_version LIMIT 1");
-    if(result)
-    {
-        QueryFieldNames const& namesMap = result->GetFieldNames();
-        std::string reqName;
-        for(QueryFieldNames::const_iterator itr = namesMap.begin(); itr != namesMap.end(); ++itr)
-        {
-            if(itr->substr(0,9)=="required_")
-            {
-                reqName = *itr;
-                break;
-            }
-        }
-
-        if(!reqName.empty())
-        {
-            // this will fail at wrong character DB version
-            dump += "UPDATE character_db_version SET "+reqName+" = 1 WHERE FALSE;\n\n";
-        }
-        else
-            sLog.outError("Table 'character_db_version' not have revision guard field, revision guard query not added to pdump.");
-
-        delete result;
-    }
-    else
-        sLog.outError("Character DB not have 'character_db_version' table, revision guard query not added to pdump.");
-
-    for(int i = 0; i < DUMP_TABLE_COUNT; ++i)
+    for(int i = 0; i < DUMP_TABLE_COUNT; i++)
         DumpTable(dump, guid, dumpTables[i].name, dumpTables[i].name, dumpTables[i].type);
 
-    // TODO: Add instance/group..
+    // TODO: Add instance/group/gifts..
     // TODO: Add a dump level option to skip some non-important tables
 
     return dump;

@@ -41,6 +41,8 @@
 #include "SocialMgr.h"
 #include "OutdoorPvP.h"
 
+extern Database loginDatabase;
+
 void WorldSession::HandleRepopRequestOpcode( WorldPacket & /*recv_data*/ )
 {
     sLog.outDebug( "WORLD: Recvd CMSG_REPOP_REQUEST Message" );

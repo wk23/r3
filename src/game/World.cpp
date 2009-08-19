@@ -64,6 +64,8 @@
 #include "Util.h"
 #include "OutdoorPvPMgr.h"
 
+extern Database loginDatabase;
+
 INSTANTIATE_SINGLETON_1( World );
 
 volatile bool World::m_stopEvent = false;

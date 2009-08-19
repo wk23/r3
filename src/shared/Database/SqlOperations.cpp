@@ -1,6 +1,4 @@
 /*
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
- *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -29,6 +27,12 @@ void SqlStatement::Execute(Database *db)
     db->DirectExecute(m_sql);
 }
 
+void SqlPreparedStatement::Execute(Database *db)
+{
+    /// just do it
+    m_stmt->DirectExecute(m_data);
+}
+
 void SqlTransaction::Execute(Database *db)
 {
     if(m_queue.empty())
@@ -36,22 +40,37 @@ void SqlTransaction::Execute(Database *db)
     db->DirectExecute("START TRANSACTION");
     while(!m_queue.empty())
     {
-        char const *sql = m_queue.front();
+        StmtPair pair = m_queue.front();
+        char *data = const_cast<char*>(pair.second);
         m_queue.pop();
 
-        if(!db->DirectExecute(sql))
+        bool success;
+
+        if(pair.first == NULL)
         {
-            free((void*)const_cast<char*>(sql));
+            // pair.second is the sql statement
+            success = db->DirectExecute(data);
+            free((void*)data);
+        }
+        else
+        {
+            // pair.second is the data (parameters) passed to the prepared statement
+            success = pair.first->DirectExecute(data);
+            pair.first->Free(data);
+        }
+
+        if(!success)
+        {
             db->DirectExecute("ROLLBACK");
             while(!m_queue.empty())
             {
-                free((void*)const_cast<char*>(m_queue.front()));
+                if(m_queue.front().first)
+                    m_queue.front().first->Free(const_cast<char*>(m_queue.front().second));
+                else
+                    free((void*)const_cast<char*>(m_queue.front().second));
                 m_queue.pop();
             }
-            return;
         }
-
-        free((void*)const_cast<char*>(sql));
     }
     db->DirectExecute("COMMIT");
 }
@@ -95,14 +114,13 @@ bool SqlQueryHolder::SetQuery(size_t index, const char *sql)
 {
     if(m_queries.size() <= index)
     {
-        sLog.outError("Query index (%u) out of range (size: %u) for query: %s",index,(uint32)m_queries.size(),sql);
+        sLog.outError("Query index %u out of range (size: %u) for query: %s",index,(uint32)m_queries.size(),sql);
         return false;
     }
 
     if(m_queries[index].first != NULL)
     {
-        sLog.outError("Attempt assign query to holder index (%u) where other query stored (Old: [%s] New: [%s])",
-            index,m_queries[index].first,sql);
+        sLog.outError("Attempted to assign query to holder index %u where other query is already stored. Old: %s, new: %s",index,m_queries.size(),m_queries[index].first,sql);
         return false;
     }
 
@@ -127,7 +145,7 @@ bool SqlQueryHolder::SetPQuery(size_t index, const char *format, ...)
 
     if(res==-1)
     {
-        sLog.outError("SQL Query truncated (and not execute) for format: %s",format);
+        sLog.outError("SQL query truncated (and not executed) for format: %s",format);
         return false;
     }
 
@@ -160,7 +178,7 @@ void SqlQueryHolder::SetResult(size_t index, QueryResult *result)
 
 SqlQueryHolder::~SqlQueryHolder()
 {
-    for(size_t i = 0; i < m_queries.size(); i++)
+    for(size_t i = 0; i < m_queries.size(); ++i)
     {
         /// if the result was never used, free the resources
         /// results used already (getresult called) are expected to be deleted
@@ -187,7 +205,7 @@ void SqlQueryHolderEx::Execute(Database *db)
     /// we can do this, we are friends
     std::vector<SqlQueryHolder::SqlResultPair> &queries = m_holder->m_queries;
 
-    for(size_t i = 0; i < queries.size(); i++)
+    for(size_t i = 0; i < queries.size(); ++i)
     {
         /// execute all queries in the holder and pass the results
         char const *sql = queries[i].first;

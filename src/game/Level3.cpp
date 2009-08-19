@@ -51,6 +51,8 @@
 #include "InstanceData.h"
 #include "CreatureEventAIMgr.h"
 
+extern Database loginDatabase;
+
 //reload commands
 bool ChatHandler::HandleReloadAllCommand(const char*)
 {

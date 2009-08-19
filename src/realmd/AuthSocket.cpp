@@ -34,7 +34,7 @@
 
 extern RealmList m_realmList;
 
-extern DatabaseType loginDatabase;
+extern Database loginDatabase;
 
 #define ChunkSize 2048
 

@@ -43,6 +43,8 @@
 #include "Log.h"
 #include "WorldLog.h"
 
+extern Database loginDatabase;
+
 #if defined( __GNUC__ )
 #pragma pack(1)
 #else

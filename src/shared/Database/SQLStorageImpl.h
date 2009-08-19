@@ -1,6 +1,4 @@
 /*
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
- *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -125,7 +123,7 @@ void SQLStorageLoaderBase<T>::Load(SQLStorage &store)
     QueryResult *result  = WorldDatabase.PQuery("SELECT MAX(%s) FROM %s", store.entry_field, store.table);
     if(!result)
     {
-        sLog.outError("Error loading %s table (not exist?)\n", store.table);
+        sLog.outError("Error loading table %s. It may not exist, or it is corrupted.", store.table);
         exit(1);                                            // Stop server at loading non exited table or not accessable table
     }
 
@@ -146,7 +144,7 @@ void SQLStorageLoaderBase<T>::Load(SQLStorage &store)
 
     if(!result)
     {
-        sLog.outError("%s table is empty!\n", store.table);
+        sLog.outError("Table %s is empty!", store.table);
         store.RecordCount = 0;
         return;
     }
@@ -157,7 +155,7 @@ void SQLStorageLoaderBase<T>::Load(SQLStorage &store)
     if(store.iNumFields != result->GetFieldCount())
     {
         store.RecordCount = 0;
-        sLog.outError("Error in %s table, probably sql file format was updated (there should be %d fields in sql).\n", store.table, store.iNumFields);
+        sLog.outError("Error in table %s. The SQL format was likely updated. There should be %u fields in the table.", store.table, store.iNumFields);
         delete result;
         exit(1);                                            // Stop server at loading broken or non-compatible table.
     }
@@ -166,7 +164,7 @@ void SQLStorageLoaderBase<T>::Load(SQLStorage &store)
     uint32 sc=0;
     uint32 bo=0;
     uint32 bb=0;
-    for(uint32 x=0; x< store.iNumFields; x++)
+    for(uint32 x=0; x< store.iNumFields; ++x)
         if(store.dst_format[x]==FT_STRING)
             ++sc;
         else if (store.dst_format[x]==FT_LOGIC)
@@ -189,7 +187,7 @@ void SQLStorageLoaderBase<T>::Load(SQLStorage &store)
         newIndex[fields[0].GetUInt32()]=p;
 
         offset=0;
-        for(uint32 x = 0; x < store.iNumFields; x++)
+        for(uint32 x = 0; x < store.iNumFields; ++x)
             switch(store.src_format[x])
             {
                 case FT_LOGIC:

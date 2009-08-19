@@ -39,6 +39,8 @@
 #include "SocialMgr.h"
 #include "zlib/zlib.h"
 
+extern Database loginDatabase;
+
 /// WorldSession constructor
 WorldSession::WorldSession(uint32 id, WorldSocket *sock, AccountTypes sec, uint8 expansion, time_t mute_time, LocaleConstant locale) :
 LookingForGroup_auto_join(false), LookingForGroup_auto_add(false), m_muteTime(mute_time),
