@@ -369,6 +369,7 @@ void Loot::AddItem(LootStoreItem const & item)
     for (int i = 0; i < tempcount; ++i) {
     if (item.needs_quest)                                   // Quest drop
     {
+        if (i>=1) continue;
         if (quest_items.size() < MAX_NR_QUEST_ITEMS)
             quest_items.push_back(LootItem(item));
     }
