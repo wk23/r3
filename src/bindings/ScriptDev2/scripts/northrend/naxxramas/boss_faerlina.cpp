@@ -16,36 +16,48 @@
 
 /* ScriptData
 SDName: Boss_Faerlina
-SD%Complete: 50
-SDComment:
+SD%Complete: 80
+SDComment: Need core support: spell 28732
 SDCategory: Naxxramas
 EndScriptData */
 
 #include "precompiled.h"
+#include "def_naxxramas.h"
 
-#define SAY_GREET                   -1533009
-#define SAY_AGGRO1                  -1533010
-#define SAY_AGGRO2                  -1533011
-#define SAY_AGGRO3                  -1533012
-#define SAY_AGGRO4                  -1533013
-#define SAY_SLAY1                   -1533014
-#define SAY_SLAY2                   -1533015
-#define SAY_DEATH                   -1533016
+#define SPELL_28732_NOT_YET_IMPLEMENTED
 
-//#define SOUND_RANDOM_AGGRO  8955                            //soundId containing the 4 aggro sounds, we not using this
+enum
+{
+    SAY_GREET                 =  -1533009,
+    SAY_AGGRO                 =  -1533010,
+    SAY_ENRAGE1               =  -1533011,
+    SAY_ENRAGE2               =  -1533012,
+    SAY_ENRAGE3               =  -1533013,
+    SAY_SLAY1                 =  -1533014,
+    SAY_SLAY2                 =  -1533015,
+    SAY_DEATH                 =  -1533016
+};
+enum
+{
+    SPELL_POSIONBOLT_VOLLEY   =  28796,
+    SPELL_ENRAGE              =  28798,
+    SPELL_RAINOFFIRE          =  39024,                   //Not sure if targeted AoEs work if casted directly upon a player
 
-#define SPELL_POSIONBOLT_VOLLEY     28796
-#define H_SPELL_POSIONBOLT_VOLLEY   54098
-#define SPELL_ENRAGE                28798
-#define H_SPELL_ENRAGE              54100
-
-#define SPELL_RAINOFFIRE            28794                   //Not sure if targeted AoEs work if casted directly upon a pPlayer
+    SPELL_WIDOWS_EMBRACE      =  28732,					//We will use it, but the real thing will be another
+    SPELL_FIREBALL            =  54095
+};
 
 struct MANGOS_DLL_DECL boss_faerlinaAI : public ScriptedAI
 {
-    boss_faerlinaAI(Creature* pCreature) : ScriptedAI(pCreature) {Reset();}
+    boss_faerlinaAI(Creature *c) : ScriptedAI(c)
+	{
+		pInstance = ((ScriptedInstance*)c->GetInstanceData());
+		Reset();
+	}
 
-    uint32 PoisonBoltVolley_Timer;
+	ScriptedInstance *pInstance;
+
+	uint32 PoisonBoltVolley_Timer;
     uint32 RainOfFire_Timer;
     uint32 Enrage_Timer;
     bool HasTaunted;
@@ -56,22 +68,23 @@ struct MANGOS_DLL_DECL boss_faerlinaAI : public ScriptedAI
         RainOfFire_Timer = 16000;
         Enrage_Timer = 60000;
         HasTaunted = false;
+        
+        if(pInstance && m_creature->isAlive())
+			pInstance->SetData(ENCOUNT_FAERLINA, NOT_STARTED);
     }
 
     void Aggro(Unit *who)
     {
-        switch (rand()%4)
-        {
-            case 0: DoScriptText(SAY_AGGRO1, m_creature); break;
-            case 1: DoScriptText(SAY_AGGRO2, m_creature); break;
-            case 2: DoScriptText(SAY_AGGRO3, m_creature); break;
-            case 3: DoScriptText(SAY_AGGRO4, m_creature); break;
-        }
+		//Close the room for boss fight
+		if(pInstance)
+            pInstance->SetData(ENCOUNT_FAERLINA, IN_PROGRESS);
+
+		DoScriptText(SAY_AGGRO, m_creature);
     }
 
     void MoveInLineOfSight(Unit *who)
     {
-        if (!HasTaunted && m_creature->IsWithinDistInMap(who, 60.0f))
+        if (!HasTaunted && m_creature->IsWithinDistInMap(who, 100.0f))
         {
             DoScriptText(SAY_GREET, m_creature);
             HasTaunted = true;
@@ -91,7 +104,11 @@ struct MANGOS_DLL_DECL boss_faerlinaAI : public ScriptedAI
 
     void JustDied(Unit* Killer)
     {
-        DoScriptText(SAY_DEATH, m_creature);
+		//Faerlina is slayed -> open all doors to Maexxna
+		if(pInstance)
+            pInstance->SetData(ENCOUNT_FAERLINA, DONE);
+
+		DoScriptText(SAY_DEATH, m_creature);
     }
 
     void UpdateAI(const uint32 diff)
@@ -118,6 +135,12 @@ struct MANGOS_DLL_DECL boss_faerlinaAI : public ScriptedAI
         //Enrage_Timer
         if (Enrage_Timer < diff)
         {
+			switch (rand()%3)
+			{
+				case 0: DoScriptText(SAY_ENRAGE1, m_creature); break;
+				case 1: DoScriptText(SAY_ENRAGE2, m_creature); break;
+				case 2: DoScriptText(SAY_ENRAGE3, m_creature); break;
+			}
             DoCast(m_creature,SPELL_ENRAGE);
             Enrage_Timer = 61000;
         }else Enrage_Timer -= diff;
@@ -126,9 +149,58 @@ struct MANGOS_DLL_DECL boss_faerlinaAI : public ScriptedAI
     }
 };
 
-CreatureAI* GetAI_boss_faerlina(Creature* pCreature)
+CreatureAI* GetAI_boss_faerlina(Creature *_Creature)
 {
-    return new boss_faerlinaAI(pCreature);
+    return new boss_faerlinaAI (_Creature);
+}
+
+struct MANGOS_DLL_DECL mob_faerlina_worshipperAI : public ScriptedAI
+{
+    mob_faerlina_worshipperAI(Creature *c) : ScriptedAI(c)
+	{
+		pInstance = ((ScriptedInstance*)c->GetInstanceData());
+		Reset();
+	}
+
+	ScriptedInstance *pInstance;
+	uint32 fireball_timer;
+
+	void Reset()
+	{
+		fireball_timer = 0;
+	}
+
+    void Aggro(Unit *who){}
+    void JustDied(Unit* Killer)
+    {
+#ifndef SPELL_28732_NOT_YET_IMPLEMENTED
+        DoCast(m_creature,SPELL_WIDOWS_EMBRACE,true);
+#else
+		Unit* Faerlina = Unit::GetUnit((*m_creature), pInstance->GetData64(GUID_FAERLINA));
+		if(Faerlina && m_creature->GetDistance2d(Faerlina) < 15.0f)
+			Faerlina->RemoveAurasByCasterSpell(SPELL_ENRAGE,pInstance->GetData64(GUID_FAERLINA));
+#endif
+    }
+
+    void UpdateAI(const uint32 diff)
+    {
+        //Return since we have no target
+        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+            return;
+
+		//PoisonBoltVolley_Timer
+        if (fireball_timer < diff)
+        {
+            DoCast(m_creature->getVictim(),SPELL_FIREBALL);
+            fireball_timer = 3000;
+        }else fireball_timer -= diff;
+
+        DoMeleeAttackIfReady();
+    }
+}; 
+CreatureAI* GetAI_mob_faerlina_worshipper(Creature *_Creature)
+{
+    return new mob_faerlina_worshipperAI (_Creature);
 }
 
 void AddSC_boss_faerlina()
@@ -137,5 +209,10 @@ void AddSC_boss_faerlina()
     newscript = new Script;
     newscript->Name = "boss_faerlina";
     newscript->GetAI = &GetAI_boss_faerlina;
+    newscript->RegisterSelf();
+
+	newscript = new Script;
+    newscript->Name = "mob_faerlina_worshipper";
+    newscript->GetAI = &GetAI_mob_faerlina_worshipper;
     newscript->RegisterSelf();
 }

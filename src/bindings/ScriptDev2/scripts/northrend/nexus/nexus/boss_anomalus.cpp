@@ -16,12 +16,27 @@
 
 /* ScriptData
 SDName: Boss_Anomalus
-SD%Complete: 10%
-SDComment:
-SDCategory: Nexus
+SD%Complete: 
+SDComment: 
+SDCategory: The Nexus, The Nexus
 EndScriptData */
 
 #include "precompiled.h"
+#include "def_nexus.h"
+
+//Spells
+#define SPELL_SPARK_N              47751
+#define SPELL_SPARK_H              57062
+#define SPELL_RIFT_SHIELD          47748
+#define SPELL_CHARGE_RIFT          47747 //Works wrong (affect players, not rifts)
+#define SPELL_CREATE_RIFT          47743 //Don't work, using WA
+#define SPELL_ARCANE_ATTRACTION    57063 //No idea, when it's used
+
+#define MOB_CRAZED_MANA_WRAITH              26746
+#define MOB_CHAOTIC_RIFT                    26918
+#define SPELL_CHAOTIC_ENERGY_BURST          47688
+#define SPELL_CHARGED_CHAOTIC_ENERGY_BURST  47737
+#define SPELL_ARCANEFORM                    48019 //Chaotic Rift visual
 
 enum
 {
@@ -30,43 +45,49 @@ enum
     SAY_SHIELD              = -1576008,
     SAY_KILL                = -1576009,
     SAY_DEATH               = -1576010,
-
-    SPELL_CREATE_RIFT       = 47743,
-    SPELL_CHARGE_RIFT       = 47747,
-    SPELL_RIFT_SHIELD       = 47748,
-
-    SPELL_SPARK             = 47751,
-    SPELL_SPARK_H           = 57062
 };
 
-/*######
-## boss_anomalus
-######*/
+float RiftLocation[6][3]=
+{
+    {652.64, -273.70, -8.75},
+    {634.45, -265.94, -8.44},
+    {620.73, -281.17, -9.02},
+    {626.10, -304.67, -9.44},
+    {639.87, -314.11, -9.49},
+    {651.72, -297.44, -9.37}
+};
 
 struct MANGOS_DLL_DECL boss_anomalusAI : public ScriptedAI
 {
-    boss_anomalusAI(Creature* pCreature) : ScriptedAI(pCreature)
+    boss_anomalusAI(Creature *c) : ScriptedAI(c)
     {
-        m_pInstance = (ScriptedInstance*)pCreature->GetInstanceData();
-        m_bIsHeroicMode = pCreature->GetMap()->IsHeroic();
+        pInstance = ((ScriptedInstance*)c->GetInstanceData());
         Reset();
+        HeroicMode = c->GetMap()->IsHeroic();
     }
 
-    ScriptedInstance* m_pInstance;
-    bool m_bIsHeroicMode;
+    ScriptedInstance* pInstance;
+    bool HeroicMode;
+
+    uint8 Phase;
+    uint32 SPELL_SPARK_Timer;                    
+    uint32 SPELL_CREATE_RIFT_Timer;
+    uint64 ChaoticRiftGUID;
 
     void Reset() 
     {
+        Phase = 0;
+        SPELL_SPARK_Timer = 5000;
+        SPELL_CREATE_RIFT_Timer = 25000;
+        ChaoticRiftGUID = 0;
+
+        if(pInstance)
+            pInstance->SetData(DATA_ANOMALUS_EVENT, NOT_STARTED);
     }
 
-    void Aggro(Unit* pWho)
+    void Aggro(Unit* who) 
     {
         DoScriptText(SAY_AGGRO, m_creature);
-    }
-
-    void JustDied(Unit* pKiller)
-    {
-        DoScriptText(SAY_DEATH, m_creature);
     }
 
     void KilledUnit(Unit* pVictim)
@@ -75,18 +96,177 @@ struct MANGOS_DLL_DECL boss_anomalusAI : public ScriptedAI
             DoScriptText(SAY_KILL, m_creature);
     }
 
-    void UpdateAI(const uint32 uiDiff)
+    void JustDied(Unit* killer)  
+    {
+        DoScriptText(SAY_DEATH, m_creature);
+        if (pInstance)
+            pInstance->SetData(DATA_ANOMALUS_EVENT, DONE);
+    }
+
+    void UpdateAI(const uint32 diff) 
+    {
+        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+            return;
+        
+        if (m_creature->HasAura(SPELL_RIFT_SHIELD))
+        {
+            Unit* Rift;
+            if (ChaoticRiftGUID)
+                Rift = Unit::GetUnit((*m_creature), ChaoticRiftGUID);
+            if (Rift && Rift->isDead())
+            {
+                m_creature->RemoveAurasDueToSpell(SPELL_RIFT_SHIELD);
+                ChaoticRiftGUID = 0;
+            }
+            return;
+        } else
+            ChaoticRiftGUID = 0;
+
+        if ((Phase == 0) && (m_creature->GetHealth() < m_creature->GetMaxHealth() * 0.75))
+        {
+            Phase = 1;
+            DoScriptText(SAY_SHIELD, m_creature);
+            DoCast(m_creature, SPELL_RIFT_SHIELD);
+
+            int tmp = rand()%(2);
+            Creature* Rift = m_creature->SummonCreature(MOB_CHAOTIC_RIFT, RiftLocation[tmp][0], RiftLocation[tmp][1], RiftLocation[tmp][2], 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 1000);
+            if (Rift)
+            {
+                //DoCast(Rift, SPELL_CHARGE_RIFT);
+                if (Unit* target = SelectUnit(SELECT_TARGET_RANDOM, 0))
+                    Rift->AI()->AttackStart(target);
+                ChaoticRiftGUID = Rift->GetGUID();
+                DoScriptText(SAY_RIFT, m_creature);
+            }
+        }
+
+        if ((Phase == 1) && (m_creature->GetHealth() < m_creature->GetMaxHealth() * 0.50))
+        {
+            Phase = 2;
+            DoScriptText(SAY_SHIELD, m_creature);
+            DoCast(m_creature, SPELL_RIFT_SHIELD);
+
+            int tmp = rand()%(2);
+            Creature* Rift = m_creature->SummonCreature(MOB_CHAOTIC_RIFT, RiftLocation[tmp][0], RiftLocation[tmp][1], RiftLocation[tmp][2], 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 1000);
+            if (Rift)
+            {
+                //DoCast(Rift, SPELL_CHARGE_RIFT);
+                if (Unit* target = SelectUnit(SELECT_TARGET_RANDOM, 0))
+                    Rift->AI()->AttackStart(target);
+                ChaoticRiftGUID = Rift->GetGUID();
+                DoScriptText(SAY_RIFT, m_creature);
+            }
+        }
+
+        if ((Phase == 2) && (m_creature->GetHealth() < m_creature->GetMaxHealth() * 0.25))
+        {
+            Phase = 3;
+            DoScriptText(SAY_SHIELD, m_creature);
+            DoCast(m_creature, SPELL_RIFT_SHIELD);
+
+            int tmp = rand()%(2);
+            Creature* Rift = m_creature->SummonCreature(MOB_CHAOTIC_RIFT, RiftLocation[tmp][0], RiftLocation[tmp][1], RiftLocation[tmp][2], 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 1000);
+            if (Rift)
+            {
+                //DoCast(Rift, SPELL_CHARGE_RIFT);
+                if (Unit* target = SelectUnit(SELECT_TARGET_RANDOM, 0))
+                    Rift->AI()->AttackStart(target);
+                ChaoticRiftGUID = Rift->GetGUID();
+                DoScriptText(SAY_RIFT, m_creature);
+            }
+        }
+
+        if (SPELL_SPARK_Timer < diff)
+        {
+            if (Unit* target = SelectUnit(SELECT_TARGET_RANDOM, 0))
+                DoCast(target, HeroicMode ? SPELL_SPARK_H : SPELL_SPARK_N);
+            SPELL_SPARK_Timer = 5000;
+        }else SPELL_SPARK_Timer -=diff;
+
+        if (SPELL_CREATE_RIFT_Timer < diff)
+        {
+            DoScriptText(SAY_RIFT, m_creature);
+
+            int tmp = rand()%(2);
+            Creature* Rift = m_creature->SummonCreature(MOB_CHAOTIC_RIFT, RiftLocation[tmp][0], RiftLocation[tmp][1], RiftLocation[tmp][2], 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 1000);
+            if (Rift)
+                if (Unit* target = SelectUnit(SELECT_TARGET_RANDOM, 0))
+                    Rift->AI()->AttackStart(target);
+            SPELL_CREATE_RIFT_Timer = 25000;
+        }else SPELL_CREATE_RIFT_Timer -=diff;
+
+        DoMeleeAttackIfReady();    
+    }
+};
+
+struct MANGOS_DLL_DECL mob_chaotic_riftAI : public Scripted_NoMovementAI
+{
+    mob_chaotic_riftAI(Creature *c) : Scripted_NoMovementAI(c)
+    {
+        pInstance = ((ScriptedInstance*)c->GetInstanceData());
+        Reset();
+    }
+
+    ScriptedInstance* pInstance;
+
+    uint32 SPELL_CHAOTIC_ENERGY_BURST_Timer;
+    uint32 SUMMON_CRAZED_MANA_WRAITH_Timer;
+
+    void Reset()
+    {
+        SPELL_CHAOTIC_ENERGY_BURST_Timer = 1000;
+        SUMMON_CRAZED_MANA_WRAITH_Timer = 5000;
+        m_creature->SetDisplayId(25206); //For some reason in DB models for ally and horde are different.
+                                         //Model for ally (1126) does not show auras. Horde model works perfect.
+                                         //Set model to horde number
+        DoCast(m_creature, SPELL_ARCANEFORM, false);
+    }
+
+    void UpdateAI(const uint32 diff) 
     {
         if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
             return;
 
-        DoMeleeAttackIfReady();
+        if (SPELL_CHAOTIC_ENERGY_BURST_Timer < diff)
+        {
+            if (pInstance)
+            {
+                Unit* Anomalus = Unit::GetUnit((*m_creature), pInstance->GetData64(DATA_ANOMALUS));
+                if (Unit* target = SelectUnit(SELECT_TARGET_RANDOM, 0))
+                    if (Anomalus && Anomalus->HasAura(SPELL_RIFT_SHIELD))
+                        DoCast(target, SPELL_CHARGED_CHAOTIC_ENERGY_BURST);
+                    else
+                        DoCast(target, SPELL_CHAOTIC_ENERGY_BURST);
+                SPELL_CHAOTIC_ENERGY_BURST_Timer = 1000;
+            }
+        }else SPELL_CHAOTIC_ENERGY_BURST_Timer -=diff;
+
+        if (SUMMON_CRAZED_MANA_WRAITH_Timer < diff)
+        {
+            Creature* Wraith = m_creature->SummonCreature(MOB_CRAZED_MANA_WRAITH, m_creature->GetPositionX()+1, m_creature->GetPositionY()+1, m_creature->GetPositionZ(), 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 1000);
+            if (Wraith)
+                if (Unit* target = SelectUnit(SELECT_TARGET_RANDOM, 0))
+                    Wraith->AI()->AttackStart(target);
+            if (pInstance)
+            {
+                Unit* Anomalus = Unit::GetUnit((*m_creature), pInstance->GetData64(DATA_ANOMALUS));
+                if (Anomalus && Anomalus->HasAura(SPELL_RIFT_SHIELD))
+                    SUMMON_CRAZED_MANA_WRAITH_Timer = 5000;
+                else
+                    SUMMON_CRAZED_MANA_WRAITH_Timer = 10000;
+            }
+        }else SUMMON_CRAZED_MANA_WRAITH_Timer -=diff;
     }
 };
 
-CreatureAI* GetAI_boss_anomalus(Creature* pCreature)
+CreatureAI* GetAI_mob_chaotic_rift(Creature *_Creature)
 {
-    return new boss_anomalusAI(pCreature);
+    return new mob_chaotic_riftAI (_Creature);
+}
+
+CreatureAI* GetAI_boss_anomalus(Creature *_Creature)
+{
+    return new boss_anomalusAI (_Creature);
 }
 
 void AddSC_boss_anomalus()
@@ -94,7 +274,12 @@ void AddSC_boss_anomalus()
     Script *newscript;
 
     newscript = new Script;
-    newscript->Name = "boss_anomalus";
+    newscript->Name="boss_anomalus";
     newscript->GetAI = &GetAI_boss_anomalus;
+    newscript->RegisterSelf();
+    
+    newscript = new Script;
+    newscript->Name="mob_chaotic_rift";
+    newscript->GetAI = &GetAI_mob_chaotic_rift;
     newscript->RegisterSelf();
 }

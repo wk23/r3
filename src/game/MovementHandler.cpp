@@ -670,7 +670,7 @@ void WorldSession::HandleMovementOpcodes( WorldPacket & recv_data )
 
         if(plMover->isMovingOrTurning())
             plMover->RemoveSpellsCausingAura(SPELL_AURA_FEIGN_DEATH);
-sLog.outError("MA-%s, movementInfo.z: %f ",plMover->GetName(), movementInfo.z);
+//sLog.outError("MA-%s, movementInfo.z: %f ",plMover->GetName(), movementInfo.z);
         if(movementInfo.z < -500.0f)
         {
             if(plMover->InBattleGround()

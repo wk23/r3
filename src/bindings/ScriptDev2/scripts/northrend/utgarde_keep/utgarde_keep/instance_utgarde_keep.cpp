@@ -33,6 +33,7 @@ struct MANGOS_DLL_DECL instance_utgarde_keep : public ScriptedInstance
 
     uint64 m_uiSkarvaldGUID;
     uint64 m_uiDalronnGUID;
+    uint64 m_uiIngvarGUID;
 
     uint64 m_uiBellow1GUID;
     uint64 m_uiBellow2GUID;
@@ -47,6 +48,7 @@ struct MANGOS_DLL_DECL instance_utgarde_keep : public ScriptedInstance
 
         m_uiSkarvaldGUID = 0;
         m_uiDalronnGUID = 0;
+        m_uiIngvarGUID = 0;
 
         m_uiBellow1GUID = 0;
         m_uiBellow2GUID = 0;
@@ -62,6 +64,7 @@ struct MANGOS_DLL_DECL instance_utgarde_keep : public ScriptedInstance
         {
             case NPC_SKARVALD: m_uiSkarvaldGUID = pCreature->GetGUID(); break;
             case NPC_DALRONN: m_uiDalronnGUID = pCreature->GetGUID(); break;
+            case NPC_INGVAR: m_uiIngvarGUID = pCreature->GetGUID(); break;
         }
     }
 
@@ -102,6 +105,20 @@ struct MANGOS_DLL_DECL instance_utgarde_keep : public ScriptedInstance
         }
     }
 
+    uint32 GetData(uint32 uiType)
+    {
+        switch(uiType)
+        {
+            case EVENT_KELESETH:
+                return m_auiEncounter[3];
+            case EVENT_SKARVALD_AND_DALRONN:
+                return m_auiEncounter[4];
+            case EVENT_INGVAR:
+                return m_auiEncounter[5];
+        }
+        return 0;
+    }
+
     void SetData(uint32 uiType, uint32 uiData)
     {
         switch(uiType)
@@ -115,6 +132,15 @@ struct MANGOS_DLL_DECL instance_utgarde_keep : public ScriptedInstance
             case GO_BELLOW_3:
                 m_auiEncounter[2] = uiData;
                 break;
+            case EVENT_KELESETH:
+                m_auiEncounter[3] = uiData;
+                break;
+            case EVENT_SKARVALD_AND_DALRONN:
+                m_auiEncounter[4] = uiData;
+                break;
+            case EVENT_INGVAR:
+                m_auiEncounter[5] = uiData;
+                break;
         }
 
         if (uiData == DONE)
@@ -122,7 +148,7 @@ struct MANGOS_DLL_DECL instance_utgarde_keep : public ScriptedInstance
             OUT_SAVE_INST_DATA;
 
             std::ostringstream saveStream;
-            saveStream << m_auiEncounter[0] << " " << m_auiEncounter[1] << " " << m_auiEncounter[2];
+            saveStream << m_auiEncounter[0] << " " << m_auiEncounter[1] << " " << m_auiEncounter[2] << " " << m_auiEncounter[3] << " " << m_auiEncounter[4] << " " << m_auiEncounter[5];
 
             strInstData = saveStream.str();
 
@@ -144,6 +170,8 @@ struct MANGOS_DLL_DECL instance_utgarde_keep : public ScriptedInstance
                 return m_uiSkarvaldGUID;
             case NPC_DALRONN:
                 return m_uiDalronnGUID;
+            case NPC_INGVAR:
+                return m_uiIngvarGUID;
             case GO_BELLOW_1:
                 return m_uiBellow1GUID;
             case GO_BELLOW_2:
@@ -171,7 +199,7 @@ struct MANGOS_DLL_DECL instance_utgarde_keep : public ScriptedInstance
         OUT_LOAD_INST_DATA(in);
 
         std::istringstream loadStream(in);
-        loadStream >> m_auiEncounter[0] >> m_auiEncounter[1] >> m_auiEncounter[2];
+        loadStream >> m_auiEncounter[0] >> m_auiEncounter[1] >> m_auiEncounter[2] >> m_auiEncounter[3] >> m_auiEncounter[4] >> m_auiEncounter[5];
 
         for(uint8 i = 0; i < MAX_ENCOUNTER; ++i)
         {

@@ -37,6 +37,7 @@ struct MANGOS_DLL_DECL instance_the_eye : public ScriptedInstance
 
     uint32 m_auiEncounter[MAX_ENCOUNTER];
 
+    uint64 m_uiAlarGUID;
     uint64 m_uiThaladredGUID;
     uint64 m_uiSanguinarGUID;
     uint64 m_uiCapernianGUID;
@@ -45,11 +46,13 @@ struct MANGOS_DLL_DECL instance_the_eye : public ScriptedInstance
     uint64 m_uiAstromancerGUID;
 
     uint32 m_uiKaelthasEventPhase;
+    uint32 m_uiAlarEventPhase;
 
     void Initialize()
     {
         memset(&m_auiEncounter, 0, sizeof(m_auiEncounter));
 
+        m_uiAlarGUID = 0;
         m_uiThaladredGUID = 0;
         m_uiSanguinarGUID = 0;
         m_uiCapernianGUID = 0;
@@ -58,6 +61,7 @@ struct MANGOS_DLL_DECL instance_the_eye : public ScriptedInstance
         m_uiAstromancerGUID = 0;
 
         m_uiKaelthasEventPhase = 0;
+        m_uiAlarEventPhase = 0;
     }
 
     bool IsEncounterInProgress() const
@@ -78,6 +82,7 @@ struct MANGOS_DLL_DECL instance_the_eye : public ScriptedInstance
             case 20060: m_uiSanguinarGUID = pCreature->GetGUID(); break;
             case 19622: m_uiKaelthasGUID = pCreature->GetGUID(); break;
             case 18805: m_uiAstromancerGUID = pCreature->GetGUID(); break;
+            case 19514: m_uiAlarGUID = pCreature->GetGUID(); break;
         }
     }
 
@@ -140,6 +145,8 @@ struct MANGOS_DLL_DECL instance_the_eye : public ScriptedInstance
                 return m_uiKaelthasGUID;
             case DATA_ASTROMANCER:
                 return m_uiAstromancerGUID;
+            case DATA_ALAR:
+                return m_uiAlarGUID;
         }
 
         return 0;

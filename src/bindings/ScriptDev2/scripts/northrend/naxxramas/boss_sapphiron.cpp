@@ -27,7 +27,7 @@ EndScriptData */
 #define EMOTE_ENRAGE            -1533083
 
 #define SPELL_ICEBOLT           28522
-#define SPELL_FROST_BREATH      29318
+#define SPELL_FROST_BREATH      29318 //should be 28524
 #define SPELL_FROST_AURA        28531
 #define SPELL_LIFE_DRAIN        28542
 #define SPELL_BLIZZARD          28547
@@ -37,6 +37,16 @@ struct MANGOS_DLL_DECL boss_sapphironAI : public ScriptedAI
 {
     boss_sapphironAI(Creature* pCreature) : ScriptedAI(pCreature)
     {
+        SpellEntry *TempSpell = (SpellEntry*)GetSpellStore()->LookupEntry(SPELL_BESERK);
+        if(TempSpell)
+        {
+            TempSpell->EffectImplicitTargetA[0] = 30;
+            TempSpell->EffectImplicitTargetB[0] = 7;
+            TempSpell->EffectImplicitTargetA[1] = 30;
+            TempSpell->EffectImplicitTargetB[1] = 7;
+            TempSpell->EffectImplicitTargetA[2] = 30;
+            TempSpell->EffectImplicitTargetB[2] = 7;
+        }
         Reset();
     }
 
@@ -55,13 +65,13 @@ struct MANGOS_DLL_DECL boss_sapphironAI : public ScriptedAI
     void Reset()
     {
         FrostAura_Timer = 2000;
-        FrostBreath_Timer = 2500;
+        FrostBreath_Timer = 6000;
         LifeDrain_Timer = 24000;
         Blizzard_Timer = 20000;
         Fly_Timer = 45000;
         Icebolt_Timer = 4000;
         land_Timer = 2000;
-        Beserk_Timer = 0;
+        Beserk_Timer = 900000;
         phase = 1;
         Icebolt_Count = 0;
         landoff = false;
@@ -98,8 +108,8 @@ struct MANGOS_DLL_DECL boss_sapphironAI : public ScriptedAI
                 Blizzard_Timer = 20000;
             }else Blizzard_Timer -= diff;
 
-            if (m_creature->GetHealth()*100 / m_creature->GetMaxHealth() > 10)
-            {
+            //if (m_creature->GetHealth()*100 / m_creature->GetMaxHealth() > 10)
+            //{
                 if (Fly_Timer < diff)
                 {
                     phase = 2;
@@ -107,14 +117,14 @@ struct MANGOS_DLL_DECL boss_sapphironAI : public ScriptedAI
                     m_creature->HandleEmoteCommand(EMOTE_ONESHOT_LIFTOFF);
                     m_creature->GetMotionMaster()->Clear(false);
                     m_creature->GetMotionMaster()->MoveIdle();
-                    DoCast(m_creature,11010);
+                    //DoCast(m_creature,11010);
                     m_creature->SetHover(true);
-                    DoCast(m_creature,18430);
+                    //DoCast(m_creature,18430);
                     Icebolt_Timer = 4000;
                     Icebolt_Count = 0;
                     landoff = false;
                 }else Fly_Timer -= diff;
-            }
+            //}
         }
 
         if (phase == 2)
@@ -154,15 +164,15 @@ struct MANGOS_DLL_DECL boss_sapphironAI : public ScriptedAI
             }
         }
 
-        if ((m_creature->GetHealth()*100) / m_creature->GetMaxHealth() <= 10)
-        {
+        //if ((m_creature->GetHealth()*100) / m_creature->GetMaxHealth() <= 10)
+        //{
             if (Beserk_Timer < diff)
             {
                 DoScriptText(EMOTE_ENRAGE, m_creature);
                 DoCast(m_creature,SPELL_BESERK);
                 Beserk_Timer = 300000;
             }else Beserk_Timer -= diff;
-        }
+        //}
 
         if (phase!=2)
             DoMeleeAttackIfReady();

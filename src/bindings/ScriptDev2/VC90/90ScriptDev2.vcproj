@@ -1607,6 +1607,10 @@
 						>
 					</File>
 					<File
+						RelativePath="..\scripts\northrend\naxxramas\def_naxxramas.h"
+						>
+					</File>
+					<File
 						RelativePath="..\scripts\northrend\naxxramas\instance_naxxramas.cpp"
 						>
 					</File>
@@ -1635,6 +1639,14 @@
 						</File>
 						<File
 							RelativePath="..\scripts\northrend\nexus\nexus\boss_telestra.cpp"
+							>
+						</File>
+						<File
+							RelativePath="..\scripts\northrend\nexus\nexus\def_nexus.h"
+							>
+						</File>
+						<File
+							RelativePath="..\scripts\northrend\nexus\nexus\instance_nexus.cpp"
 							>
 						</File>
 					</Filter>
@@ -1697,6 +1709,10 @@
 					<Filter
 						Name="ulduar"
 						>
+						<File
+							RelativePath="..\scripts\northrend\ulduar\ulduar\npc_ulduar_teleporter.cpp"
+							>
+						</File>
 					</Filter>
 				</Filter>
 				<Filter
@@ -1738,6 +1754,14 @@
 				<Filter
 					Name="vault_of_archavon"
 					>
+					<File
+						RelativePath="..\scripts\northrend\vault_of_archavon\boss_emalon.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\scripts\northrend\vault_of_archavon\instance_vault_of_archavon.cpp"
+						>
+					</File>
 				</Filter>
 				<Filter
 					Name="violet_hold"
@@ -2122,6 +2146,10 @@
 						>
 						<File
 							RelativePath="..\scripts\outland\tempest_keep\the_eye\boss_astromancer.cpp"
+							>
+						</File>
+						<File
+							RelativePath="..\scripts\outland\tempest_keep\the_eye\boss_alar.cpp"
 							>
 						</File>
 						<File

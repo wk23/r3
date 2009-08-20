@@ -77,12 +77,12 @@ struct MANGOS_DLL_DECL boss_gluthAI : public ScriptedAI
     boss_gluthAI(Creature* pCreature) : ScriptedAI(pCreature)
     {
         m_pInstance = (ScriptedInstance*)pCreature->GetInstanceData();
-        m_bIsHeroicMode = pCreature->GetMap()->IsHeroic();
+        m_bIsHeroic = pCreature->GetMap()->IsHeroic();
         Reset();
     }
 
     ScriptedInstance* m_pInstance;
-    bool m_bIsHeroicMode;
+    bool m_bIsHeroic;
 
     uint32 MortalWound_Timer;
     uint32 Decimate_Timer;
@@ -123,7 +123,7 @@ struct MANGOS_DLL_DECL boss_gluthAI : public ScriptedAI
         //Enrage_Timer
         if (Enrage_Timer < diff)
         {
-            DoCast(m_creature, m_bIsHeroicMode ? SPELL_ENRAGE_H : SPELL_ENRAGE);
+            DoCast(m_creature, m_bIsHeroic ? SPELL_ENRAGE_H : SPELL_ENRAGE);
             Enrage_Timer = 60000;
         }else Enrage_Timer -= diff;
 
@@ -136,7 +136,7 @@ struct MANGOS_DLL_DECL boss_gluthAI : public ScriptedAI
                     pZombie->AddThreat(pTarget,0.0f);
             }
 
-            if (m_bIsHeroicMode)
+            if (m_bIsHeroic)
             {
                 if (Creature* pZombie = m_creature->SummonCreature(NPC_ZOMBIE_CHOW,ADD_1X,ADD_1Y,ADD_1Z,0,TEMPSUMMON_TIMED_OR_DEAD_DESPAWN,80000))
                 {

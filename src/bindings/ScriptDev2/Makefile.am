@@ -309,10 +309,13 @@ scripts/northrend/naxxramas/boss_razuvious.cpp \
 scripts/northrend/naxxramas/boss_sapphiron.cpp \
 scripts/northrend/naxxramas/boss_thaddius.cpp \
 scripts/northrend/naxxramas/instance_naxxramas.cpp \
+scripts/northrend/naxxramas/def_naxxramas.h \
 scripts/northrend/nexus/nexus/boss_anomalus.cpp \
 scripts/northrend/nexus/nexus/boss_keristrasza.cpp \
 scripts/northrend/nexus/nexus/boss_ormorok.cpp \
 scripts/northrend/nexus/nexus/boss_telestra.cpp \
+scripts/northrend/nexus/nexus/def_nexus.h \
+scripts/northrend/nexus/nexus/instance_nexus.cpp \
 scripts/northrend/obsidian_sanctum/boss_sartharion.cpp \
 scripts/northrend/obsidian_sanctum/def_obsidian_sanctum.h \
 scripts/northrend/obsidian_sanctum/instance_obsidian_sanctum.cpp \
@@ -322,12 +325,15 @@ scripts/northrend/ulduar/halls_of_lightning/boss_loken.cpp \
 scripts/northrend/ulduar/halls_of_lightning/boss_volkhan.cpp \
 scripts/northrend/ulduar/halls_of_lightning/def_halls_of_lightning.h \
 scripts/northrend/ulduar/halls_of_lightning/instance_halls_of_lightning.cpp \
+scripts/northrend/ulduar/ulduar/npc_ulduar_teleporter.cpp \
 scripts/northrend/utgarde_keep/utgarde_keep/boss_ingvar.cpp \
 scripts/northrend/utgarde_keep/utgarde_keep/boss_keleseth.cpp \
 scripts/northrend/utgarde_keep/utgarde_keep/boss_skarvald_and_dalronn.cpp \
 scripts/northrend/utgarde_keep/utgarde_keep/def_utgarde_keep.h \
 scripts/northrend/utgarde_keep/utgarde_keep/instance_utgarde_keep.cpp \
 scripts/northrend/utgarde_keep/utgarde_keep/utgarde_keep.cpp \
+scripts/northrend/vault_of_archavon/boss_emalon.cpp \
+scripts/northrend/vault_of_archavon/instance_vault_of_archavon.cpp \
 scripts/outland/blades_edge_mountains.cpp \
 scripts/outland/boss_doomlord_kazzak.cpp \
 scripts/outland/boss_doomwalker.cpp \
@@ -406,6 +412,7 @@ scripts/outland/tempest_keep/botanica/boss_high_botanist_freywinn.cpp \
 scripts/outland/tempest_keep/botanica/boss_laj.cpp \
 scripts/outland/tempest_keep/botanica/boss_warp_splinter.cpp \
 scripts/outland/tempest_keep/the_eye/boss_astromancer.cpp \
+scripts/outland/tempest_keep/the_eye/boss_alar.cpp \
 scripts/outland/tempest_keep/the_eye/boss_kaelthas.cpp \
 scripts/outland/tempest_keep/the_eye/boss_void_reaver.cpp \
 scripts/outland/tempest_keep/the_eye/def_the_eye.h \

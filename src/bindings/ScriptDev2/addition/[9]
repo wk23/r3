@@ -1,0 +1,1 @@
+update creature_template set ScriptName='boss_kelthuzad' where entry=15990;
