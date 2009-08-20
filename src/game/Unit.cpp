@@ -5235,7 +5235,7 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura* triggeredByAu
                 case 11129:
                 {
                     //last charge and crit
-                    if (triggeredByAura->GetAuraCharges() <= 1 && (procEx & PROC_EX_CRITICAL_HIT) )
+                    if (triggeredByAura->GetAuraCharges() <= 1 && ((procEx & PROC_EX_CRITICAL_HIT) || procSpell->SpellIconID==2946))
                     {
                         RemoveAurasDueToSpell(28682);       //-> remove Combustion auras
                         return true;                        // charge counting (will removed)
