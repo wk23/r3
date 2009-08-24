@@ -938,9 +938,9 @@ uint32 Unit::DealDamage(Unit *pVictim, uint32 damage, CleanDamage const* cleanDa
 
     DEBUG_LOG("DealDamageEnd returned %d damage", damage);
     if (HasAura(48266)) {
-    uint32 damage_bp=(uint32)(damage*0.15);
+    //uint32 damage_bp=(uint32)(damage*0.15);//double direct damage modifier
     uint32 addhealth_bp=(uint32)(damage*0.04);
-    damage+=damage_bp;
+    //damage+=damage_bp;
     SpellEntry const *auraSpellInfo = sSpellStore.LookupEntry(48266);
     DealHeal(this, addhealth_bp, auraSpellInfo);
     }
