@@ -96,10 +96,10 @@ enum SpecialSurprise
 
     NPC_PLAGUEFIST              = 29053
 };
-enum
-{
-    FACTION_DEFAULT                 = 7,
-    FACTION_FRIENDLY                = 35
+
+enum {
+    FACTION_DEFAULT= 7,
+    FACTION_FRIENDLY = 35
 };
 
 struct MANGOS_DLL_DECL npc_a_special_surpriseAI : public ScriptedAI
@@ -170,11 +170,13 @@ struct MANGOS_DLL_DECL npc_a_special_surpriseAI : public ScriptedAI
 
     void MoveInLineOfSight(Unit* pWho)
     {
+
         if (m_uiPlayerGUID || pWho->GetTypeId() != TYPEID_PLAYER || !pWho->IsWithinDist(m_creature, INTERACTION_DISTANCE))
             return;
 
         if (MeetQuestCondition(pWho))
             m_uiPlayerGUID = pWho->GetGUID();
+
     }
 
     void UpdateAI(const uint32 uiDiff) 
@@ -498,6 +500,7 @@ struct MANGOS_DLL_DECL npc_a_special_surpriseAI : public ScriptedAI
                 m_uiExecuteSpeech_Timer -= uiDiff;
         }
     }
+
 };
 
 CreatureAI* GetAI_npc_a_special_surprise(Creature* pCreature)
