@@ -53,5 +53,3 @@ EXTRA_DIST += \
 	win/VC100/zlib.vcxproj \
 	win/VC100/g3dlite.vcxproj
 
-ACLOCAL_AMFLAGS = -I m4
-
