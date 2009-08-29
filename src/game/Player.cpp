@@ -3271,24 +3271,9 @@ bool Player::addSpell(uint32 spell_id, bool active, bool learning, bool dependen
 
 bool Player::IsNeedCastPassiveSpellAtLearn(SpellEntry const* spellInfo) const
 {
-    bool need_cast =  false;
-
-    switch(spellInfo->Id)
-    {
-        // some spells not have stance data expected cast at form change or present
-        case  5420: need_cast = (m_form == FORM_TREE);            break;
-        case  5419: need_cast = (m_form == FORM_TRAVEL);          break;
-        case  7376: need_cast = (m_form == FORM_DEFENSIVESTANCE); break;
-        case  7381: need_cast = (m_form == FORM_BERSERKERSTANCE); break;
-        case 21156: need_cast = (m_form == FORM_BATTLESTANCE);    break;
-        case 21178: need_cast = (m_form == FORM_BEAR || m_form == FORM_DIREBEAR); break;
-        case 33948: need_cast = (m_form == FORM_FLIGHT);          break;
-        case 34764: need_cast = (m_form == FORM_FLIGHT);          break;
-        case 40121: need_cast = (m_form == FORM_FLIGHT_EPIC);     break;
-        case 40122: need_cast = (m_form == FORM_FLIGHT_EPIC);     break;
-        // another spells have proper stance data
-        default: need_cast = !spellInfo->Stances || m_form != 0 && (spellInfo->Stances & (1<<(m_form-1))); break;
-    }
+    // note: form passives activated with shapeshift spells be implemented by HandleShapeshiftBoosts instead of spell_learn_spell
+    // talent dependent passives activated at form apply have proper stance data
+    bool need_cast = !spellInfo->Stances || m_form != 0 && (spellInfo->Stances & (1<<(m_form-1)));
 
     //Check CasterAuraStates
     return need_cast && (!spellInfo->CasterAuraState || HasAuraState(AuraState(spellInfo->CasterAuraState)));
@@ -3738,8 +3723,8 @@ bool Player::resetTalents(bool no_cost)
         PlayerTalentMap::iterator itr2 = m_talents[m_activeSpec]->begin();
         for (; itr2 != m_talents[m_activeSpec]->end(); ++itr2)
         {
-			removeSpell(itr2->first, !IsPassiveSpell(itr2->first),false);
-			itr2->second->state = PLAYERSPELL_REMOVED;
+	removeSpell(itr2->first, !IsPassiveSpell(itr2->first),false);
+	itr2->second->state = PLAYERSPELL_REMOVED;
         }
     }
 
@@ -4183,6 +4168,9 @@ void Player::DeleteFromDB(uint64 playerguid, uint32 accountId, bool updateRealmC
     CharacterDatabase.PExecute("DELETE FROM character_achievement WHERE guid = '%u'",guid);
     CharacterDatabase.PExecute("DELETE FROM character_achievement_progress WHERE guid = '%u'",guid);
     CharacterDatabase.PExecute("DELETE FROM character_equipmentsets WHERE guid = '%u'",guid);
+    CharacterDatabase.PExecute("DELETE FROM guild_eventlog WHERE PlayerGuid1 = '%u'",guid);
+    CharacterDatabase.PExecute("DELETE FROM guild_eventlog WHERE PlayerGuid2 = '%u'",guid);
+    CharacterDatabase.PExecute("DELETE FROM guild_bank_eventlog WHERE PlayerGuid = '%u'",guid);
     CharacterDatabase.CommitTransaction();
 
     //loginDatabase.PExecute("UPDATE realmcharacters SET numchars = numchars - 1 WHERE acctid = %d AND realmid = %d", accountId, realmID);
@@ -6363,7 +6351,8 @@ uint32 Player::GetZoneIdFromDB(uint64 guid)
 
         zone = MapManager::Instance().GetZoneId(map,posx,posy,posz);
 
-        CharacterDatabase.PExecute("UPDATE characters SET zone='%u' WHERE guid='%u'", zone, guidLow);
+        if (zone > 0)
+            CharacterDatabase.PExecute("UPDATE characters SET zone='%u' WHERE guid='%u'", zone, guidLow);
     }
 
     return zone;
@@ -14833,7 +14822,7 @@ bool Player::LoadFromDB( uint32 guid, SqlQueryHolder *holder )
     if( HasFlag(PLAYER_FLAGS, PLAYER_FLAGS_GHOST) )
         m_deathState = DEAD;
 
-	_LoadTalents(holder->GetResult(PLAYER_LOGIN_QUERY_LOADTALENTS));
+   _LoadTalents(holder->GetResult(PLAYER_LOGIN_QUERY_LOADTALENTS));
     _LoadSpells(holder->GetResult(PLAYER_LOGIN_QUERY_LOADSPELLS));
 
     // after spell load, learn rewarded spell if need also

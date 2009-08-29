@@ -225,6 +225,7 @@ void WorldSession::HandleMovementOpcodes( WorldPacket & recv_data )
         // movement anticheat
         plMover->m_anti_JustTeleported = 1;
         // end movement anticheat
+        recv_data.rpos(recv_data.wpos());                   // prevent warnings spam
         return;
     }
 
@@ -270,11 +271,15 @@ void WorldSession::HandleMovementOpcodes( WorldPacket & recv_data )
     {
         sLog.outError("MovementHandler: player %s (guid %d, account %u) sent a packet (opcode %u) that is " SIZEFMTD " bytes larger than it should be. Kicked as cheater.", _player->GetName(), _player->GetGUIDLow(), _player->GetSession()->GetAccountId(), recv_data.GetOpcode(), recv_data.size() - recv_data.rpos());
         KickPlayer();
+        recv_data.rpos(recv_data.wpos());                   // prevent warnings spam
         return;
     }
 
     if (!MaNGOS::IsValidMapCoord(movementInfo.x, movementInfo.y, movementInfo.z, movementInfo.o))
+    {
+        recv_data.rpos(recv_data.wpos());                   // prevent warnings spam
         return;
+    }
 
     /* handle special cases */
     if (movementInfo.HasMovementFlag(MOVEMENTFLAG_ONTRANSPORT) && !mover->GetVehicleGUID())
@@ -282,11 +287,17 @@ void WorldSession::HandleMovementOpcodes( WorldPacket & recv_data )
         // transports size limited
         // (also received at zeppelin leave by some reason with t_* as absolute in continent coordinates, can be safely skipped)
         if( movementInfo.t_x > 60 || movementInfo.t_y > 60 || movementInfo.t_x < -60 ||  movementInfo.t_y < -60 )
+        {
+            recv_data.rpos(recv_data.wpos());                   // prevent warnings spam
             return;
+        }
 
         if( !MaNGOS::IsValidMapCoord(movementInfo.x+movementInfo.t_x, movementInfo.y + movementInfo.t_y,
             movementInfo.z + movementInfo.t_z, movementInfo.o + movementInfo.t_o) )
+        {
+            recv_data.rpos(recv_data.wpos());                   // prevent warnings spam
             return;
+        }
 
         if (plMover && plMover->m_anti_TransportGUID == 0 && (movementInfo.t_guid !=0))
         {
@@ -742,7 +753,10 @@ void WorldSession::HandleForceSpeedChangeAck(WorldPacket &recv_data)
 
     // now can skip not our packet
     if(_player->GetGUID() != guid)
+    {
+        recv_data.rpos(recv_data.wpos());                   // prevent warnings spam
         return;
+    }
 
     // continue parse packet
 
@@ -806,18 +820,22 @@ void WorldSession::HandleForceSpeedChangeAck(WorldPacket &recv_data)
 
 void WorldSession::HandleSetActiveMoverOpcode(WorldPacket &recv_data)
 {
+    //if(!recv_data) return;
+
     sLog.outDebug("WORLD: Recvd CMSG_SET_ACTIVE_MOVER");
     recv_data.hexlike();
 
     uint64 guid;
     recv_data >> guid;
 
+    if(_player->m_mover_in_queve)
     if(_player->m_mover_in_queve && _player->m_mover_in_queve->GetGUID() == guid)
     {
         _player->m_mover = _player->m_mover_in_queve;
         _player->m_mover_in_queve = NULL;
     }
 
+    if(_player->m_mover)
     if(_player->m_mover->GetGUID() != guid)
     {
         sLog.outError("HandleSetActiveMoverOpcode: incorrect mover guid: mover is " I64FMT " and should be " I64FMT, _player->m_mover->GetGUID(), guid);
@@ -827,15 +845,18 @@ void WorldSession::HandleSetActiveMoverOpcode(WorldPacket &recv_data)
 
 void WorldSession::HandleMoveNotActiveMover(WorldPacket &recv_data)
 {
+    //if(!recv_data) return;
     sLog.outDebug("WORLD: Recvd CMSG_MOVE_NOT_ACTIVE_MOVER");
     recv_data.hexlike();
 
     uint64 old_mover_guid;
     recv_data >> old_mover_guid;
 
+    if(_player->m_mover)
     if(_player->m_mover->GetGUID() == old_mover_guid)
     {
         sLog.outError("HandleMoveNotActiveMover: incorrect mover guid: mover is " I64FMT " and should be " I64FMT " instead of " I64FMT, _player->m_mover->GetGUID(), _player->GetGUID(), old_mover_guid);
+        recv_data.rpos(recv_data.wpos());                   // prevent warnings spam
         return;
     }
 
@@ -852,7 +873,10 @@ void WorldSession::HandleDismissControlledVehicle(WorldPacket &recv_data)
     uint64 vehicleGUID = _player->GetVehicleGUID();
 
     if(!vehicleGUID)                                        // something wrong here...
+    {
+        recv_data.rpos(recv_data.wpos());                   // prevent warnings spam
         return;
+    }
 
     MovementInfo mi;
     ReadMovementInfo(recv_data, &mi);

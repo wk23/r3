@@ -2585,6 +2585,9 @@ template <class T> T Player::ApplySpellMod(uint32 spellId, SpellModOp op, T &bas
     for (SpellModList::iterator itr = m_spellMods[op].begin(); itr != m_spellMods[op].end(); ++itr)
     {
         SpellModifier *mod = *itr;
+        
+        if (!mod)
+            continue;
 
         if(!IsAffectedBySpellmod(spellInfo,mod,spell))
             continue;

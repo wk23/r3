@@ -211,6 +211,7 @@ void ThreatContainer::clearReferences()
 // Return the HostilReference of NULL, if not found
 HostilReference* ThreatContainer::getReferenceByTarget(Unit* pVictim)
 {
+    if(!pVictim) return NULL;
     HostilReference* result = NULL;
     uint64 guid = pVictim->GetGUID();
     for(std::list<HostilReference*>::const_iterator i = iThreatList.begin(); i != iThreatList.end(); ++i)
@@ -230,6 +231,8 @@ HostilReference* ThreatContainer::getReferenceByTarget(Unit* pVictim)
 
 HostilReference* ThreatContainer::addThreat(Unit* pVictim, float pThreat)
 {
+    if(!pVictim) return NULL;
+    if(!pThreat) pThreat=0;
     HostilReference* ref = getReferenceByTarget(pVictim);
     if(ref)
         ref->addThreat(pThreat);
@@ -364,7 +367,7 @@ void ThreatManager::addThreat(Unit* pVictim, float pThreat, SpellSchoolMask scho
     //mobs, NPCs, guards have ThreatList and HateOfflineList
     //players and pets have only InHateListOf
     //HateOfflineList is used co contain unattackable victims (in-flight, in-water, GM etc.)
-
+    if(!pVictim) return;
     // not to self
     if (pVictim == getOwner())
         return;

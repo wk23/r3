@@ -34,6 +34,7 @@ HostilRefManager::~HostilRefManager()
 
 void HostilRefManager::threatAssist(Unit *pVictim, float pThreat, SpellEntry const *pThreatSpell, bool pSingleTarget)
 {
+    if(!pVictim) return;
     HostilReference* ref;
 
     uint32 size = pSingleTarget ? 1 : getSize();            // if pSingleTarget do not devide threat

@@ -712,7 +712,7 @@ class MANGOS_DLL_SPEC Creature : public Unit
                 return;
 		    }
         }
-        bool AreLootAndRewardAllowed() { return (m_unPlayerDamageDone > m_unUnitDamageDone); }
+        bool AreLootAndRewardAllowed() { return (!m_unUnitDamageDone || (m_unPlayerDamageDone > m_unUnitDamageDone)); }
         void ResetObtainedDamage() 
         {
 		    m_unPlayerDamageDone = 0;
