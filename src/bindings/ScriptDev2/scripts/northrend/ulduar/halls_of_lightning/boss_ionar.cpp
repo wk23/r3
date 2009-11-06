@@ -22,7 +22,7 @@ SDCategory: Halls of Lightning
 EndScriptData */
 
 #include "precompiled.h"
-#include "def_halls_of_lightning.h"
+#include "halls_of_lightning.h"
 
 enum
 {
@@ -89,8 +89,8 @@ struct MANGOS_DLL_DECL boss_ionarAI : public ScriptedAI
         m_uiSplit_Timer = 25000;
         m_uiSparkAtHomeCount = 0;
 
-        m_uiStaticOverload_Timer = 5000 + rand()%1000;
-        m_uiBallLightning_Timer = 10000 + rand()%1000;
+        m_uiStaticOverload_Timer = urand(5000, 6000);
+        m_uiBallLightning_Timer = urand(10000, 11000);
 
         m_uiHealthAmountModifier = 1;
 
@@ -127,7 +127,7 @@ struct MANGOS_DLL_DECL boss_ionarAI : public ScriptedAI
     {
         if (m_creature->Attack(pWho, true))
         {
-            m_creature->AddThreat(pWho, 0.0f);
+            m_creature->AddThreat(pWho);
             m_creature->SetInCombatWith(pWho);
             pWho->SetInCombatWith(m_creature);
 
@@ -147,7 +147,7 @@ struct MANGOS_DLL_DECL boss_ionarAI : public ScriptedAI
 
     void KilledUnit(Unit *victim)
     {
-        switch(rand()%3)
+        switch(urand(0, 2))
         {
             case 0: DoScriptText(SAY_SLAY_1, m_creature); break;
             case 1: DoScriptText(SAY_SLAY_2, m_creature); break;
@@ -262,7 +262,7 @@ struct MANGOS_DLL_DECL boss_ionarAI : public ScriptedAI
         }
 
         //Return since we have no target
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         if (m_uiStaticOverload_Timer < uiDiff)
@@ -270,7 +270,7 @@ struct MANGOS_DLL_DECL boss_ionarAI : public ScriptedAI
             if (Unit* pTarget = SelectUnit(SELECT_TARGET_RANDOM, 0))
                 DoCast(pTarget, m_bIsHeroic ? SPELL_STATIC_OVERLOAD_H : SPELL_STATIC_OVERLOAD_N);
 
-            m_uiStaticOverload_Timer = 5000 + rand()%1000;
+            m_uiStaticOverload_Timer = urand(5000, 6000);
         }
         else
             m_uiStaticOverload_Timer -= uiDiff;
@@ -278,7 +278,7 @@ struct MANGOS_DLL_DECL boss_ionarAI : public ScriptedAI
         if (m_uiBallLightning_Timer < uiDiff)
         {
             DoCast(m_creature->getVictim(), m_bIsHeroic ? SPELL_BALL_LIGHTNING_H : SPELL_BALL_LIGHTNING_N);
-            m_uiBallLightning_Timer = 10000 + rand()%1000;
+            m_uiBallLightning_Timer = urand(10000, 11000);
         }
         else
             m_uiBallLightning_Timer -= uiDiff;
@@ -288,11 +288,7 @@ struct MANGOS_DLL_DECL boss_ionarAI : public ScriptedAI
         {
             ++m_uiHealthAmountModifier;
 
-            switch(rand()%2)
-            {
-                case 0: DoScriptText(SAY_SPLIT_1, m_creature); break;
-                case 1: DoScriptText(SAY_SPLIT_2, m_creature); break;
-            }
+            DoScriptText(urand(0, 1) ? SAY_SPLIT_1 : SAY_SPLIT_2, m_creature);
 
             if (m_creature->IsNonMeleeSpellCasted(false))
                 m_creature->InterruptNonMeleeSpells(false);

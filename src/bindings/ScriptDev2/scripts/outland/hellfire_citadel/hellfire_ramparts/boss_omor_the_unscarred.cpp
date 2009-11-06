@@ -79,7 +79,7 @@ struct MANGOS_DLL_DECL boss_omor_the_unscarredAI : public ScriptedAI
 
     void Aggro(Unit *who)
     {
-        switch(rand()%3)
+        switch(urand(0, 2))
         {
             case 0: DoScriptText(SAY_AGGRO_1, m_creature); break;
             case 1: DoScriptText(SAY_AGGRO_2, m_creature); break;
@@ -89,7 +89,7 @@ struct MANGOS_DLL_DECL boss_omor_the_unscarredAI : public ScriptedAI
 
     void KilledUnit(Unit* victim)
     {
-        if (rand()%2)
+        if (urand(0, 1))
             return;
 
         DoScriptText(SAY_KILL_1, m_creature);
@@ -112,7 +112,7 @@ struct MANGOS_DLL_DECL boss_omor_the_unscarredAI : public ScriptedAI
 
     void UpdateAI(const uint32 diff)
     {
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         //only two may be wrong, perhaps increase timer and spawn periodically instead.
@@ -122,7 +122,7 @@ struct MANGOS_DLL_DECL boss_omor_the_unscarredAI : public ScriptedAI
             {
                 m_creature->InterruptNonMeleeSpells(false);
                 DoCast(m_creature,SPELL_SUMMON_FIENDISH_HOUND);
-                Summon_Timer = 15000+rand()%15000;
+                Summon_Timer = urand(15000, 30000);
             }else Summon_Timer -= diff;
         }
 
@@ -154,7 +154,7 @@ struct MANGOS_DLL_DECL boss_omor_the_unscarredAI : public ScriptedAI
             if (temp && temp->GetTypeId() == TYPEID_PLAYER)
             {
                 DoCast(temp,SPELL_ORBITAL_STRIKE);
-                OrbitalStrike_Timer = 14000+rand()%2000;
+                OrbitalStrike_Timer = urand(14000, 16000);
                 playerGUID = temp->GetGUID();
 
                 if (playerGUID)
@@ -178,7 +178,7 @@ struct MANGOS_DLL_DECL boss_omor_the_unscarredAI : public ScriptedAI
             if (Unit* target = SelectUnit(SELECT_TARGET_RANDOM,0))
             {
                 DoCast(target, m_bIsHeroicMode ? H_SPELL_BANE_OF_TREACHERY : SPELL_TREACHEROUS_AURA);
-                Aura_Timer = 8000+rand()%8000;
+                Aura_Timer = urand(8000, 16000);
             }
         }else Aura_Timer -= diff;
 
@@ -190,7 +190,7 @@ struct MANGOS_DLL_DECL boss_omor_the_unscarredAI : public ScriptedAI
                     target = m_creature->getVictim();
 
                 DoCast(target, m_bIsHeroicMode ? H_SPELL_SHADOW_BOLT : SPELL_SHADOW_BOLT);
-                Shadowbolt_Timer = 4000+rand()%2500;
+                Shadowbolt_Timer = urand(4000, 6500);
             }
         }else Shadowbolt_Timer -= diff;
 

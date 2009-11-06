@@ -22,7 +22,7 @@ SDCategory: Zul'Gurub
 EndScriptData */
 
 #include "precompiled.h"
-#include "def_zulgurub.h"
+#include "zulgurub.h"
 
 bool GOHello_go_gong_of_bethekk(Player* pPlayer, GameObject* pGo)
 {
@@ -76,7 +76,7 @@ struct MANGOS_DLL_DECL boss_arlokkAI : public ScriptedAI
     uint32 m_uiSummon_Timer;
     uint32 m_uiSummonCount;
 
-    Unit* m_pMarkedTarget;
+    uint64 m_uiMarkedGUID;
 
     bool m_bIsPhaseTwo;
     bool m_bIsVanished;
@@ -96,7 +96,7 @@ struct MANGOS_DLL_DECL boss_arlokkAI : public ScriptedAI
         m_bIsPhaseTwo = false;
         m_bIsVanished = false;
 
-        m_pMarkedTarget = NULL;
+        m_uiMarkedGUID = 0;
 
         m_creature->SetDisplayId(MODEL_ID_NORMAL);
         m_creature->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
@@ -129,8 +129,9 @@ struct MANGOS_DLL_DECL boss_arlokkAI : public ScriptedAI
 
     void DoSummonPhanters()
     {
-        if (m_pMarkedTarget)
-            DoScriptText(SAY_FEAST_PANTHER, m_creature, m_pMarkedTarget);
+        if (Unit* pUnit = Unit::GetUnit(*m_creature, m_uiMarkedGUID))
+            if (pUnit->isAlive())
+                DoScriptText(SAY_FEAST_PANTHER, m_creature, pUnit);
 
         m_creature->SummonCreature(NPC_ZULIAN_PROWLER, -11532.7998, -1649.6734, 41.4800, 0.0f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 15000);
         m_creature->SummonCreature(NPC_ZULIAN_PROWLER, -11532.9970, -1606.4840, 41.2979, 0.0f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 15000);
@@ -138,15 +139,16 @@ struct MANGOS_DLL_DECL boss_arlokkAI : public ScriptedAI
 
     void JustSummoned(Creature* pSummoned)
     {
-        if (m_pMarkedTarget)
-            pSummoned->AI()->AttackStart(m_pMarkedTarget);
+        if (Unit* pUnit = Unit::GetUnit(*m_creature, m_uiMarkedGUID))
+            if (pUnit->isAlive())
+                pSummoned->AI()->AttackStart(pUnit);
 
         ++m_uiSummonCount;
     }
 
     void UpdateAI(const uint32 uiDiff)
     {
-        if (!m_creature->getVictim() && !m_creature->SelectHostilTarget())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         if (!m_bIsPhaseTwo)
@@ -161,12 +163,21 @@ struct MANGOS_DLL_DECL boss_arlokkAI : public ScriptedAI
 
             if (m_uiMark_Timer < uiDiff)
             {
-                m_pMarkedTarget = SelectUnit(SELECT_TARGET_RANDOM,0);
+                if (Unit* pTarget = SelectUnit(SELECT_TARGET_RANDOM, 0))
+                {
+                    if (Player* pMark = pTarget->GetCharmerOrOwnerPlayerOrPlayerItself())
+                    {
+                        DoCast(pMark, SPELL_MARK);
+                        m_uiMarkedGUID = pMark->GetGUID();
+                    }
+                    else
+                    {
+                        if (m_uiMarkedGUID)
+                            m_uiMarkedGUID = 0;
 
-                if (m_pMarkedTarget)
-                    DoCast(m_pMarkedTarget, SPELL_MARK);
-                else
-                    error_log("SD2: boss_arlokk could not accuire m_pMarkedTarget.");
+                        error_log("SD2: boss_arlokk could not accuire a new target to mark.");
+                    }
+                }
 
                 m_uiMark_Timer = 15000;
             }
@@ -192,7 +203,7 @@ struct MANGOS_DLL_DECL boss_arlokkAI : public ScriptedAI
                 if (m_creature->getThreatManager().getThreat(m_creature->getVictim()))
                     m_creature->getThreatManager().modifyThreatPercent(m_creature->getVictim(),-80);
 
-                m_uiGouge_Timer = 17000+rand()%10000;
+                m_uiGouge_Timer = urand(17000, 27000);
             }
             else
                 m_uiGouge_Timer -= uiDiff;

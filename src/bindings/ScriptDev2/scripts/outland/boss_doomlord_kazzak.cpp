@@ -23,27 +23,30 @@ EndScriptData */
 
 #include "precompiled.h"
 
-#define SAY_INTRO                       -1000147
-#define SAY_AGGRO1                      -1000148
-#define SAY_AGGRO2                      -1000149
-#define SAY_SURPREME1                   -1000150
-#define SAY_SURPREME2                   -1000151
-#define SAY_KILL1                       -1000152
-#define SAY_KILL2                       -1000153
-#define SAY_KILL3                       -1000154
-#define SAY_DEATH                       -1000155
-#define EMOTE_FRENZY                    -1000156
-#define SAY_RAND1                       -1000157
-#define SAY_RAND2                       -1000158
+enum
+{
+    SAY_INTRO                       = -1000147,
+    SAY_AGGRO1                      = -1000148,
+    SAY_AGGRO2                      = -1000149,
+    SAY_SURPREME1                   = -1000150,
+    SAY_SURPREME2                   = -1000151,
+    SAY_KILL1                       = -1000152,
+    SAY_KILL2                       = -1000153,
+    SAY_KILL3                       = -1000154,
+    SAY_DEATH                       = -1000155,
+    EMOTE_GENERIC_FRENZY            = -1000002,
+    SAY_RAND1                       = -1000157,
+    SAY_RAND2                       = -1000158,
 
-#define SPELL_SHADOWVOLLEY              32963
-#define SPELL_CLEAVE                    31779
-#define SPELL_THUNDERCLAP               36706
-#define SPELL_VOIDBOLT                  39329
-#define SPELL_MARKOFKAZZAK              32960
-#define SPELL_ENRAGE                    32964
-#define SPELL_CAPTURESOUL               32966
-#define SPELL_TWISTEDREFLECTION         21063
+    SPELL_SHADOWVOLLEY              = 32963,
+    SPELL_CLEAVE                    = 31779,
+    SPELL_THUNDERCLAP               = 36706,
+    SPELL_VOIDBOLT                  = 39329,
+    SPELL_MARKOFKAZZAK              = 32960,
+    SPELL_ENRAGE                    = 32964,
+    SPELL_CAPTURESOUL               = 32966,
+    SPELL_TWISTEDREFLECTION         = 21063
+};
 
 struct MANGOS_DLL_DECL boss_doomlordkazzakAI : public ScriptedAI
 {
@@ -59,9 +62,9 @@ struct MANGOS_DLL_DECL boss_doomlordkazzakAI : public ScriptedAI
 
     void Reset()
     {
-        ShadowVolley_Timer = 6000 + rand()%4000;
+        ShadowVolley_Timer = urand(6000, 10000);
         Cleave_Timer = 7000;
-        ThunderClap_Timer = 14000 + rand()%4000;
+        ThunderClap_Timer = urand(14000, 18000);
         VoidBolt_Timer = 30000;
         MarkOfKazzak_Timer = 25000;
         Enrage_Timer = 60000;
@@ -75,11 +78,7 @@ struct MANGOS_DLL_DECL boss_doomlordkazzakAI : public ScriptedAI
 
     void Aggro(Unit *who)
     {
-        switch(rand()%2)
-        {
-            case 0: DoScriptText(SAY_AGGRO1, m_creature); break;
-            case 1: DoScriptText(SAY_AGGRO2, m_creature); break;
-        }
+        DoScriptText(urand(0, 1) ? SAY_AGGRO1 : SAY_AGGRO2, m_creature);
     }
 
     void KilledUnit(Unit* victim)
@@ -90,7 +89,7 @@ struct MANGOS_DLL_DECL boss_doomlordkazzakAI : public ScriptedAI
 
         DoCast(m_creature,SPELL_CAPTURESOUL);
 
-        switch(rand()%3)
+        switch(urand(0, 2))
         {
             case 0: DoScriptText(SAY_KILL1, m_creature); break;
             case 1: DoScriptText(SAY_KILL2, m_creature); break;
@@ -106,35 +105,35 @@ struct MANGOS_DLL_DECL boss_doomlordkazzakAI : public ScriptedAI
     void UpdateAI(const uint32 diff)
     {
         //Return since we have no target
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         //ShadowVolley_Timer
         if (ShadowVolley_Timer < diff)
         {
             DoCast(m_creature->getVictim(), SPELL_SHADOWVOLLEY);
-            ShadowVolley_Timer = 4000 + rand()%2000;
+            ShadowVolley_Timer = urand(4000, 6000);
         }else ShadowVolley_Timer -= diff;
 
         //Cleave_Timer
         if (Cleave_Timer < diff)
         {
             DoCast(m_creature->getVictim(),SPELL_CLEAVE);
-            Cleave_Timer = 8000 + rand()%4000;
+            Cleave_Timer = urand(8000, 12000);
         }else Cleave_Timer -= diff;
 
         //ThunderClap_Timer
         if (ThunderClap_Timer < diff)
         {
             DoCast(m_creature->getVictim(),SPELL_THUNDERCLAP);
-            ThunderClap_Timer = 10000 + rand()%4000;
+            ThunderClap_Timer = urand(10000, 14000);
         }else ThunderClap_Timer -= diff;
 
         //VoidBolt_Timer
         if (VoidBolt_Timer < diff)
         {
             DoCast(m_creature->getVictim(),SPELL_VOIDBOLT);
-            VoidBolt_Timer = 15000 + rand()%3000;
+            VoidBolt_Timer = urand(15000, 18000);
         }else VoidBolt_Timer -= diff;
 
         //MarkOfKazzak_Timer
@@ -151,7 +150,7 @@ struct MANGOS_DLL_DECL boss_doomlordkazzakAI : public ScriptedAI
         //Enrage_Timer
         if (Enrage_Timer < diff)
         {
-            DoScriptText(EMOTE_FRENZY, m_creature);
+            DoScriptText(EMOTE_GENERIC_FRENZY, m_creature);
             DoCast(m_creature,SPELL_ENRAGE);
             Enrage_Timer = 30000;
         }else Enrage_Timer -= diff;

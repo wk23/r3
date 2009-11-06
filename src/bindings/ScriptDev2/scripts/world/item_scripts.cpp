@@ -67,7 +67,7 @@ bool ItemUse_item_draenei_fishing_net(Player* pPlayer, Item* pItem, const SpellC
     //{
     if (pPlayer->GetQuestStatus(9452) == QUEST_STATUS_INCOMPLETE)
     {
-        if (rand()%100 < 35)
+        if (!urand(0, 2))
         {
             Creature *Murloc = pPlayer->SummonCreature(17102,pPlayer->GetPositionX() ,pPlayer->GetPositionY()+20, pPlayer->GetPositionZ(), 0,TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT,10000);
             if (Murloc)
@@ -150,45 +150,6 @@ bool ItemUse_item_gor_dreks_ointment(Player* pPlayer, Item* pItem, const SpellCa
     return false;
 }
 
-/*#####
-# item_blood_gem
-#####*/
-
-bool ItemUse_item_blood_gem(Player *player, Item* _Item, SpellCastTargets const& targets)
-{
-    if (targets.getUnitTarget() && targets.getUnitTarget()->GetTypeId()==TYPEID_UNIT && (targets.getUnitTarget()->GetMaxHealth() < 35) && targets.getUnitTarget()->GetEntry() == 26411)
-        return false;
-
-    player->SendEquipError(EQUIP_ERR_YOU_CAN_NEVER_USE_THAT_ITEM,_Item,NULL);
-    return true;
-}
-
-/*#####
-# item_frost_gem
-#####*/
-
-bool ItemUse_item_frost_gem(Player *player, Item* _Item, SpellCastTargets const& targets)
-{
-    if (targets.getUnitTarget() && targets.getUnitTarget()->GetTypeId()==TYPEID_UNIT && (targets.getUnitTarget()->GetMaxHealth() < 35) && targets.getUnitTarget()->GetEntry() == 26283)
-        return false;
-
-    player->SendEquipError(EQUIP_ERR_YOU_CAN_NEVER_USE_THAT_ITEM,_Item,NULL);
-    return true;
-}
-
-/*#####
-# item_unholy_gem
-#####*/
-
-bool ItemUse_item_unholy_gem(Player *player, Item* _Item, SpellCastTargets const& targets)
-{
-    if (targets.getUnitTarget() && targets.getUnitTarget()->GetTypeId()==TYPEID_UNIT && (targets.getUnitTarget()->GetMaxHealth() < 35) && targets.getUnitTarget()->GetEntry() == 26926)
-        return false;
-
-    player->SendEquipError(EQUIP_ERR_YOU_CAN_NEVER_USE_THAT_ITEM,_Item,NULL);
-    return true;
-}
-
 void AddSC_item_scripts()
 {
     Script *newscript;
@@ -216,20 +177,5 @@ void AddSC_item_scripts()
     newscript = new Script;
     newscript->Name = "item_gor_dreks_ointment";
     newscript->pItemUse = &ItemUse_item_gor_dreks_ointment;
-    newscript->RegisterSelf();
-
-    newscript = new Script;
-    newscript->Name = "item_blood_gem";
-    newscript->pItemUse = &ItemUse_item_blood_gem;
-    newscript->RegisterSelf();
-    
-    newscript = new Script;
-    newscript->Name = "item_frost_gem";
-    newscript->pItemUse = &ItemUse_item_frost_gem;
-    newscript->RegisterSelf();
-    
-    newscript = new Script;
-    newscript->Name = "item_unholy_gem";
-    newscript->pItemUse = &ItemUse_item_unholy_gem;
     newscript->RegisterSelf();
 }

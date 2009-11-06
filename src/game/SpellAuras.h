@@ -56,9 +56,18 @@ class MANGOS_DLL_SPEC Aura
 
     public:
         //aura handlers
-        void HandleNULL(bool, bool) { /* Not implemented. */ }
-        void HandleUnused(bool, bool) { /* Not used or useless. */ }
-        void HandleNoImmediateEffect(bool, bool) { /* Aura does not have immediate effect at add/remove and handled by ID in other place. */ }
+        void HandleNULL(bool, bool)
+        {
+            // NOT IMPLEMENTED
+        }
+        void HandleUnused(bool, bool)
+        {
+            // NOT USED BY ANY SPELL OR USELESS
+        }
+        void HandleNoImmediateEffect(bool, bool)
+        {
+            // aura not have immediate effect at add/remove and handled by ID in other code place
+        }
         void HandleBindSight(bool Apply, bool Real);
         void HandleModPossess(bool Apply, bool Real);
         void HandlePeriodicDamage(bool Apply, bool Real);
@@ -150,6 +159,7 @@ class MANGOS_DLL_SPEC Aura
         void HandleFarSight(bool Apply, bool Real);
         void HandleModPossessPet(bool Apply, bool Real);
         void HandleModMechanicImmunity(bool Apply, bool Real);
+        void HandleModMechanicImmunityMask(bool Apply, bool Real);
         void HandleAuraModSkill(bool Apply, bool Real);
         void HandleModDamagePercentDone(bool Apply, bool Real);
         void HandleModPercentStat(bool Apply, bool Real);
@@ -202,10 +212,8 @@ class MANGOS_DLL_SPEC Aura
         void HandleAuraIncreaseBaseHealthPercent(bool Apply, bool Real);
         void HandleNoReagentUseAura(bool Apply, bool Real);
         void HandlePhase(bool Apply, bool Real);
-        void HandleAuraInitializeImages(bool Apply, bool Real);
-        void HandleAuraCloneCaster(bool Apply, bool Real);
-        void HandleAllowOnlyAbility(bool Apply, bool Real);
-        void HandleAddCreatureImmunity(bool apply, bool Real);
+        void HandleModTargetArmorPct(bool Apply, bool Real);
+        void HandleAuraModAllCritChance(bool Apply, bool Real);
 
         virtual ~Aura();
 
@@ -256,7 +264,7 @@ class MANGOS_DLL_SPEC Aura
             m_procCharges = charges;
             SendAuraUpdate(false);
         }
-        bool DropAuraCharge() // return true if last charge dropped
+        bool DropAuraCharge()                               // return true if last charge dropped
         {
             if (m_procCharges == 0)
                 return false;
@@ -269,7 +277,6 @@ class MANGOS_DLL_SPEC Aura
 
         void SetAura(bool remove) { m_target->SetVisibleAura(m_auraSlot, remove ? 0 : GetId()); }
         void SendAuraUpdate(bool remove);
-        void SendFakeAuraUpdate(uint32 auraId, bool remove);
 
         int8 GetStackAmount() {return m_stackAmount;}
         void SetStackAmount(uint8 num);
@@ -288,11 +295,7 @@ class MANGOS_DLL_SPEC Aura
         bool IsDeathPersistent() const { return m_isDeathPersist; }
         bool IsRemovedOnShapeLost() const { return m_isRemovedOnShapeLost; }
         bool IsInUse() const { return m_in_use;}
-        bool IsStacking() const { return m_stacking;}
         bool IsDeleted() const { return m_deleted;}
-
-        void SetDamageDoneBySpell(int32 damage) { m_damageDoneBySpell = damage; }
-        void SetHealingDoneBySpell(int32 healing) { m_healingDoneBySpell = healing; }
 
         void SetInUse(bool state)
         {
@@ -341,6 +344,7 @@ class MANGOS_DLL_SPEC Aura
         void PeriodicDummyTick();
 
         bool IsCritFromAbilityAura(Unit* caster, uint32& damage);
+        void ReapplyAffectedPassiveAuras(Unit* target);
 
         Modifier m_modifier;
         SpellModifier *m_spellmod;
@@ -350,9 +354,6 @@ class MANGOS_DLL_SPEC Aura
         uint64 m_caster_guid;
         uint64 m_castItemGuid;                              // it is NOT safe to keep a pointer to the item because it may get deleted
         time_t m_applyTime;
-
-        int32 m_damageDoneBySpell;
-        int32 m_healingDoneBySpell;
 
         int32 m_currentBasePoints;                          // cache SpellEntry::EffectBasePoints and use for set custom base points
         int32 m_maxduration;                                // Max aura duration
@@ -380,11 +381,11 @@ class MANGOS_DLL_SPEC Aura
         bool m_isRemovedOnShapeLost:1;
         bool m_deleted:1;                                   // true if RemoveAura(iterator) called while in Aura::ApplyModifier call (added to Unit::m_deletedAuras)
         bool m_isSingleTargetAura:1;                        // true if it's a single target spell and registered at caster - can change at spell steal for example
-        bool m_stacking:1;                                  // Aura is not overwritten, but effects are not cumulative with similar effects
 
         uint32 m_in_use;                                    // > 0 while in Aura::ApplyModifier call/Aura::Update/etc
     private:
         void CleanupTriggeredSpells();
+        bool IsNeedVisibleSlot(Unit const* caster) const;   // helper for check req. visibility slot
 };
 
 class MANGOS_DLL_SPEC AreaAura : public Aura

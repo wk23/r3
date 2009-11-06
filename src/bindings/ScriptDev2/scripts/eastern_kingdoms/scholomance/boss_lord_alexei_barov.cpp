@@ -22,7 +22,7 @@ SDCategory: Scholomance
 EndScriptData */
 
 #include "precompiled.h"
-#include "def_scholomance.h"
+#include "scholomance.h"
 
 #define SPELL_IMMOLATE             20294                    // Old ID  was 15570
 #define SPELL_VEILOFSHADOW         17820
@@ -55,7 +55,7 @@ struct MANGOS_DLL_DECL boss_lordalexeibarovAI : public ScriptedAI
 
     void UpdateAI(const uint32 diff)
     {
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         //Immolate_Timer

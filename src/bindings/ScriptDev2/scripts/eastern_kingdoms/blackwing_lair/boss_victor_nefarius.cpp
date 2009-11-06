@@ -74,7 +74,7 @@ struct MANGOS_DLL_DECL boss_victor_nefariusAI : public ScriptedAI
         NefarianGUID = 0;
         Reset();
         srand(time(NULL));
-        switch (rand()%20)
+        switch(urand(0, 19))
         {
             case 0:
                 DrakType1 = CREATURE_BRONZE_DRAKANOID;
@@ -211,13 +211,13 @@ struct MANGOS_DLL_DECL boss_victor_nefariusAI : public ScriptedAI
         if (who && who->GetTypeId() == TYPEID_PLAYER && m_creature->IsHostileTo(who))
         {
             //Add them to our threat list
-            m_creature->AddThreat(who,0.0f);
+            m_creature->AddThreat(who);
         }
     }
 
     void UpdateAI(const uint32 diff)
     {
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         //Only do this if we haven't spawned nef yet
@@ -231,7 +231,7 @@ struct MANGOS_DLL_DECL boss_victor_nefariusAI : public ScriptedAI
                 if (target)
                     DoCast(target,SPELL_SHADOWBOLT);
 
-                ShadowBoltTimer = 3000 + (rand()%7000);
+                ShadowBoltTimer = urand(3000, 10000);
             }else ShadowBoltTimer -= diff;
 
             //FearTimer
@@ -242,7 +242,7 @@ struct MANGOS_DLL_DECL boss_victor_nefariusAI : public ScriptedAI
                 if (target)
                     DoCast(target,SPELL_FEAR);
 
-                FearTimer = 10000 + (rand()%10000);
+                FearTimer = urand(10000, 20000);
             }else FearTimer -= diff;
 
             //Add spawning mechanism
@@ -254,7 +254,7 @@ struct MANGOS_DLL_DECL boss_victor_nefariusAI : public ScriptedAI
                 Unit* target = NULL;
 
                 //1 in 3 chance it will be a chromatic
-                if (rand()%3 == 0)
+                if (!urand(0, 2))
                     CreatureID = CREATURE_CHROMATIC_DRAKANOID;
                 else CreatureID = DrakType1;
 
@@ -270,7 +270,7 @@ struct MANGOS_DLL_DECL boss_victor_nefariusAI : public ScriptedAI
                 }
 
                 //1 in 3 chance it will be a chromatic
-                if (rand()%3 == 0)
+                if (!urand(0, 2))
                     CreatureID = CREATURE_CHROMATIC_DRAKANOID;
                 else CreatureID = DrakType2;
 

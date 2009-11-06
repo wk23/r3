@@ -22,7 +22,7 @@ SDCategory: Black Temple
 EndScriptData */
 
 #include "precompiled.h"
-#include "def_black_temple.h"
+#include "black_temple.h"
 
 //Sound'n'speech
 //Suffering
@@ -221,7 +221,7 @@ struct MANGOS_DLL_DECL boss_reliquary_of_soulsAI : public ScriptedAI
                     m_creature->SetUInt32Value(UNIT_NPC_EMOTESTATE,375);
                     SummonEssenceTimer = 8000;
                     AnimationTimer = 5100;
-                    m_creature->AddThreat(who, 1.0f);
+                    m_creature->AddThreat(who);
                 }
             }
         }
@@ -229,7 +229,7 @@ struct MANGOS_DLL_DECL boss_reliquary_of_soulsAI : public ScriptedAI
 
     void SummonSoul()
     {
-        uint32 random = rand()%6;
+        uint32 random = urand(0, 5);
         float x = Coords[random].x;
         float y = Coords[random].y;
 
@@ -239,7 +239,7 @@ struct MANGOS_DLL_DECL boss_reliquary_of_soulsAI : public ScriptedAI
         {
             ((npc_enslaved_soulAI*)Soul->AI())->ReliquaryGUID = m_creature->GetGUID();
             Soul->CastSpell(Soul, ENSLAVED_SOUL_PASSIVE, true);
-            Soul->AddThreat(target, 1.0f);
+            Soul->AddThreat(target);
             ++SoulCount;
         }
     }
@@ -249,14 +249,14 @@ struct MANGOS_DLL_DECL boss_reliquary_of_soulsAI : public ScriptedAI
         if (!target)
             return;
 
-        std::list<HostilReference*>& m_threatlist = target->getThreatManager().getThreatList();
-        std::list<HostilReference*>::iterator itr = m_threatlist.begin();
+        std::list<HostileReference*>& m_threatlist = target->getThreatManager().getThreatList();
+        std::list<HostileReference*>::iterator itr = m_threatlist.begin();
         for(; itr != m_threatlist.end(); ++itr)
         {
             Unit* pUnit = Unit::GetUnit((*m_creature), (*itr)->getUnitGuid());
             if (pUnit)
             {
-                m_creature->AddThreat(pUnit, 1.0f);         // This is so that we make sure the unit is in Reliquary's threat list before we reset the unit's threat.
+                m_creature->AddThreat(pUnit);                // This is so that we make sure the unit is in Reliquary's threat list before we reset the unit's threat.
                 m_creature->getThreatManager().modifyThreatPercent(pUnit, -100);
                 float threat = target->getThreatManager().getThreat(pUnit);
                 m_creature->AddThreat(pUnit, threat);       // This makes it so that the unit has the same amount of threat in Reliquary's threatlist as in the target creature's (One of the Essences).
@@ -301,7 +301,7 @@ struct MANGOS_DLL_DECL boss_reliquary_of_soulsAI : public ScriptedAI
 
                     if (Unit* target = SelectUnit(SELECT_TARGET_TOPAGGRO, 0))
                     {
-                        EssenceSuffering->AddThreat(target, 1.0f);
+                        EssenceSuffering->AddThreat(target);
                         EssenceSuffering->AI()->AttackStart(target);
                     }
 
@@ -405,7 +405,7 @@ struct MANGOS_DLL_DECL boss_reliquary_of_soulsAI : public ScriptedAI
 
                         if (Unit* target = SelectUnit(SELECT_TARGET_RANDOM, 0))
                         {
-                            EssenceDesire->AddThreat(target, 1.0f);
+                            EssenceDesire->AddThreat(target);
                             EssenceDesire->AI()->AttackStart(target);
                         }
 
@@ -511,7 +511,7 @@ struct MANGOS_DLL_DECL boss_reliquary_of_soulsAI : public ScriptedAI
                     {
                         if (Unit* target = SelectUnit(SELECT_TARGET_TOPAGGRO, 0))
                         {
-                            EssenceAnger->AddThreat(target, 1.0f);
+                            EssenceAnger->AddThreat(target);
                             EssenceAnger->AI()->AttackStart(target);
                         }
 
@@ -594,7 +594,7 @@ struct MANGOS_DLL_DECL boss_essence_of_sufferingAI : public ScriptedAI
 
     void KilledUnit(Unit *victim)
     {
-        switch(rand()%3)
+        switch(urand(0, 2))
         {
             case 0: DoScriptText(SUFF_SAY_SLAY1, m_creature); break;
             case 1: DoScriptText(SUFF_SAY_SLAY2, m_creature); break;
@@ -608,12 +608,12 @@ struct MANGOS_DLL_DECL boss_essence_of_sufferingAI : public ScriptedAI
 
     void CastFixate()
     {
-        std::list<HostilReference*>& m_threatlist = m_creature->getThreatManager().getThreatList();
+        std::list<HostileReference*>& m_threatlist = m_creature->getThreatManager().getThreatList();
         if (m_threatlist.empty())
             return;                                         // No point continuing if empty threatlist.
 
         std::list<Unit*> targets;
-        std::list<HostilReference*>::iterator itr = m_threatlist.begin();
+        std::list<HostileReference*>::iterator itr = m_threatlist.begin();
         for(; itr != m_threatlist.end(); ++itr)
         {
             Unit* pUnit = Unit::GetUnit((*m_creature), (*itr)->getUnitGuid());
@@ -636,7 +636,7 @@ struct MANGOS_DLL_DECL boss_essence_of_sufferingAI : public ScriptedAI
 
     void UpdateAI(const uint32 diff)
     {
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         if (m_creature->GetHealth() <= (m_creature->GetMaxHealth()*0.1))
@@ -660,7 +660,7 @@ struct MANGOS_DLL_DECL boss_essence_of_sufferingAI : public ScriptedAI
         // Prevent overlapping yells
         if (AggroYellTimer)
         {
-            if (AggroYellTimer < diff)
+            if (AggroYellTimer <= diff)
             {
                 DoScriptText(SUFF_SAY_AGGRO, m_creature);
                 AggroYellTimer = 0;
@@ -730,7 +730,7 @@ struct MANGOS_DLL_DECL boss_essence_of_desireAI : public ScriptedAI
 
     void KilledUnit(Unit *victim)
     {
-        switch(rand()%3)
+        switch(urand(0, 2))
         {
             case 0: DoScriptText(DESI_SAY_SLAY1, m_creature); break;
             case 1: DoScriptText(DESI_SAY_SLAY2, m_creature); break;
@@ -762,7 +762,7 @@ struct MANGOS_DLL_DECL boss_essence_of_desireAI : public ScriptedAI
     void UpdateAI(const uint32 diff)
     {
         //Return since we have no target
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         if (m_creature->GetHealth() <= (m_creature->GetMaxHealth()*0.1))
@@ -781,7 +781,7 @@ struct MANGOS_DLL_DECL boss_essence_of_desireAI : public ScriptedAI
         if (DeadenTimer < diff)
         {
             DoCast(m_creature->getVictim(), SPELL_DEADEN);
-            DeadenTimer = 30000 + rand()%30001;
+            DeadenTimer = urand(30000, 60000);
         }else DeadenTimer -= diff;
 
         if (SoulShockTimer < diff)
@@ -789,7 +789,7 @@ struct MANGOS_DLL_DECL boss_essence_of_desireAI : public ScriptedAI
             DoCast(m_creature->getVictim(), SPELL_SOUL_SHOCK);
             SoulShockTimer = 40000;
 
-            if (rand()%2 == 0)
+            if (urand(0, 1))
                 DoScriptText(DESI_SAY_SPEC, m_creature);
 
         }else SoulShockTimer -= diff;
@@ -857,16 +857,12 @@ struct MANGOS_DLL_DECL boss_essence_of_angerAI : public ScriptedAI
 
     void KilledUnit(Unit *victim)
     {
-        switch(rand()%2)
-        {
-            case 0: DoScriptText(ANGER_SAY_SLAY1, m_creature); break;
-            case 1: DoScriptText(ANGER_SAY_SLAY2, m_creature); break;
-        }
+        DoScriptText(urand(0, 1) ? ANGER_SAY_SLAY1 : ANGER_SAY_SLAY2, m_creature);
     }
 
     void UpdateAI(const uint32 diff)
     {
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         if (!CheckedAggro)
@@ -877,7 +873,7 @@ struct MANGOS_DLL_DECL boss_essence_of_angerAI : public ScriptedAI
 
         if (AggroYellTimer)
         {
-            if (AggroYellTimer < diff)
+            if (AggroYellTimer <= diff)
             {
                 DoScriptText(ANGER_SAY_FREED2, m_creature);
                 AggroYellTimer = 0;

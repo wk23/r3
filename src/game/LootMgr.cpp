@@ -35,17 +35,17 @@ static Rates const qualityToRate[MAX_ITEM_QUALITY] = {
     RATE_DROP_ITEM_ARTIFACT,                                // ITEM_QUALITY_ARTIFACT
 };
 
-LootStore LootTemplates_Creature(     "creature_loot_template",     "creature entry",               true);
-LootStore LootTemplates_Disenchant(   "disenchant_loot_template",   "item disenchant id",           true);
-LootStore LootTemplates_Fishing(      "fishing_loot_template",      "area id",                      true);
-LootStore LootTemplates_Gameobject(   "gameobject_loot_template",   "gameobject entry",             true);
-LootStore LootTemplates_Item(         "item_loot_template",         "item entry",                   true);
-LootStore LootTemplates_Milling(      "milling_loot_template",      "item entry (herb)",            true);
-LootStore LootTemplates_Pickpocketing("pickpocketing_loot_template","creature pickpocket lootid",   true);
-LootStore LootTemplates_Prospecting(  "prospecting_loot_template",  "item entry (ore)",             true);
-LootStore LootTemplates_QuestMail(    "quest_mail_loot_template",   "quest id (with mail template)",false);
-LootStore LootTemplates_Reference(    "reference_loot_template",    "reference id",                 false);
-LootStore LootTemplates_Skinning(     "skinning_loot_template",     "creature skinning id",         true);
+LootStore LootTemplates_Creature(     "creature_loot_template",     "creature entry",                 true);
+LootStore LootTemplates_Disenchant(   "disenchant_loot_template",   "item disenchant id",             true);
+LootStore LootTemplates_Fishing(      "fishing_loot_template",      "area id",                        true);
+LootStore LootTemplates_Gameobject(   "gameobject_loot_template",   "gameobject entry",               true);
+LootStore LootTemplates_Item(         "item_loot_template",         "item entry",                     true);
+LootStore LootTemplates_Mail(         "mail_loot_template",         "mail template id",               false);
+LootStore LootTemplates_Milling(      "milling_loot_template",      "item entry (herb)",              true);
+LootStore LootTemplates_Pickpocketing("pickpocketing_loot_template","creature pickpocket lootid",     true);
+LootStore LootTemplates_Prospecting(  "prospecting_loot_template",  "item entry (ore)",               true);
+LootStore LootTemplates_Reference(    "reference_loot_template",    "reference id",                   false);
+LootStore LootTemplates_Skinning(     "skinning_loot_template",     "creature skinning id",           true);
 LootStore LootTemplates_Spell(        "spell_loot_template",        "spell id (random item creating)",false);
 
 class LootTemplate::LootGroup                               // A set of loot definitions for items (refs are not allowed)
@@ -364,18 +364,18 @@ bool LootItem::AllowedForPlayer(Player const * player) const
 // Inserts the item into the loot (called by LootTemplate processors)
 void Loot::AddItem(LootStoreItem const & item)
 {
-        //1
-    int tempcount=urand(1, sWorld.getRate(RATE_DROP_ITEM_POOR));
-    for (int i = 0; i < tempcount; ++i) {
     if (item.needs_quest)                                   // Quest drop
     {
-        if (i>=1) continue;
         if (quest_items.size() < MAX_NR_QUEST_ITEMS)
             quest_items.push_back(LootItem(item));
     }
     else if (items.size() < MAX_NR_LOOT_ITEMS)              // Non-quest drop
     {
-        items.push_back(LootItem(item));
+        //1
+        int tempcount=urand(1, sWorld.getRate(RATE_DROP_ITEM_POOR));
+        for (int i = 0; i < tempcount; ++i)
+              items.push_back(LootItem(item));
+        //items.push_back(LootItem(item));
 
         // non-conditional one-player only items are counted here,
         // free for all items are counted in FillFFALoot(),
@@ -387,7 +387,6 @@ void Loot::AddItem(LootStoreItem const & item)
                 ++unlootedCount;
         }
     }
-    }//for
 }
 
 // Calls processor of corresponding LootTemplate (which handles everything including references)
@@ -1098,6 +1097,10 @@ void LoadLootTemplates_Creature()
     for(LootIdSet::const_iterator itr = ids_setUsed.begin(); itr != ids_setUsed.end(); ++itr)
         ids_set.erase(*itr);
 
+    // for alterac valley we've defined Player-loot inside creature_loot_template id=0
+    // this hack is used, so that we won't need to create an extra table player_loot_template for just one case
+    ids_set.erase(0);
+
     // output error for any still listed (not referenced from appropriate table) ids
     LootTemplates_Creature.ReportUnusedIds(ids_set);
 }
@@ -1257,28 +1260,19 @@ void LoadLootTemplates_Prospecting()
     LootTemplates_Prospecting.ReportUnusedIds(ids_set);
 }
 
-void LoadLootTemplates_QuestMail()
+void LoadLootTemplates_Mail()
 {
     LootIdSet ids_set;
-    LootTemplates_QuestMail.LoadAndCollectLootIds(ids_set);
+    LootTemplates_Mail.LoadAndCollectLootIds(ids_set);
 
     // remove real entries and check existence loot
-    ObjectMgr::QuestMap const& questMap = objmgr.GetQuestTemplates();
-    for(ObjectMgr::QuestMap::const_iterator itr = questMap.begin(); itr != questMap.end(); ++itr )
-    {
-        if(!itr->second->GetRewMailTemplateId())
-            continue;
-
-        if(ids_set.count(itr->first))
-            ids_set.erase(itr->first);
-        /* disabled reporting: some quest mails not include items
-        else
-            LootTemplates_QuestMail.ReportNotExistedId(itr->first);
-        */
-    }
+    for(uint32 i = 1; i < sMailTemplateStore.GetNumRows(); ++i )
+        if(sMailTemplateStore.LookupEntry(i))
+            if(ids_set.count(i))
+                ids_set.erase(i);
 
     // output error for any still listed (not referenced from appropriate table) ids
-    LootTemplates_QuestMail.ReportUnusedIds(ids_set);
+    LootTemplates_Mail.ReportUnusedIds(ids_set);
 }
 
 void LoadLootTemplates_Skinning()
@@ -1327,7 +1321,7 @@ void LoadLootTemplates_Spell()
         {
             // not report about not trainable spells (optionally supported by DB)
             // ignore 61756 (Northrend Inscription Research (FAST QA VERSION) for example
-            if (!(spellInfo->Attributes & SPELL_ATTR_NOT_SHAPESHIFT) || (spellInfo->Attributes & SPELL_ATTR_UNK5))
+            if (!(spellInfo->Attributes & SPELL_ATTR_NOT_SHAPESHIFT) || (spellInfo->Attributes & SPELL_ATTR_TRADESPELL))
             {
                 LootTemplates_Spell.ReportNotExistedId(spell_id);
             }
@@ -1355,7 +1349,7 @@ void LoadLootTemplates_Reference()
     LootTemplates_Skinning.CheckLootRefs(&ids_set);
     LootTemplates_Disenchant.CheckLootRefs(&ids_set);
     LootTemplates_Prospecting.CheckLootRefs(&ids_set);
-    LootTemplates_QuestMail.CheckLootRefs(&ids_set);
+    LootTemplates_Mail.CheckLootRefs(&ids_set);
     LootTemplates_Reference.CheckLootRefs(&ids_set);
 
     // output error for any still listed ids (not referenced from any loot table)

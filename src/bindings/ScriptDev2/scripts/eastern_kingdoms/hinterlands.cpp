@@ -35,18 +35,16 @@ EndContentData */
 
 enum
 {
-    SAY_OOX_START           = -1000416,
-    SAY_OOX_AGGRO           = -1000417,
-    SAY_OOX_DANGER          = -1000418,
-    SAY_OOX_COMPLETE        = -1000419,
+    SAY_OOX_START           = -1000287,
+    SAY_OOX_AGGRO1          = -1000288,
+    SAY_OOX_AGGRO2          = -1000289,
+    SAY_OOX_AMBUSH          = -1000290,
+    SAY_OOX_END             = -1000292,
 
     QUEST_RESQUE_OOX_09     = 836,
 
     NPC_MARAUDING_OWL       = 7808,
-    NPC_VILE_AMBUSHER       = 7809,
-
-    FACTION_ESCORTEE_A      = 774,
-    FACTION_ESCORTEE_H      = 775
+    NPC_VILE_AMBUSHER       = 7809
 };
 
 struct MANGOS_DLL_DECL npc_00x09hlAI : public npc_escortAI
@@ -60,13 +58,13 @@ struct MANGOS_DLL_DECL npc_00x09hlAI : public npc_escortAI
         switch(uiPointId)
         {
             case 26:
-                DoScriptText(SAY_OOX_DANGER, m_creature);
+                DoScriptText(SAY_OOX_AMBUSH, m_creature);
                 break;
             case 43:
-                DoScriptText(SAY_OOX_DANGER, m_creature);
+                DoScriptText(SAY_OOX_AMBUSH, m_creature);
                 break;
             case 64:
-                DoScriptText(SAY_OOX_COMPLETE, m_creature);
+                DoScriptText(SAY_OOX_END, m_creature);
                 if (Player* pPlayer = GetPlayerForEscort())
                     pPlayer->GroupEventHappens(QUEST_RESQUE_OOX_09, m_creature);
                 break;
@@ -78,19 +76,19 @@ struct MANGOS_DLL_DECL npc_00x09hlAI : public npc_escortAI
         switch(uiPointId)
         {
             case 27:
-                for(int i = 0; i < 3; ++i)
+                for(uint8 i = 0; i < 3; ++i)
                 {
                     float fX, fY, fZ;
-                    m_creature->GetRandomPoint(147.927444, -3851.513428, 130.893, 7.0f, fX, fY, fZ);
+                    m_creature->GetRandomPoint(147.927444f, -3851.513428f, 130.893f, 7.0f, fX, fY, fZ);
 
                     m_creature->SummonCreature(NPC_MARAUDING_OWL, fX, fY, fZ, 0.0f, TEMPSUMMON_CORPSE_TIMED_DESPAWN, 25000);
                 }
                 break;
             case 44:
-                for(int i = 0; i < 3; ++i)
+                for(uint8 i = 0; i < 3; ++i)
                 {
                     float fX, fY, fZ;
-                    m_creature->GetRandomPoint(-141.151581, -4291.213867, 120.130, 7.0f, fX, fY, fZ);
+                    m_creature->GetRandomPoint(-141.151581f, -4291.213867f, 120.130f, 7.0f, fX, fY, fZ);
 
                     m_creature->SummonCreature(NPC_VILE_AMBUSHER, fX, fY, fZ, 0.0f, TEMPSUMMON_CORPSE_TIMED_DESPAWN, 25000);
                 }
@@ -103,7 +101,10 @@ struct MANGOS_DLL_DECL npc_00x09hlAI : public npc_escortAI
         if (pWho->GetEntry() == NPC_MARAUDING_OWL || pWho->GetEntry() == NPC_VILE_AMBUSHER)
             return;
 
-        DoScriptText(SAY_OOX_AGGRO, m_creature);
+        if (urand(0, 1))
+            DoScriptText(SAY_OOX_AGGRO1, m_creature);
+        else
+            DoScriptText(SAY_OOX_AGGRO2, m_creature);
     }
 
     void JustSummoned(Creature* pSummoned)
@@ -119,9 +120,9 @@ bool QuestAccept_npc_00x09hl(Player* pPlayer, Creature* pCreature, const Quest* 
         pCreature->SetStandState(UNIT_STAND_STATE_STAND);
 
         if (pPlayer->GetTeam() == ALLIANCE)
-            pCreature->setFaction(FACTION_ESCORTEE_A);
+            pCreature->setFaction(FACTION_ESCORT_A_PASSIVE);
         else if (pPlayer->GetTeam() == HORDE)
-            pCreature->setFaction(FACTION_ESCORTEE_H);
+            pCreature->setFaction(FACTION_ESCORT_H_PASSIVE);
 
         DoScriptText(SAY_OOX_START, pCreature, pPlayer);
 
@@ -203,7 +204,7 @@ struct MANGOS_DLL_DECL npc_rinjiAI : public npc_escortAI
 
     void Aggro(Unit* pWho)
     {
-        if (IsBeingEscorted)
+        if (HasEscortState(STATE_ESCORT_ESCORTING))
         {
             if (pWho->GetEntry() == NPC_OUTRUNNER && !m_bIsByOutrunner)
             {
@@ -211,15 +212,11 @@ struct MANGOS_DLL_DECL npc_rinjiAI : public npc_escortAI
                 m_bIsByOutrunner = true;
             }
 
-            if (rand()%4)
+            if (urand(0, 3))
                 return;
 
             //only if attacked and escorter is not in combat?
-            switch(rand()%2)
-            {
-                case 0: DoScriptText(SAY_RIN_HELP_1, m_creature); break;
-                case 1: DoScriptText(SAY_RIN_HELP_2, m_creature); break;
-            }
+            DoScriptText(urand(0, 1) ? SAY_RIN_HELP_1 : SAY_RIN_HELP_2, m_creature);
         }
     }
 
@@ -276,9 +273,9 @@ struct MANGOS_DLL_DECL npc_rinjiAI : public npc_escortAI
     void UpdateEscortAI(const uint32 uiDiff)
     {
         //Check if we have a current target
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
         {
-            if (IsBeingEscorted && m_uiPostEventCount)
+            if (HasEscortState(STATE_ESCORT_ESCORTING) && m_uiPostEventCount)
             {
                 if (m_uiPostEventTimer < uiDiff)
                 {

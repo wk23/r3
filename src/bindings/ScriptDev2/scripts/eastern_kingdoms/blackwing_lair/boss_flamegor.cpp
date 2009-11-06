@@ -23,11 +23,14 @@ EndScriptData */
 
 #include "precompiled.h"
 
-#define EMOTE_FRENZY            -1469031
+enum
+{
+    EMOTE_GENERIC_FRENZY        = -1000002,
 
-#define SPELL_SHADOWFLAME        22539
-#define SPELL_WINGBUFFET         23339
-#define SPELL_FRENZY             23342                      //This spell periodically triggers fire nova
+    SPELL_SHADOWFLAME           = 22539,
+    SPELL_WINGBUFFET            = 23339,
+    SPELL_FRENZY                = 23342                     //This spell periodically triggers fire nova
+};
 
 struct MANGOS_DLL_DECL boss_flamegorAI : public ScriptedAI
 {
@@ -51,14 +54,14 @@ struct MANGOS_DLL_DECL boss_flamegorAI : public ScriptedAI
 
     void UpdateAI(const uint32 diff)
     {
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         //ShadowFlame_Timer
         if (ShadowFlame_Timer < diff)
         {
             DoCast(m_creature->getVictim(),SPELL_SHADOWFLAME);
-            ShadowFlame_Timer = 15000 + rand()%7000;
+            ShadowFlame_Timer = urand(15000, 22000);
         }else ShadowFlame_Timer -= diff;
 
         //WingBuffet_Timer
@@ -74,9 +77,9 @@ struct MANGOS_DLL_DECL boss_flamegorAI : public ScriptedAI
         //Frenzy_Timer
         if (Frenzy_Timer < diff)
         {
-            DoScriptText(EMOTE_FRENZY, m_creature);
+            DoScriptText(EMOTE_GENERIC_FRENZY, m_creature);
             DoCast(m_creature,SPELL_FRENZY);
-            Frenzy_Timer = 8000 + (rand()%2000);
+            Frenzy_Timer = urand(8000, 1000);
         }else Frenzy_Timer -= diff;
 
         DoMeleeAttackIfReady();

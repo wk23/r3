@@ -22,7 +22,7 @@ SDCategory: Naxxramas
 EndScriptData */
 
 #include "precompiled.h"
-#include "def_naxxramas.h"
+#include "naxxramas.h"
 
 #define SPELL_28732_NOT_YET_IMPLEMENTED
 
@@ -70,14 +70,13 @@ struct MANGOS_DLL_DECL boss_faerlinaAI : public ScriptedAI
         HasTaunted = false;
         
         if(pInstance && m_creature->isAlive())
-			pInstance->SetData(ENCOUNT_FAERLINA, NOT_STARTED);
+			pInstance->SetData(TYPE_FAERLINA, NOT_STARTED);
     }
 
     void Aggro(Unit *who)
     {
 		//Close the room for boss fight
-		if(pInstance)
-            pInstance->SetData(ENCOUNT_FAERLINA, IN_PROGRESS);
+		if(pInstance) pInstance->SetData(TYPE_FAERLINA, IN_PROGRESS);
 
 		DoScriptText(SAY_AGGRO, m_creature);
     }
@@ -95,25 +94,19 @@ struct MANGOS_DLL_DECL boss_faerlinaAI : public ScriptedAI
 
     void KilledUnit(Unit* victim)
     {
-        switch (rand()%2)
-        {
-            case 0: DoScriptText(SAY_SLAY1, m_creature); break;
-            case 1: DoScriptText(SAY_SLAY2, m_creature); break;
-        }
+        DoScriptText(urand(0, 1) ? SAY_SLAY1 : SAY_SLAY2, m_creature);
     }
 
     void JustDied(Unit* Killer)
     {
-		//Faerlina is slayed -> open all doors to Maexxna
-		if(pInstance)
-            pInstance->SetData(ENCOUNT_FAERLINA, DONE);
+		if(pInstance) pInstance->SetData(TYPE_FAERLINA, DONE);
 
 		DoScriptText(SAY_DEATH, m_creature);
     }
 
     void UpdateAI(const uint32 diff)
     {
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         //PoisonBoltVolley_Timer
@@ -128,7 +121,6 @@ struct MANGOS_DLL_DECL boss_faerlinaAI : public ScriptedAI
         {
             if (Unit* target = SelectUnit(SELECT_TARGET_RANDOM,0))
                 DoCast(target,SPELL_RAINOFFIRE);
-
             RainOfFire_Timer = 16000;
         }else RainOfFire_Timer -= diff;
 
@@ -171,6 +163,7 @@ struct MANGOS_DLL_DECL mob_faerlina_worshipperAI : public ScriptedAI
 	}
 
     void Aggro(Unit *who){}
+    
     void JustDied(Unit* Killer)
     {
 #ifndef SPELL_28732_NOT_YET_IMPLEMENTED
@@ -185,7 +178,7 @@ struct MANGOS_DLL_DECL mob_faerlina_worshipperAI : public ScriptedAI
     void UpdateAI(const uint32 diff)
     {
         //Return since we have no target
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
 		//PoisonBoltVolley_Timer

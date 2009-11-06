@@ -49,7 +49,7 @@ struct MANGOS_DLL_DECL boss_mothersmolderwebAI : public ScriptedAI
     void UpdateAI(const uint32 diff)
     {
         //Return since we have no target
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         //Crystalize_Timer
@@ -63,7 +63,7 @@ struct MANGOS_DLL_DECL boss_mothersmolderwebAI : public ScriptedAI
         if (MothersMilk_Timer < diff)
         {
             DoCast(m_creature,SPELL_MOTHERSMILK);
-            MothersMilk_Timer = 5000+rand()%7500;
+            MothersMilk_Timer = urand(5000, 12500);
         }else MothersMilk_Timer -= diff;
 
         DoMeleeAttackIfReady();

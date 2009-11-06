@@ -22,7 +22,7 @@ SDCategory: Karazhan
 EndScriptData */
 
 #include "precompiled.h"
-#include "def_karazhan.h"
+#include "karazhan.h"
 
 /***********************************/
 /*** OPERA WIZARD OF OZ EVENT *****/
@@ -178,7 +178,7 @@ struct MANGOS_DLL_DECL boss_dorotheeAI : public ScriptedAI
             }else AggroTimer -= diff;
         }
 
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         if (WaterBoltTimer < diff)
@@ -235,7 +235,7 @@ struct MANGOS_DLL_DECL mob_titoAI : public ScriptedAI
 
     void UpdateAI(const uint32 diff)
     {
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         if (YipTimer < diff)
@@ -311,7 +311,7 @@ struct MANGOS_DLL_DECL boss_strawmanAI : public ScriptedAI
 
     void SpellHit(Unit* caster, const SpellEntry *Spell)
     {
-        if ((Spell->SchoolMask == SPELL_SCHOOL_MASK_FIRE) && (!(rand()%10)))
+        if ((Spell->SchoolMask == SPELL_SCHOOL_MASK_FIRE) && !urand(0, 1))
         {
             /*
                 if (not direct damage(aoe,dot))
@@ -346,7 +346,7 @@ struct MANGOS_DLL_DECL boss_strawmanAI : public ScriptedAI
             }else AggroTimer -= diff;
         }
 
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         if (BrainBashTimer < diff)
@@ -433,14 +433,14 @@ struct MANGOS_DLL_DECL boss_tinheadAI : public ScriptedAI
     {
         if (AggroTimer)
         {
-            if (AggroTimer < diff)
+            if (AggroTimer <= diff)
             {
                 m_creature->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
                 AggroTimer = 0;
             }else AggroTimer -= diff;
         }
 
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         if (CleaveTimer < diff)
@@ -537,25 +537,25 @@ struct MANGOS_DLL_DECL boss_roarAI : public ScriptedAI
             }else AggroTimer -= diff;
         }
 
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         if (MangleTimer < diff)
         {
             DoCast(m_creature->getVictim(), SPELL_MANGLE);
-            MangleTimer = 5000 + rand()%3000;
+            MangleTimer = urand(5000, 8000);
         }else MangleTimer -= diff;
 
         if (ShredTimer < diff)
         {
             DoCast(m_creature->getVictim(), SPELL_SHRED);
-            ShredTimer = 10000 + rand()%5000;
+            ShredTimer = urand(10000, 15000);
         }else ShredTimer -= diff;
 
         if (ScreamTimer < diff)
         {
             DoCast(m_creature->getVictim(), SPELL_FRIGHTENED_SCREAM);
-            ScreamTimer = 20000 + rand()%10000;
+            ScreamTimer = urand(20000, 30000);
         }else ScreamTimer -= diff;
 
         DoMeleeAttackIfReady();
@@ -588,14 +588,9 @@ struct MANGOS_DLL_DECL boss_croneAI : public ScriptedAI
 
     void Aggro(Unit* who)
     {
-        switch(rand()%2)
-        {
-            case 0: DoScriptText(SAY_CRONE_AGGRO, m_creature); break;
-            case 1: DoScriptText(SAY_CRONE_AGGRO2, m_creature); break;
-        }
+        DoScriptText(urand(0, 1) ? SAY_CRONE_AGGRO : SAY_CRONE_AGGRO2, m_creature);
 
         m_creature->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
-        m_creature->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_UNK_8);
     }
 
     void JustDied(Unit* killer)
@@ -617,7 +612,7 @@ struct MANGOS_DLL_DECL boss_croneAI : public ScriptedAI
 
     void UpdateAI(const uint32 diff)
     {
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         if (m_creature->HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE))
@@ -669,7 +664,7 @@ struct MANGOS_DLL_DECL mob_cycloneAI : public ScriptedAI
             float PosX, PosY, PosZ;
             m_creature->GetRandomPoint(x,y,z,10, PosX, PosY, PosZ);
             m_creature->GetMotionMaster()->MovePoint(0, PosX, PosY, PosZ);
-            MoveTimer = 5000 + rand()%3000;
+            MoveTimer = urand(5000, 8000);
         }else MoveTimer -= diff;
     }
 };
@@ -772,7 +767,7 @@ struct MANGOS_DLL_DECL boss_bigbadwolfAI : public ScriptedAI
     void Reset()
     {
         ChaseTimer = 30000;
-        FearTimer = 25000 + rand()%10000;
+        FearTimer = urand(25000, 35000);
         SwipeTimer = 5000;
 
         HoodGUID = 0;
@@ -810,7 +805,7 @@ struct MANGOS_DLL_DECL boss_bigbadwolfAI : public ScriptedAI
 
     void UpdateAI(const uint32 diff)
     {
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         DoMeleeAttackIfReady();
@@ -859,13 +854,13 @@ struct MANGOS_DLL_DECL boss_bigbadwolfAI : public ScriptedAI
         if (FearTimer < diff)
         {
             DoCast(m_creature->getVictim(), SPELL_TERRIFYING_HOWL);
-            FearTimer = 25000 + rand()%10000;
+            FearTimer = urand(25000, 35000);
         }else FearTimer -= diff;
 
         if (SwipeTimer < diff)
         {
             DoCast(m_creature->getVictim(), SPELL_WIDE_SWIPE);
-            SwipeTimer = 25000 + rand()%5000;
+            SwipeTimer = urand(25000, 30000);
         }else SwipeTimer -= diff;
     }
 };
@@ -1118,7 +1113,7 @@ struct MANGOS_DLL_DECL boss_romuloAI : public ScriptedAI
             Creature* Julianne = ((Creature*)Unit::GetUnit((*m_creature), JulianneGUID));
             if (Julianne && Julianne->getVictim())
             {
-                m_creature->AddThreat(Julianne->getVictim(), 1.0f);
+                m_creature->AddThreat(Julianne->getVictim());
             }
         }
     }
@@ -1339,7 +1334,7 @@ void boss_julianneAI::UpdateAI(const uint32 diff)
         }else ResurrectSelfTimer -= diff;
     }
 
-    if (!m_creature->SelectHostilTarget() || !m_creature->getVictim() || IsFakingDeath)
+    if (!m_creature->SelectHostileTarget() || !m_creature->getVictim() || IsFakingDeath)
         return;
 
     if (RomuloDead)
@@ -1361,31 +1356,31 @@ void boss_julianneAI::UpdateAI(const uint32 diff)
     if (BlindingPassionTimer < diff)
     {
         DoCast(SelectUnit(SELECT_TARGET_RANDOM, 0), SPELL_BLINDING_PASSION);
-        BlindingPassionTimer = 30000 + rand()%15000;
+        BlindingPassionTimer = urand(30000, 45000);
     } else BlindingPassionTimer -= diff;
 
     if (DevotionTimer < diff)
     {
         DoCast(m_creature, SPELL_DEVOTION);
-        DevotionTimer = 15000 + rand()%30000;
+        DevotionTimer = urand(15000, 45000);
     } else DevotionTimer -= diff;
 
     if (PowerfulAttractionTimer < diff)
     {
         DoCast(SelectUnit(SELECT_TARGET_RANDOM, 0), SPELL_POWERFUL_ATTRACTION);
-        PowerfulAttractionTimer = 5000 + rand()%25000;
+        PowerfulAttractionTimer = urand(5000, 30000);
     } else PowerfulAttractionTimer -= diff;
 
     if (EternalAffectionTimer < diff)
     {
-        if (rand()%2 == 1 && SummonedRomulo)
+        if (urand(0, 1) && SummonedRomulo)
         {
             Creature* Romulo = ((Creature*)Unit::GetUnit((*m_creature), RomuloGUID));
             if (Romulo && Romulo->isAlive() && !RomuloDead)
                 DoCast(Romulo, SPELL_ETERNAL_AFFECTION);
         } else DoCast(m_creature, SPELL_ETERNAL_AFFECTION);
 
-        EternalAffectionTimer = 45000 + rand()%15000;
+        EternalAffectionTimer = urand(45000, 60000);
     } else EternalAffectionTimer -= diff;
 
     DoMeleeAttackIfReady();
@@ -1393,7 +1388,7 @@ void boss_julianneAI::UpdateAI(const uint32 diff)
 
 void boss_romuloAI::UpdateAI(const uint32 diff)
 {
-    if (!m_creature->SelectHostilTarget() || !m_creature->getVictim() || IsFakingDeath)
+    if (!m_creature->SelectHostileTarget() || !m_creature->getVictim() || IsFakingDeath)
         return;
 
     if (JulianneDead)
@@ -1418,26 +1413,26 @@ void boss_romuloAI::UpdateAI(const uint32 diff)
         if (target && !m_creature->HasInArc(M_PI, target))
         {
             DoCast(target, SPELL_BACKWARD_LUNGE);
-            BackwardLungeTimer = 15000 + rand()%15000;
+            BackwardLungeTimer = urand(15000, 30000);
         }
     }else BackwardLungeTimer -= diff;
 
     if (DaringTimer < diff)
     {
         DoCast(m_creature, SPELL_DARING);
-        DaringTimer = 20000 + rand()%20000;
+        DaringTimer = urand(20000, 40000);
     }else DaringTimer -= diff;
 
     if (DeadlySwatheTimer < diff)
     {
         DoCast(SelectUnit(SELECT_TARGET_RANDOM, 0), SPELL_DEADLY_SWATHE);
-        DeadlySwatheTimer = 15000 + rand()%10000;
+        DeadlySwatheTimer = urand(15000, 25000);
     }else DeadlySwatheTimer -= diff;
 
     if (PoisonThrustTimer < diff)
     {
         DoCast(m_creature->getVictim(), SPELL_POISON_THRUST);
-        PoisonThrustTimer = 10000 + rand()%10000;
+        PoisonThrustTimer = urand(10000, 20000);
     }else PoisonThrustTimer -= diff;
 
     DoMeleeAttackIfReady();

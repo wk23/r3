@@ -26,7 +26,7 @@ npc_forest_frog
 EndContentData */
 
 #include "precompiled.h"
-#include "def_zulaman.h"
+#include "zulaman.h"
 #include "escort_ai.h"
 
 /*######
@@ -54,7 +54,7 @@ struct MANGOS_DLL_DECL npc_forest_frogAI : public ScriptedAI
         if (m_pInstance)
         {
             uint32 cEntry = 0;
-            switch(rand()%11)
+            switch(urand(0, 10))
             {
                 case 0: cEntry = 24024; break;              //Kraz
                 case 1: cEntry = 24397; break;              //Mannuth
@@ -70,9 +70,12 @@ struct MANGOS_DLL_DECL npc_forest_frogAI : public ScriptedAI
             }
 
             if (!m_pInstance->GetData(TYPE_RAND_VENDOR_1))
-                if (rand()%10 == 1) cEntry = 24408;          //Gunter
+                if (!urand(0, 9))
+                    cEntry = 24408;                         //Gunter
+
             if (!m_pInstance->GetData(TYPE_RAND_VENDOR_2))
-                if (rand()%10 == 1) cEntry = 24409;          //Kyren
+                if (!urand(0, 9))
+                    cEntry = 24409;                         //Kyren
 
             if (cEntry) m_creature->UpdateEntry(cEntry);
 
@@ -86,8 +89,10 @@ struct MANGOS_DLL_DECL npc_forest_frogAI : public ScriptedAI
         if (spell->Id == SPELL_REMOVE_AMANI_CURSE && caster->GetTypeId() == TYPEID_PLAYER && m_creature->GetEntry() == ENTRY_FOREST_FROG)
         {
             //increase or decrease chance of mojo?
-            if (rand()%99 == 50) DoCast(caster,SPELL_PUSH_MOJO,true);
-            else DoSpawnRandom();
+            if (!urand(0, 49))
+                DoCast(caster,SPELL_PUSH_MOJO,true);
+            else
+                DoSpawnRandom();
         }
     }
 };
@@ -136,7 +141,7 @@ struct MANGOS_DLL_DECL npc_harrison_jones_zaAI : public npc_escortAI
 
                 //Start bang gong for 2min
                 m_creature->CastSpell(m_creature, SPELL_BANGING_THE_GONG, false);
-                IsOnHold = true;
+                SetEscortPaused(true);
                 break;
             case 3:
                 DoScriptText(SAY_OPEN_ENTRANCE, m_creature);
@@ -153,12 +158,12 @@ struct MANGOS_DLL_DECL npc_harrison_jones_zaAI : public npc_escortAI
     void StartEvent()
     {
         DoScriptText(SAY_START, m_creature);
-        Start(false,true,false,0);
+        Start(false,false);
     }
 
     void SetHoldState(bool bOnHold)
     {
-        IsOnHold = bOnHold;
+        SetEscortPaused(bOnHold);
 
         //Stop banging gong if still
         if (m_pInstance && m_pInstance->GetData(TYPE_EVENT_RUN) == SPECIAL && m_creature->HasAura(SPELL_BANGING_THE_GONG))

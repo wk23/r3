@@ -22,7 +22,7 @@ SDCategory: Caverns of Time, Old Hillsbrad Foothills
 EndScriptData */
 
 #include "precompiled.h"
-#include "def_old_hillsbrad.h"
+#include "old_hillsbrad.h"
 
 #define SAY_ENTER                   -1560000
 #define SAY_TAUNT1                  -1560001
@@ -74,11 +74,7 @@ struct MANGOS_DLL_DECL boss_captain_skarlocAI : public ScriptedAI
 
     void KilledUnit(Unit *victim)
     {
-        switch(rand()%2)
-        {
-            case 0: DoScriptText(SAY_SLAY1, m_creature); break;
-            case 1: DoScriptText(SAY_SLAY2, m_creature); break;
-        }
+        DoScriptText(urand(0, 1) ? SAY_SLAY1 : SAY_SLAY2, m_creature);
     }
 
     void JustDied(Unit *victim)
@@ -92,14 +88,14 @@ struct MANGOS_DLL_DECL boss_captain_skarlocAI : public ScriptedAI
     void UpdateAI(const uint32 diff)
     {
         //Return since we have no target
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         //Holy_Light
         if (Holy_Light_Timer < diff)
         {
             DoCast(m_creature, SPELL_HOLY_LIGHT);
-            Holy_Light_Timer = 20000 + rand()%10000;
+            Holy_Light_Timer = urand(20000, 30000);
         }else Holy_Light_Timer -= diff;
 
         //Cleanse
@@ -113,7 +109,7 @@ struct MANGOS_DLL_DECL boss_captain_skarlocAI : public ScriptedAI
         if (HammerOfJustice_Timer < diff)
         {
             DoCast(m_creature->getVictim(), SPELL_HAMMER_OF_JUSTICE);
-            HammerOfJustice_Timer = 20000 + rand()%15000;
+            HammerOfJustice_Timer = urand(20000, 35000);
         }else HammerOfJustice_Timer -= diff;
 
         //Holy Shield
@@ -127,14 +123,14 @@ struct MANGOS_DLL_DECL boss_captain_skarlocAI : public ScriptedAI
         if (DevotionAura_Timer < diff)
         {
             DoCast(m_creature, SPELL_DEVOTION_AURA);
-            DevotionAura_Timer = 45000 + rand()%10000;
+            DevotionAura_Timer = urand(45000, 55000);
         }else DevotionAura_Timer -= diff;
 
         //Consecration
         if (Consecration_Timer < diff)
         {
             //DoCast(m_creature->getVictim(), SPELL_CONSECRATION);
-            Consecration_Timer = 5000 + rand()%5000;
+            Consecration_Timer = urand(5000, 10000);
         }else Consecration_Timer -= diff;
 
         DoMeleeAttackIfReady();

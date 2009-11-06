@@ -331,7 +331,8 @@ enum MangosStrings
     LANG_CUSTOMIZE_PLAYER               = 345,
     LANG_CUSTOMIZE_PLAYER_GUID          = 346,
     LANG_COMMAND_GOTAXINODENOTFOUND     = 347,
-    // Room for more level 2              348-399 not used
+    LANG_GAMEOBJECT_HAVE_INVALID_DATA   = 348,
+    // Room for more level 2              349-399 not used
 
     // level 3 chat
     LANG_SCRIPTS_RELOADED               = 400,
@@ -532,8 +533,8 @@ enum MangosStrings
     LANG_GET_UINT_FIELD                 = 570,
     LANG_GET_FLOAT                      = 571,              //log
     LANG_GET_FLOAT_FIELD                = 572,
-    LANG_SET_32BIT                      = 573,              //log
-    LANG_SET_32BIT_FIELD                = 574,
+    //                                    573,              //not used
+    //                                    574,              //not used
     LANG_CHANGE_32BIT                   = 575,              //log
     LANG_CHANGE_32BIT_FIELD             = 576,
 
@@ -742,15 +743,11 @@ enum MangosStrings
     LANG_DIST_ARENA_POINTS_TEAM_START   = 744,
     LANG_DIST_ARENA_POINTS_TEAM_END     = 745,
     LANG_DIST_ARENA_POINTS_END          = 746,
-//                                      = 747, not used
-//                                      = 748, not used
-//                                      = 749, not used
+
     LANG_BATTLEGROUND_PREMATURE_FINISH_WARNING = 750,       // "Not enough players. This game will close in %u mins."
     LANG_BATTLEGROUND_PREMATURE_FINISH_WARNING_SECS = 751,  // "Not enough players. This game will close in %u seconds."
-//                                      = 752, not used
-//  LANG_BG_WS_START_TWO_MINUTES        = 753, - defined above
-//  LANG_BG_AB_START_TWO_MINUTES        = 754, - defined above
-//  LANG_BG_EY_START_TWO_MINUTES        = 755, - defined above
+    LANG_BATTLEGROUND_ONLY_ALLIANCE_USE = 752, // "Only The Alliance can use that portal"
+    LANG_BATTLEGROUND_ONLY_HORDE_USE    = 753, // "Only The Horde can use that portal"
 
     LANG_BG_AV_ALLY                     = 757,
     LANG_BG_AV_HORDE                    = 758,
@@ -860,7 +857,9 @@ enum MangosStrings
     LANG_RESET_PET_TALENTS_ONLINE       = 1127,
     LANG_TAXINODE_ENTRY_LIST_CHAT       = 1128,
     LANG_TAXINODE_ENTRY_LIST_CONSOLE    = 1129,
-    // Room for more level 3              1130-1199 not used
+    LANG_EVENT_STARTED                  = 1130,
+    LANG_EVENT_STOPPED                  = 1131,
+    // Room for more level 3              1132-1199 not used
 
     // Debug commands
     LANG_CINEMATIC_NOT_EXIST            = 1200,

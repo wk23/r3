@@ -24,7 +24,6 @@
 #include "Bag.h"
 #include "Creature.h"
 #include "Player.h"
-#include "DynamicObject.h"
 #include "GameObject.h"
 #include "Corpse.h"
 #include "QuestDef.h"
@@ -179,6 +178,19 @@ struct PetLevelInfo
     uint16 mana;
     uint16 armor;
 };
+
+struct MailLevelReward
+{
+    MailLevelReward() : raceMask(0), mailTemplateId(0), senderEntry(0) {}
+    MailLevelReward(uint32 _raceMask, uint32 _mailTemplateId, uint32 _senderEntry) : raceMask(_raceMask), mailTemplateId(_mailTemplateId), senderEntry(_senderEntry) {}
+
+    uint32 raceMask;
+    uint32 mailTemplateId;
+    uint32 senderEntry;
+};
+
+typedef std::list<MailLevelReward> MailLevelRewardList;
+typedef UNORDERED_MAP<uint8,MailLevelRewardList> MailLevelRewardMap;
 
 struct ReputationOnKillEntry
 {
@@ -507,8 +519,8 @@ class ObjectMgr
         void LoadEventScripts();
         void LoadSpellScripts();
 
-        bool LoadMangosStrings(Database& db, char const* table, int32 min_value, int32 max_value);
-        bool LoadMangosStrings() { return LoadMangosStrings(WorldDatabase,"mangos_string",1,std::numeric_limits<int32>::max()); }
+        bool LoadMangosStrings(DatabaseType& db, char const* table, int32 min_value, int32 max_value);
+        bool LoadMangosStrings() { return LoadMangosStrings(WorldDatabase,"mangos_string",MIN_MANGOS_STRING_ID,MAX_MANGOS_STRING_ID); }
         void LoadDbScriptStrings();
         void LoadCreatureLocales();
         void LoadCreatureTemplates();
@@ -529,6 +541,7 @@ class ObjectMgr
         void LoadNpcOptionLocales();
         void LoadPointOfInterestLocales();
         void LoadInstanceTemplate();
+        void LoadMailLevelRewards();
 
         void LoadGossipText();
 
@@ -600,6 +613,19 @@ class ObjectMgr
 
         typedef std::multimap<int32, uint32> ExclusiveQuestGroups;
         ExclusiveQuestGroups mExclusiveQuestGroups;
+
+        MailLevelReward const* GetMailLevelReward(uint32 level,uint32 raceMask)
+        {
+            MailLevelRewardMap::const_iterator map_itr = m_mailLevelRewardMap.find(level);
+            if (map_itr == m_mailLevelRewardMap.end())
+                return NULL;
+
+            for(MailLevelRewardList::const_iterator set_itr = map_itr->second.begin(); set_itr != map_itr->second.end(); ++set_itr)
+                if (set_itr->raceMask & raceMask)
+                    return &*set_itr;
+
+            return NULL;
+        }
 
         WeatherZoneChances const* GetWeatherChances(uint32 zone_id) const
         {
@@ -836,12 +862,10 @@ class ObjectMgr
         // first free low guid for seelcted guid type
         uint32 m_hiCharGuid;
         uint32 m_hiCreatureGuid;
-        uint32 m_hiPetGuid;
-        uint32 m_hiVehicleGuid;
         uint32 m_hiItemGuid;
         uint32 m_hiGoGuid;
-        uint32 m_hiDoGuid;
         uint32 m_hiCorpseGuid;
+        uint32 m_hiVehicleGuid;
 
         QuestMap            mQuestTemplates;
 
@@ -900,6 +924,8 @@ class ObjectMgr
         void ConvertCreatureAddonPassengers(CreatureDataAddon* addon, char const* table, char const* guidEntryStr);
         void LoadQuestRelationsHelper(QuestRelations& map,char const* table);
 
+        MailLevelRewardMap m_mailLevelRewardMap;
+
         typedef std::map<uint32,PetLevelInfo*> PetLevelInfoMap;
         // PetLevelInfoMap[creature_id][level]
         PetLevelInfoMap petInfo;                            // [creature_id][level]
@@ -950,7 +976,7 @@ class ObjectMgr
 #define objmgr MaNGOS::Singleton<ObjectMgr>::Instance()
 
 // scripting access functions
-MANGOS_DLL_SPEC bool LoadMangosStrings(Database& db, char const* table,int32 start_value = MAX_CREATURE_AI_TEXT_STRING_ID, int32 end_value = std::numeric_limits<int32>::min());
+MANGOS_DLL_SPEC bool LoadMangosStrings(DatabaseType& db, char const* table,int32 start_value = MAX_CREATURE_AI_TEXT_STRING_ID, int32 end_value = std::numeric_limits<int32>::min());
 MANGOS_DLL_SPEC uint32 GetAreaTriggerScriptId(uint32 trigger_id);
 MANGOS_DLL_SPEC uint32 GetScriptId(const char *name);
 MANGOS_DLL_SPEC ObjectMgr::ScriptNameMap& GetScriptNames();

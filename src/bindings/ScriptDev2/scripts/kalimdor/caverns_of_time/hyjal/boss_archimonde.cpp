@@ -22,7 +22,7 @@ SDCategory: Caverns of Time, Mount Hyjal
 EndScriptData */
 
 #include "precompiled.h"
-#include "def_hyjal.h"
+#include "hyjal.h"
 #include "SpellAuras.h"
 
 //text id -1534018 are the text used when previous events complete. Not part of this script.
@@ -221,9 +221,9 @@ struct MANGOS_DLL_DECL boss_archimondeAI : public ScriptedAI
         DrainNordrassilTimer = 0;
         FearTimer = 42000;
         AirBurstTimer = 30000;
-        GripOfTheLegionTimer = 5000 + rand()%20000;
+        GripOfTheLegionTimer = urand(5000, 25000);
         DoomfireTimer = 20000;
-        SoulChargeTimer = 2000 + rand()%27000;
+        SoulChargeTimer = urand(2000, 29000);
         SoulChargeCount = 0;
         MeleeRangeCheckTimer = 15000;
         HandOfDeathTimer = 2000;
@@ -250,7 +250,7 @@ struct MANGOS_DLL_DECL boss_archimondeAI : public ScriptedAI
 
     void KilledUnit(Unit *victim)
     {
-        switch(rand()%2)
+        switch(urand(0, 2))
         {
             case 0: DoScriptText(SAY_SLAY1, m_creature); break;
             case 1: DoScriptText(SAY_SLAY2, m_creature); break;
@@ -282,7 +282,7 @@ struct MANGOS_DLL_DECL boss_archimondeAI : public ScriptedAI
                 break;
         }
 
-        SoulChargeTimer = 2000 + rand()%28000;
+        SoulChargeTimer = urand(2000, 30000);
         ++SoulChargeCount;
     }
 
@@ -301,12 +301,12 @@ struct MANGOS_DLL_DECL boss_archimondeAI : public ScriptedAI
         if (victim && m_creature->IsWithinDistInMap(victim, m_creature->GetAttackDistance(victim)))
             return false;
 
-        std::list<HostilReference*>& m_threatlist = m_creature->getThreatManager().getThreatList();
+        std::list<HostileReference*>& m_threatlist = m_creature->getThreatManager().getThreatList();
         if (m_threatlist.empty())
             return false;
 
         std::list<Unit*> targets;
-        std::list<HostilReference*>::iterator itr = m_threatlist.begin();
+        std::list<HostileReference*>::iterator itr = m_threatlist.begin();
         for(; itr != m_threatlist.end(); ++itr)
         {
             Unit* pUnit = Unit::GetUnit((*m_creature), (*itr)->getUnitGuid());
@@ -379,7 +379,7 @@ struct MANGOS_DLL_DECL boss_archimondeAI : public ScriptedAI
         uint32 chargeSpell = 0;
         uint32 unleashSpell = 0;
 
-        switch(rand()%3)
+        switch(urand(0, 2))
         {
             case 0:
                 chargeSpell = SPELL_SOUL_CHARGE_RED;
@@ -404,7 +404,7 @@ struct MANGOS_DLL_DECL boss_archimondeAI : public ScriptedAI
         }
 
         if (HasCast)
-            SoulChargeTimer = 2000 + rand()%28000;
+            SoulChargeTimer = urand(2000, 30000);
     }
 
     void UpdateAI(const uint32 diff)
@@ -452,7 +452,7 @@ struct MANGOS_DLL_DECL boss_archimondeAI : public ScriptedAI
             }else DrainNordrassilTimer -= diff;
         }
 
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         if (((m_creature->GetHealth()*100 / m_creature->GetMaxHealth()) < 10) && !BelowTenPercent && !Enraged)
@@ -535,18 +535,18 @@ struct MANGOS_DLL_DECL boss_archimondeAI : public ScriptedAI
         if (GripOfTheLegionTimer < diff)
         {
             DoCast(SelectUnit(SELECT_TARGET_RANDOM, 0), SPELL_GRIP_OF_THE_LEGION);
-            GripOfTheLegionTimer = 5000 + rand()%20000;
+            GripOfTheLegionTimer = urand(5000, 25000);
         }else GripOfTheLegionTimer -= diff;
 
         if (AirBurstTimer < diff)
         {
-            if (rand()%2 == 0)
+            if (!urand(0, 1))
                 DoScriptText(SAY_AIR_BURST1, m_creature);
             else
                 DoScriptText(SAY_AIR_BURST2, m_creature);
 
             DoCast(SelectUnit(SELECT_TARGET_RANDOM, 0), SPELL_AIR_BURST);
-            AirBurstTimer = 25000 + rand()%15000;
+            AirBurstTimer = urand(25000, 40000);
         }else AirBurstTimer -= diff;
 
         if (FearTimer < diff)
@@ -557,7 +557,7 @@ struct MANGOS_DLL_DECL boss_archimondeAI : public ScriptedAI
 
         if (DoomfireTimer < diff)
         {
-            if (rand()%2 == 0)
+            if (!urand(0, 1))
                 DoScriptText(SAY_DOOMFIRE1, m_creature);
             else
                 DoScriptText(SAY_DOOMFIRE2, m_creature);

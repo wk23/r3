@@ -48,7 +48,7 @@ struct MANGOS_DLL_DECL boss_hungarfenAI : public ScriptedAI
 
     void UpdateAI(const uint32 diff)
     {
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         if ((m_creature->GetHealth()*100) / m_creature->GetMaxHealth() <= 20)
@@ -74,7 +74,7 @@ struct MANGOS_DLL_DECL boss_hungarfenAI : public ScriptedAI
         {
             if (Unit *target = SelectUnit(SELECT_TARGET_RANDOM,0))
                 DoCast(target,SPELL_ACID_GEYSER);
-            AcidGeyser_Timer = 10000+rand()%7500;
+            AcidGeyser_Timer = urand(10000, 17500);
         }else AcidGeyser_Timer -= diff;
 
         DoMeleeAttackIfReady();

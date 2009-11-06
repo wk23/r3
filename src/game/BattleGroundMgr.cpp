@@ -31,6 +31,8 @@
 #include "BattleGroundSA.h"
 #include "BattleGroundDS.h"
 #include "BattleGroundRV.h"
+#include "BattleGroundIC.h"
+#include "BattleGroundABG.h"
 #include "MapManager.h"
 #include "Map.h"
 #include "MapInstanced.h"
@@ -40,7 +42,7 @@
 #include "ArenaTeam.h"
 #include "World.h"
 #include "WorldPacket.h"
-#include "ProgressBar.h"
+#include "GameEventMgr.h"
 
 #include "Policies/SingletonImp.h"
 
@@ -148,7 +150,7 @@ bool BattleGroundQueue::SelectionPool::AddGroup(GroupQueueInfo *ginfo, uint32 de
 // add group to bg queue with the given leader and bg specifications
 GroupQueueInfo * BattleGroundQueue::AddGroup(Player *leader, BattleGroundTypeId BgTypeId, uint8 ArenaType, bool isRated, bool isPremade, uint32 arenaRating, uint32 arenateamid)
 {
-    BGQueueIdBasedOnLevel queue_id = leader->GetBattleGroundQueueIdFromLevel(BgTypeId);
+    BGQueueIdBasedOnLevel queue_id = leader->GetBattleGroundQueueIdFromLevel();
 
     // create new ginfo
     // cannot use the method like in addplayer, because that could modify an in-queue group's stats
@@ -389,7 +391,7 @@ void BattleGroundQueue::AnnounceWorld(GroupQueueInfo *ginfo, const uint64& playe
             if (!bg || !plr)
                 return;
 
-            BGQueueIdBasedOnLevel queue_id = plr->GetBattleGroundQueueIdFromLevel(bg->GetTypeID());
+            BGQueueIdBasedOnLevel queue_id = plr->GetBattleGroundQueueIdFromLevel();
             char const* bgName = bg->GetName();
             uint32 MinPlayers = bg->GetMinPlayersPerTeam();
             uint32 qHorde = 0;
@@ -1005,6 +1007,11 @@ void BattleGroundQueue::Update(BattleGroundTypeId bgTypeId, BGQueueIdBasedOnLeve
 /***            BATTLEGROUND QUEUE EVENTS              ***/
 /*********************************************************/
 
+//this lock is used to solve BGQueueInviteEvent/BGQueueRemoveEvent synchronization issues with mtmaps patch!
+//NOTE: THIS IS TEMPORAL FIX AND IT IS NOT FOR INCLUSION INTO MAIN REPO!!!!
+typedef ACE_Thread_Mutex BGQUEUE_LOCK_TYPE;
+BGQUEUE_LOCK_TYPE gBgQueueEventLock;
+
 bool BGQueueInviteEvent::Execute(uint64 /*e_time*/, uint32 /*p_time*/)
 {
     Player* plr = objmgr.GetPlayer( m_PlayerGuid );
@@ -1017,22 +1024,34 @@ bool BGQueueInviteEvent::Execute(uint64 /*e_time*/, uint32 /*p_time*/)
     if (!bg)
         return true;
 
+    bool bNotify = false;
+    uint8 ArenaType = 0;
+
     BattleGroundQueueTypeId bgQueueTypeId = BattleGroundMgr::BGQueueTypeId(bg->GetTypeID(), bg->GetArenaType());
     uint32 queueSlot = plr->GetBattleGroundQueueIndex(bgQueueTypeId);
     if( queueSlot < PLAYER_MAX_BATTLEGROUND_QUEUES )        // player is in queue or in battleground
     {
+        ACE_Guard<BGQUEUE_LOCK_TYPE> lock(gBgQueueEventLock);
         // check if player is invited to this bg
         BattleGroundQueue::QueuedPlayersMap const& qpMap = sBattleGroundMgr.m_BattleGroundQueues[bgQueueTypeId].m_QueuedPlayers;
         BattleGroundQueue::QueuedPlayersMap::const_iterator qItr = qpMap.find(m_PlayerGuid);
         if( qItr != qpMap.end() && qItr->second.GroupInfo->IsInvitedToBGInstanceGUID == m_BgInstanceGUID
             && qItr->second.GroupInfo->RemoveInviteTime == m_RemoveTime )
         {
-            WorldPacket data;
-            //we must send remaining time in queue
-            sBattleGroundMgr.BuildBattleGroundStatusPacket(&data, bg, queueSlot, STATUS_WAIT_JOIN, INVITE_ACCEPT_WAIT_TIME - INVITATION_REMIND_TIME, 0, qItr->second.GroupInfo->ArenaType);
-            plr->GetSession()->SendPacket(&data);
+            bNotify = true;
+            ArenaType = qItr->second.GroupInfo->ArenaType;
         }
     }
+
+    //send notification to player
+    if(bNotify)
+    {
+        WorldPacket data;
+        //we must send remaining time in queue
+        sBattleGroundMgr.BuildBattleGroundStatusPacket(&data, bg, queueSlot, STATUS_WAIT_JOIN, INVITE_ACCEPT_WAIT_TIME - INVITATION_REMIND_TIME, 0, ArenaType);
+        plr->GetSession()->SendPacket(&data);
+    }
+
     return true;                                            //event will be deleted
 }
 
@@ -1060,13 +1079,15 @@ bool BGQueueRemoveEvent::Execute(uint64 /*e_time*/, uint32 /*p_time*/)
     BattleGround* bg = sBattleGroundMgr.GetBattleGround(m_BgInstanceGUID, m_BgTypeId);
     //battleground can be deleted already when we are removing queue info
     //bg pointer can be NULL! so use it carefully!
+    bool bNotify = false;
 
     uint32 queueSlot = plr->GetBattleGroundQueueIndex(m_BgQueueTypeId);
     if( queueSlot < PLAYER_MAX_BATTLEGROUND_QUEUES )        // player is in queue, or in Battleground
     {
+        ACE_Guard<BGQUEUE_LOCK_TYPE> lock(gBgQueueEventLock);
         // check if player is in queue for this BG and if we are removing his invite event
         BattleGroundQueue::QueuedPlayersMap& qpMap = sBattleGroundMgr.m_BattleGroundQueues[m_BgQueueTypeId].m_QueuedPlayers;
-        BattleGroundQueue::QueuedPlayersMap::iterator qMapItr = qpMap.find(m_PlayerGuid);
+        BattleGroundQueue::QueuedPlayersMap::const_iterator qMapItr = qpMap.find(m_PlayerGuid);
         if( qMapItr != qpMap.end() && qMapItr->second.GroupInfo
             && qMapItr->second.GroupInfo->IsInvitedToBGInstanceGUID == m_BgInstanceGUID
             && qMapItr->second.GroupInfo->RemoveInviteTime == m_RemoveTime )
@@ -1079,10 +1100,15 @@ bool BGQueueRemoveEvent::Execute(uint64 /*e_time*/, uint32 /*p_time*/)
             if (bg)
                 sBattleGroundMgr.ScheduleQueueUpdate(m_BgQueueTypeId, m_BgTypeId, bg->GetQueueId());
 
-            WorldPacket data;
-            sBattleGroundMgr.BuildBattleGroundStatusPacket(&data, bg, queueSlot, STATUS_NONE, 0, 0, 0);
-            plr->GetSession()->SendPacket(&data);
+            bNotify = true;
         }
+    }
+
+    if(bNotify)
+    {
+        WorldPacket data;
+        sBattleGroundMgr.BuildBattleGroundStatusPacket(&data, bg, queueSlot, STATUS_NONE, 0, 0, 0);
+        plr->GetSession()->SendPacket(&data);
     }
 
     //event will be deleted
@@ -1166,13 +1192,16 @@ void BattleGroundMgr::Update(uint32 diff)
     if (!m_QueueUpdateScheduler.empty())
     {
         //copy vector and clear the other
+        // TODO add lock
+        // TODO maybe std::list would be better and then unlock after end of cycle
         std::vector<uint32> scheduled(m_QueueUpdateScheduler);
         m_QueueUpdateScheduler.clear();
+        // TODO drop lock
         for (uint8 i = 0; i < scheduled.size(); i++)
         {
-            BattleGroundQueueTypeId bgQueueTypeId = BattleGroundQueueTypeId(scheduled[i] / 65536);
-            BattleGroundTypeId bgTypeId = BattleGroundTypeId((scheduled[i] % 65536) / 256);
-            BGQueueIdBasedOnLevel queue_id = BGQueueIdBasedOnLevel(scheduled[i] % 256);
+            BattleGroundQueueTypeId bgQueueTypeId = BattleGroundQueueTypeId(scheduled[i] >> 16);
+            BattleGroundTypeId bgTypeId = BattleGroundTypeId((scheduled[i] >> 8) & 255);
+            BGQueueIdBasedOnLevel queue_id = BGQueueIdBasedOnLevel(scheduled[i] & 255);
             m_BattleGroundQueues[bgQueueTypeId].Update(bgTypeId, queue_id);
         }
     }
@@ -1405,6 +1434,8 @@ void BattleGroundMgr::BuildPvpLogDataPacket(WorldPacket *data, BattleGround *bg)
             case BATTLEGROUND_RL:
             case BATTLEGROUND_DS:                           // wotlk
             case BATTLEGROUND_RV:                           // wotlk
+            case BATTLEGROUND_IC:                           // wotlk
+            case BATTLEGROUND_ABG:                          // wotlk
                 *data << (int32)0;                          // 0
                 break;
             default:
@@ -1582,6 +1613,12 @@ BattleGround * BattleGroundMgr::CreateNewBattleGround(BattleGroundTypeId bgTypeI
         case BATTLEGROUND_RV:
             bg = new BattleGroundRV(*(BattleGroundRV*)bg_template);
             break;
+        case BATTLEGROUND_IC:
+            bg = new BattleGroundIC(*(BattleGroundIC*)bg_template);
+            break;
+        case BATTLEGROUND_ABG:
+            bg = new BattleGroundABG(*(BattleGroundABG*)bg_template);
+            break;
         default:
             //error, but it is handled few lines above
             return 0;
@@ -1599,12 +1636,6 @@ BattleGround * BattleGroundMgr::CreateNewBattleGround(BattleGroundTypeId bgTypeI
     bg->SetQueueId(queue_id);
     bg->SetArenaType(arenaType);
     bg->SetRated(isRated);
-
-    // add BG to free slot queue
-    bg->AddToBGFreeSlotQueue();
-
-    // add bg to update list
-    AddBattleGround(bg->GetInstanceID(), bg->GetTypeID(), bg);
 
     return bg;
 }
@@ -1627,6 +1658,8 @@ uint32 BattleGroundMgr::CreateBattleGround(BattleGroundTypeId bgTypeId, bool IsA
         case BATTLEGROUND_SA: bg = new BattleGroundSA; break;
         case BATTLEGROUND_DS: bg = new BattleGroundDS; break;
         case BATTLEGROUND_RV: bg = new BattleGroundRV; break;
+        case BATTLEGROUND_IC: bg = new BattleGroundIC; break;
+        case BATTLEGROUND_ABG: bg = new BattleGroundABG; break;
         default:bg = new BattleGround;   break;             // placeholder for non implemented BG
     }
 
@@ -1721,7 +1754,7 @@ void BattleGroundMgr::CreateInitialBattleGrounds()
             AStartLoc[2] = start->z;
             AStartLoc[3] = fields[6].GetFloat();
         }
-        else if (bgTypeID == BATTLEGROUND_AA)
+        else if (bgTypeID == BATTLEGROUND_AA || bgTypeID == BATTLEGROUND_ABG)
         {
             AStartLoc[0] = 0;
             AStartLoc[1] = 0;
@@ -1744,7 +1777,7 @@ void BattleGroundMgr::CreateInitialBattleGrounds()
             HStartLoc[2] = start->z;
             HStartLoc[3] = fields[8].GetFloat();
         }
-        else if (bgTypeID == BATTLEGROUND_AA)
+        else if (bgTypeID == BATTLEGROUND_AA || bgTypeID == BATTLEGROUND_ABG)
         {
             HStartLoc[0] = 0;
             HStartLoc[1] = 0;
@@ -1866,7 +1899,7 @@ void BattleGroundMgr::BuildBattleGroundListPacket(WorldPacket *data, const uint6
         uint32 count = 0;
         *data << uint32(0x00);                              // number of bg instances
 
-        uint32 queue_id = plr->GetBattleGroundQueueIdFromLevel(bgTypeId);
+        uint32 queue_id = plr->GetBattleGroundQueueIdFromLevel();
         for(std::set<uint32>::iterator itr = m_ClientBattleGroundIds[bgTypeId][queue_id].begin(); itr != m_ClientBattleGroundIds[bgTypeId][queue_id].end();++itr)
         {
             *data << uint32(*itr);
@@ -1897,16 +1930,6 @@ void BattleGroundMgr::SendToBattleGround(Player *pl, uint32 instanceId, BattleGr
     }
 }
 
-void BattleGroundMgr::SendAreaSpiritHealerQueryOpcode(Player *pl, BattleGround *bg, const uint64& guid)
-{
-    WorldPacket data(SMSG_AREA_SPIRIT_HEALER_TIME, 12);
-    uint32 time_ = 30000 - bg->GetLastResurrectTime();      // resurrect every 30 seconds
-    if (time_ == uint32(-1))
-        time_ = 0;
-    data << guid << time_;
-    pl->GetSession()->SendPacket(&data);
-}
-
 bool BattleGroundMgr::IsArenaType(BattleGroundTypeId bgTypeId)
 {
     return ( bgTypeId == BATTLEGROUND_AA ||
@@ -1929,6 +1952,10 @@ BattleGroundQueueTypeId BattleGroundMgr::BGQueueTypeId(BattleGroundTypeId bgType
             return BATTLEGROUND_QUEUE_EY;
         case BATTLEGROUND_SA:
             return BATTLEGROUND_QUEUE_SA;
+        case BATTLEGROUND_IC:
+            return BATTLEGROUND_QUEUE_IC;
+        case BATTLEGROUND_ABG:
+            return BATTLEGROUND_QUEUE_NONE;
         case BATTLEGROUND_AA:
         case BATTLEGROUND_NA:
         case BATTLEGROUND_RL:
@@ -1965,6 +1992,8 @@ BattleGroundTypeId BattleGroundMgr::BGTemplateId(BattleGroundQueueTypeId bgQueue
             return BATTLEGROUND_EY;
         case BATTLEGROUND_QUEUE_SA:
             return BATTLEGROUND_SA;
+        case BATTLEGROUND_QUEUE_IC:
+            return BATTLEGROUND_IC;
         case BATTLEGROUND_QUEUE_2v2:
         case BATTLEGROUND_QUEUE_3v3:
         case BATTLEGROUND_QUEUE_5v5:
@@ -2009,9 +2038,9 @@ void BattleGroundMgr::ToggleArenaTesting()
 
 void BattleGroundMgr::ScheduleQueueUpdate(BattleGroundQueueTypeId bgQueueTypeId, BattleGroundTypeId bgTypeId, BGQueueIdBasedOnLevel queue_id)
 {
-    //This method must be atomic!
+    //This method must be atomic, TODO add mutex
     //we will use only 1 number created of bgTypeId and queue_id
-    uint32 schedule_id = (bgQueueTypeId * 65536) + (bgTypeId * 256) + queue_id;
+    uint32 schedule_id = (bgQueueTypeId << 16) | (bgTypeId << 8) | queue_id;
     bool found = false;
     for (uint8 i = 0; i < m_QueueUpdateScheduler.size(); i++)
     {
@@ -2089,62 +2118,133 @@ void BattleGroundMgr::LoadBattleMastersEntry()
     sLog.outString( ">> Loaded %u battlemaster entries", count );
 }
 
-void BattleGroundMgr::LoadCreatureBattleEventIndexes()
+bool BattleGroundMgr::IsBGWeekend(BattleGroundTypeId bgTypeId)
 {
-    mCreatureBattleEventIndexMap.clear();                   // need for reload case
-    QueryResult *result = WorldDatabase.Query( "SELECT guid, eventIndex FROM creature_battleground" );
-    uint32 count = 0;
-    if( !result )
+    switch (bgTypeId)
     {
-        barGoLink bar( 1 );
-        bar.step();
-
-        sLog.outString();
-        sLog.outString( ">> Loaded 0 battleground eventindexes for creatures - table is empty!" );
-        return;
+        case BATTLEGROUND_AV:
+            return IsHolidayActive(HOLIDAY_CALL_TO_ARMS_AV);
+        case BATTLEGROUND_EY:
+            return IsHolidayActive(HOLIDAY_CALL_TO_ARMS_EY);
+        case BATTLEGROUND_WS:
+            return IsHolidayActive(HOLIDAY_CALL_TO_ARMS_WS);
+        case BATTLEGROUND_SA:
+            return IsHolidayActive(HOLIDAY_CALL_TO_ARMS_SA);
+        default:
+            return false;
     }
-    barGoLink bar( result->GetRowCount() );
-    do
-    {
-        ++count;
-        bar.step();
-        Field *fields = result->Fetch();
-        uint32 dbTableGuidLow   = fields[0].GetUInt32();
-        uint8  eventIndex       = fields[1].GetUInt8();
-        mCreatureBattleEventIndexMap[dbTableGuidLow] = eventIndex;
-
-    } while( result->NextRow() );
-    delete result;
-    sLog.outString();
-    sLog.outString( ">> Loaded %u battleground eventindexes for creatures", count );
 }
 
-void BattleGroundMgr::LoadGameObjectBattleEventIndexes()
+void BattleGroundMgr::LoadBattleEventIndexes()
 {
-    mGameObjectBattleEventIndexMap.clear();                   // need for reload case
-    QueryResult *result = WorldDatabase.Query( "SELECT guid, eventIndex FROM gameobject_battleground" );
+    BattleGroundEventIdx events;
+    events.event1 = BG_EVENT_NONE;
+    events.event2 = BG_EVENT_NONE;
+    m_GameObjectBattleEventIndexMap.clear();             // need for reload case
+    m_GameObjectBattleEventIndexMap[-1] = events;
+    m_CreatureBattleEventIndexMap.clear();               // need for reload case
+    m_CreatureBattleEventIndexMap[-1] = events;
+
     uint32 count = 0;
-    if( !result )
+
+    QueryResult *result =
+        //                              0            1           2             3                     4           5           6
+        WorldDatabase.PQuery( "SELECT data.typ, data.guid1, data.ev1 AS ev1, data.ev2 AS ev2, data.map AS m, data.guid2, description.map, "
+        //                              7                  8                   9
+                                      "description.event1, description.event2, description.description "
+                                 "FROM "
+                                    "(SELECT '1' AS typ, a.guid AS guid1, a.event1 AS ev1, a.event2 AS ev2, b.map AS map, b.guid AS guid2 "
+                                        "FROM gameobject_battleground AS a "
+                                        "LEFT OUTER JOIN gameobject AS b ON a.guid = b.guid "
+                                     "UNION "
+                                     "SELECT '2' AS typ, a.guid AS guid1, a.event1 AS ev1, a.event2 AS ev2, b.map AS map, b.guid AS guid2 "
+                                        "FROM creature_battleground AS a "
+                                        "LEFT OUTER JOIN creature AS b ON a.guid = b.guid "
+                                    ") data "
+                                    "RIGHT OUTER JOIN battleground_events AS description ON data.map = description.map "
+                                        "AND data.ev1 = description.event1 AND data.ev2 = description.event2 "
+        // full outer join doesn't work in mysql :-/ so just UNION-select the same again and add a left outer join
+                              "UNION "
+                              "SELECT data.typ, data.guid1, data.ev1, data.ev2, data.map, data.guid2, description.map, "
+                                      "description.event1, description.event2, description.description "
+                                 "FROM "
+                                    "(SELECT '1' AS typ, a.guid AS guid1, a.event1 AS ev1, a.event2 AS ev2, b.map AS map, b.guid AS guid2 "
+                                        "FROM gameobject_battleground AS a "
+                                        "LEFT OUTER JOIN gameobject AS b ON a.guid = b.guid "
+                                     "UNION "
+                                     "SELECT '2' AS typ, a.guid AS guid1, a.event1 AS ev1, a.event2 AS ev2, b.map AS map, b.guid AS guid2 "
+                                        "FROM creature_battleground AS a "
+                                        "LEFT OUTER JOIN creature AS b ON a.guid = b.guid "
+                                    ") data "
+                                    "LEFT OUTER JOIN battleground_events AS description ON data.map = description.map "
+                                        "AND data.ev1 = description.event1 AND data.ev2 = description.event2 "
+                              "ORDER BY m, ev1, ev2" );
+    if(!result)
     {
-        barGoLink bar( 1 );
+        barGoLink bar(1);
         bar.step();
 
         sLog.outString();
-        sLog.outString( ">> Loaded 0 battleground eventindexes for gameobjects - table is empty!" );
+        sLog.outErrorDb(">> Loaded 0 battleground eventindexes.");
         return;
     }
-    barGoLink bar( result->GetRowCount() );
+
+    barGoLink bar(result->GetRowCount());
+
     do
     {
-        ++count;
         bar.step();
         Field *fields = result->Fetch();
-        uint32 dbTableGuidLow   = fields[0].GetUInt32();
-        uint8  eventIndex       = fields[1].GetUInt8();
-        mGameObjectBattleEventIndexMap[dbTableGuidLow] = eventIndex;
+        if (fields[2].GetUInt8() == BG_EVENT_NONE || fields[3].GetUInt8() == BG_EVENT_NONE)
+            continue;                                       // we don't need to add those to the eventmap
 
-    } while( result->NextRow() );
-    delete result;
+        bool gameobject         = (fields[0].GetUInt8() == 1);
+        uint32 dbTableGuidLow   = fields[1].GetUInt32();
+        events.event1           = fields[2].GetUInt8();
+        events.event2           = fields[3].GetUInt8();
+        uint32 map              = fields[4].GetUInt32();
+
+        uint32 desc_map = fields[6].GetUInt32();
+        uint8 desc_event1 = fields[7].GetUInt8();
+        uint8 desc_event2 = fields[8].GetUInt8();
+        const char *description = fields[9].GetString();
+
+        // checking for NULL - through right outer join this will mean following:
+        if (fields[5].GetUInt32() != dbTableGuidLow)
+        {
+            sLog.outErrorDb("BattleGroundEvent: %s with nonexistant guid %u for event: map:%u, event1:%u, event2:%u (\"%s\")",
+                (gameobject) ? "gameobject" : "creature", dbTableGuidLow, map, events.event1, events.event2, description);
+            continue;
+        }
+
+        // checking for NULL - through full outer join this can mean 2 things:
+        if (desc_map != map)
+        {
+            // there is an event missing
+            if (dbTableGuidLow == 0)
+            {
+                sLog.outErrorDb("BattleGroundEvent: missing db-data for map:%u, event1:%u, event2:%u (\"%s\")", desc_map, desc_event1, desc_event2, description);
+                continue;
+            }
+            // we have an event which shouldn't exist
+            else
+            {
+                sLog.outErrorDb("BattleGroundEvent: %s with guid %u is registered, for a nonexistant event: map:%u, event1:%u, event2:%u",
+                    (gameobject) ? "gameobject" : "creature", dbTableGuidLow, map, events.event1, events.event2);
+                continue;
+            }
+        }
+
+        if (gameobject)
+            m_GameObjectBattleEventIndexMap[dbTableGuidLow] = events;
+        else
+            m_CreatureBattleEventIndexMap[dbTableGuidLow] = events;
+
+        ++count;
+
+    } while(result->NextRow());
+
     sLog.outString();
-    sLog.outString( ">> Loaded %u battleground eventindexes for gameobjects", count );
+    sLog.outString( ">> Loaded %u battleground eventindexes", count);
+    delete result;
 }

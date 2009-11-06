@@ -22,7 +22,7 @@ SDCategory: Magister's Terrace
 EndScriptData */
 
 #include "precompiled.h"
-#include "def_magisters_terrace.h"
+#include "magisters_terrace.h"
 
 enum
 {
@@ -118,7 +118,7 @@ struct MANGOS_DLL_DECL boss_vexallusAI : public ScriptedAI
 
     void UpdateAI(const uint32 diff)
     {
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         if (!Enraged)

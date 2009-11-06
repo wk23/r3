@@ -22,7 +22,7 @@ SDCategory: Caverns of Time, Old Hillsbrad Foothills
 EndScriptData */
 
 #include "precompiled.h"
-#include "def_old_hillsbrad.h"
+#include "old_hillsbrad.h"
 #include "escort_ai.h"
 
 /*######
@@ -119,11 +119,7 @@ struct MANGOS_DLL_DECL boss_lieutenant_drakeAI : public ScriptedAI
 
     void KilledUnit(Unit *victim)
     {
-        switch(rand()%2)
-        {
-            case 0: DoScriptText(SAY_SLAY1, m_creature); break;
-            case 1: DoScriptText(SAY_SLAY2, m_creature); break;
-        }
+        DoScriptText(urand(0, 1) ? SAY_SLAY1 : SAY_SLAY2, m_creature);
     }
 
     void JustDied(Unit *victim)
@@ -141,14 +137,14 @@ struct MANGOS_DLL_DECL boss_lieutenant_drakeAI : public ScriptedAI
         }
 
         //Return since we have no target
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         //Whirlwind
         if (Whirlwind_Timer < diff)
         {
             DoCast(m_creature->getVictim(), SPELL_WHIRLWIND);
-            Whirlwind_Timer = 20000+rand()%5000;
+            Whirlwind_Timer = urand(20000, 25000);
         }else Whirlwind_Timer -= diff;
 
         //Fear
@@ -156,7 +152,7 @@ struct MANGOS_DLL_DECL boss_lieutenant_drakeAI : public ScriptedAI
         {
             DoScriptText(SAY_SHOUT, m_creature);
             DoCast(m_creature->getVictim(), SPELL_FRIGHTENING_SHOUT);
-            Fear_Timer = 25000+rand()%10000;
+            Fear_Timer = urand(25000, 35000);
         }else Fear_Timer -= diff;
 
         //Mortal Strike
@@ -164,7 +160,7 @@ struct MANGOS_DLL_DECL boss_lieutenant_drakeAI : public ScriptedAI
         {
             DoScriptText(SAY_MORTAL, m_creature);
             DoCast(m_creature->getVictim(), SPELL_MORTAL_STRIKE);
-            MortalStrike_Timer = 20000+rand()%10000;
+            MortalStrike_Timer = urand(20000, 30000);
         }else MortalStrike_Timer -= diff;
 
         DoMeleeAttackIfReady();

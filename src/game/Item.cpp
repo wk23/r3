@@ -708,6 +708,9 @@ bool Item::IsEquipped() const
 
 bool Item::CanBeTraded(bool mail) const
 {
+	if(!mail && IsBoundAccountWide()) // Dirty hack, because trade window is closing
+		return false;
+
     if ((!mail || !IsBoundAccountWide()) && IsSoulBound())
         return false;
 
@@ -754,16 +757,6 @@ bool Item::IsFitToSpellRequirements(SpellEntry const* spellInfo) const
     //Lava Lash
     if (spellInfo->Id==60103 && spellInfo->EquippedItemClass==ITEM_CLASS_WEAPON)
          return true;
-
-    // Enchant spells have only effect[0]
-    if(proto->IsVellum() && spellInfo->Effect[0] == SPELL_EFFECT_ENCHANT_ITEM && spellInfo->EffectItemType[0])
-    {
-        if(proto->SubClass == ITEM_SUBCLASS_WEAPON_ENCHANTMENT && spellInfo->EquippedItemClass == ITEM_CLASS_WEAPON)
-            return true;
-        else if(proto->SubClass == ITEM_SUBCLASS_ARMOR_ENCHANTMENT && spellInfo->EquippedItemClass == ITEM_CLASS_ARMOR)
-            return true;
-    }
-    // Vellum enchant case should ignore everything below
 
     if (spellInfo->EquippedItemClass != -1)                 // -1 == any item class
     {
@@ -1008,6 +1001,26 @@ bool Item::IsBindedNotWith( Player const* player ) const
     {
         return objmgr.GetPlayerAccountIdByGUID(GetOwnerGUID()) != player->GetSession()->GetAccountId();
     }
+}
+
+void Item::AddToClientUpdateList()
+{
+    if (Player* pl = GetOwner())
+        pl->GetMap()->AddUpdateObject(this);
+}
+
+void Item::RemoveFromClientUpdateList()
+{
+    if (Player* pl = GetOwner())
+        pl->GetMap()->RemoveUpdateObject(this);
+}
+
+void Item::BuildUpdateData(UpdateDataMapType& update_players)
+{
+    if (Player* pl = GetOwner())
+        BuildUpdateDataForPlayer(pl, update_players);
+
+    ClearUpdateMask(false);
 }
 
 bool ItemRequiredTarget::IsFitToRequirements( Unit* pUnitTarget ) const

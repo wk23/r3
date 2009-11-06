@@ -58,7 +58,7 @@ struct MANGOS_DLL_DECL mob_stolen_soulAI : public ScriptedAI
 
     void UpdateAI(const uint32 diff)
     {
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         if (Class_Timer < diff)
@@ -163,9 +163,9 @@ struct MANGOS_DLL_DECL boss_exarch_maladaarAI : public ScriptedAI
         soulholder = 0;
         soulclass = 0;
 
-        Fear_timer = 15000 + rand()% 5000;
+        Fear_timer = urand(15000, 20000);
         Ribbon_of_Souls_timer = 5000;
-        StolenSoul_Timer = 25000 + rand()% 10000;
+        StolenSoul_Timer = urand(25000, 35000);
 
         Avatar_summoned = false;
     }
@@ -183,7 +183,7 @@ struct MANGOS_DLL_DECL boss_exarch_maladaarAI : public ScriptedAI
 
     void Aggro(Unit *who)
     {
-        switch (rand()%3)
+        switch(urand(0, 2))
         {
             case 0: DoScriptText(SAY_AGGRO_1, m_creature); break;
             case 1: DoScriptText(SAY_AGGRO_2, m_creature); break;
@@ -210,14 +210,10 @@ struct MANGOS_DLL_DECL boss_exarch_maladaarAI : public ScriptedAI
 
     void KilledUnit(Unit* victim)
     {
-        if (rand()%2)
+        if (urand(0, 1))
             return;
 
-        switch (rand()%2)
-        {
-            case 0: DoScriptText(SAY_SLAY_1, m_creature); break;
-            case 1: DoScriptText(SAY_SLAY_2, m_creature); break;
-        }
+        DoScriptText(urand(0, 1) ? SAY_SLAY_1 : SAY_SLAY_2, m_creature);
     }
 
     void JustDied(Unit* Killer)
@@ -230,7 +226,7 @@ struct MANGOS_DLL_DECL boss_exarch_maladaarAI : public ScriptedAI
 
     void UpdateAI(const uint32 diff)
     {
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         if (!Avatar_summoned && ((m_creature->GetHealth()*100) / m_creature->GetMaxHealth() < 25))
@@ -242,7 +238,7 @@ struct MANGOS_DLL_DECL boss_exarch_maladaarAI : public ScriptedAI
 
             DoCast(m_creature, SPELL_SUMMON_AVATAR);
             Avatar_summoned = true;
-            StolenSoul_Timer = 15000 + rand()% 15000;
+            StolenSoul_Timer = urand(15000, 30000);
         }
 
         if (StolenSoul_Timer < diff)
@@ -267,7 +263,7 @@ struct MANGOS_DLL_DECL boss_exarch_maladaarAI : public ScriptedAI
                     DoCast(target,SPELL_STOLEN_SOUL);
                     m_creature->SummonCreature(ENTRY_STOLEN_SOUL, 0.0f, 0.0f, 0.0f, 0.0f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 10000);
 
-                    StolenSoul_Timer = 20000 + rand()% 10000;
+                    StolenSoul_Timer = urand(20000, 30000);
                 } else StolenSoul_Timer = 1000;
             }
         }else StolenSoul_Timer -= diff;
@@ -277,13 +273,13 @@ struct MANGOS_DLL_DECL boss_exarch_maladaarAI : public ScriptedAI
             if (Unit *target = SelectUnit(SELECT_TARGET_RANDOM,0))
                 DoCast(target,SPELL_RIBBON_OF_SOULS);
 
-            Ribbon_of_Souls_timer = 5000 + (rand()%20 * 1000);
+            Ribbon_of_Souls_timer = urand(5000, 25000);
         }else Ribbon_of_Souls_timer -= diff;
 
         if (Fear_timer < diff)
         {
             DoCast(m_creature,SPELL_SOUL_SCREAM);
-            Fear_timer = 15000 + rand()% 15000;
+            Fear_timer = urand(15000, 30000);
         }else Fear_timer -= diff;
 
         DoMeleeAttackIfReady();
@@ -311,13 +307,13 @@ struct MANGOS_DLL_DECL mob_avatar_of_martyredAI : public ScriptedAI
 
     void UpdateAI(const uint32 diff)
     {
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         if (Mortal_Strike_timer < diff)
         {
             DoCast(m_creature->getVictim(), SPELL_AV_MORTAL_STRIKE);
-            Mortal_Strike_timer = 10000 + rand()%20 * 1000;
+            Mortal_Strike_timer = urand(10000, 30000);
         } else Mortal_Strike_timer -= diff;
 
         DoMeleeAttackIfReady();

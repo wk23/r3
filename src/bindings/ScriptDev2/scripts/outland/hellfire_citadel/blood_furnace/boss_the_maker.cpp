@@ -22,7 +22,7 @@ SDCategory: Hellfire Citadel, Blood Furnace
 EndScriptData */
 
 #include "precompiled.h"
-#include "def_blood_furnace.h"
+#include "blood_furnace.h"
 
 enum
 {
@@ -64,7 +64,7 @@ struct MANGOS_DLL_DECL boss_the_makerAI : public ScriptedAI
 
     void Aggro(Unit *who)
     {
-        switch(rand()%3)
+        switch(urand(0, 2))
         {
             case 0: DoScriptText(SAY_AGGRO_1, m_creature); break;
             case 1: DoScriptText(SAY_AGGRO_2, m_creature); break;
@@ -83,11 +83,7 @@ struct MANGOS_DLL_DECL boss_the_makerAI : public ScriptedAI
 
     void KilledUnit(Unit* victim)
     {
-        switch(rand()%2)
-        {
-            case 0: DoScriptText(SAY_KILL_1, m_creature); break;
-            case 1: DoScriptText(SAY_KILL_2, m_creature); break;
-        }
+        DoScriptText(urand(0, 1) ? SAY_KILL_1 : SAY_KILL_2, m_creature);
     }
 
     void JustDied(Unit* Killer)
@@ -100,20 +96,20 @@ struct MANGOS_DLL_DECL boss_the_makerAI : public ScriptedAI
 
     void UpdateAI(const uint32 diff)
     {
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         if (AcidSpray_Timer < diff)
         {
             DoCast(m_creature->getVictim(),SPELL_ACID_SPRAY);
-            AcidSpray_Timer = 15000+rand()%8000;
+            AcidSpray_Timer = urand(15000, 23000);
         }else AcidSpray_Timer -=diff;
 
         if (ExplodingBreaker_Timer < diff)
         {
             if (Unit* target = SelectUnit(SELECT_TARGET_RANDOM,0))
                 DoCast(target,SPELL_EXPLODING_BREAKER);
-            ExplodingBreaker_Timer = 4000+rand()%8000;
+            ExplodingBreaker_Timer = urand(4000, 12000);
         }else ExplodingBreaker_Timer -=diff;
 
         /* // Disabled until Core Support for mind control
@@ -131,7 +127,7 @@ struct MANGOS_DLL_DECL boss_the_makerAI : public ScriptedAI
         if (Knockdown_Timer < diff)
         {
             DoCast(m_creature->getVictim(),SPELL_KNOCKDOWN);
-            Knockdown_Timer = 4000+rand()%8000;
+            Knockdown_Timer = urand(4000, 12000);
         }else Knockdown_Timer -=diff;
 
         DoMeleeAttackIfReady();

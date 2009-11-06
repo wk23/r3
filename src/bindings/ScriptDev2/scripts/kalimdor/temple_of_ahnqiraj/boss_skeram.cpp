@@ -22,7 +22,7 @@ SDCategory: Temple of Ahn'Qiraj
 EndScriptData */
 
 #include "precompiled.h"
-#include "def_temple_of_ahnqiraj.h"
+#include "temple_of_ahnqiraj.h"
 #include "Group.h"
 
 #define SAY_AGGRO1                  -1531000
@@ -76,10 +76,10 @@ struct MANGOS_DLL_DECL boss_skeramAI : public ScriptedAI
 
     void Reset()
     {
-        ArcaneExplosion_Timer = 6000 + rand()%6000;
+        ArcaneExplosion_Timer = urand(6000, 12000);
         EarthShock_Timer = 2000;
         FullFillment_Timer = 15000;
-        Blink_Timer = 8000 + rand()%12000;
+        Blink_Timer = urand(8000, 20000);
         Invisible_Timer = 500;
 
         Images75 = false;
@@ -96,7 +96,7 @@ struct MANGOS_DLL_DECL boss_skeramAI : public ScriptedAI
 
     void KilledUnit(Unit* victim)
     {
-        switch(rand()%3)
+        switch(urand(0, 2))
         {
             case 0: DoScriptText(SAY_SLAY1, m_creature); break;
             case 1: DoScriptText(SAY_SLAY2, m_creature); break;
@@ -114,7 +114,7 @@ struct MANGOS_DLL_DECL boss_skeramAI : public ScriptedAI
     {
         if (IsImage || Images75)
             return;
-        switch(rand()%3)
+        switch(urand(0, 2))
         {
             case 0: DoScriptText(SAY_AGGRO1, m_creature); break;
             case 1: DoScriptText(SAY_AGGRO2, m_creature); break;
@@ -125,14 +125,14 @@ struct MANGOS_DLL_DECL boss_skeramAI : public ScriptedAI
     void UpdateAI(const uint32 diff)
     {
         //Return since we have no target
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         //ArcaneExplosion_Timer
         if (ArcaneExplosion_Timer < diff)
         {
             DoCast(m_creature->getVictim(), SPELL_ARCANE_EXPLOSION);
-            ArcaneExplosion_Timer = 8000 + rand()%10000;
+            ArcaneExplosion_Timer = urand(8000, 18000);
         }else ArcaneExplosion_Timer -= diff;
 
         //If we are within range melee the target
@@ -158,7 +158,7 @@ struct MANGOS_DLL_DECL boss_skeramAI : public ScriptedAI
         if (Blink_Timer < diff)
         {
             //DoCast(m_creature, SPELL_BLINK);
-            switch(rand()%3)
+            switch(urand(0, 2))
             {
                 case 0:
                     m_creature->GetMap()->CreatureRelocation(m_creature, -8340.782227, 2083.814453, 125.648788, 0.0f);
@@ -175,7 +175,7 @@ struct MANGOS_DLL_DECL boss_skeramAI : public ScriptedAI
             }
             DoStopAttack();
 
-            Blink_Timer= 20000 + rand()%20000;
+            Blink_Timer = urand(20000, 40000);
         }else Blink_Timer -= diff;
 
         int procent = (int) (m_creature->GetHealth()*100 / m_creature->GetMaxHealth() +0.5);
@@ -219,7 +219,7 @@ struct MANGOS_DLL_DECL boss_skeramAI : public ScriptedAI
 
         ov_mycoordinates *bossc=place1, *i1=place2, *i2=place3;
 
-        switch(rand()%3)
+        switch(urand(0, 2))
         {
             case 0:
                 bossc = place1;

@@ -22,7 +22,7 @@ SDCategory: Magister's Terrace
 EndScriptData */
 
 #include "precompiled.h"
-#include "def_magisters_terrace.h"
+#include "magisters_terrace.h"
 
 struct Speech
 {
@@ -141,7 +141,7 @@ struct MANGOS_DLL_DECL boss_priestess_delrissaAI : public ScriptedAI
                 if (!pAdd->getVictim())
                 {
                     pWho->SetInCombatWith(pAdd);
-                    pAdd->AddThreat(pWho, 0.0f);
+                    pAdd->AddThreat(pWho);
                 }
             }
         }
@@ -227,7 +227,7 @@ struct MANGOS_DLL_DECL boss_priestess_delrissaAI : public ScriptedAI
 
     void UpdateAI(const uint32 diff)
     {
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         if (HealTimer < diff)
@@ -252,7 +252,7 @@ struct MANGOS_DLL_DECL boss_priestess_delrissaAI : public ScriptedAI
         {
             Unit* target = m_creature;
 
-            if (rand()%2 == 1)
+            if (urand(0, 1))
             {
                 if (Unit* pAdd = Unit::GetUnit(*m_creature, m_auiLackeyGUID[rand()%MAX_ACTIVE_LACKEY]))
                 {
@@ -269,7 +269,7 @@ struct MANGOS_DLL_DECL boss_priestess_delrissaAI : public ScriptedAI
         {
             Unit* target = m_creature;
 
-            if (rand()%2 == 1)
+            if (urand(0, 1))
             {
                 if (Unit* pAdd = Unit::GetUnit(*m_creature, m_auiLackeyGUID[rand()%MAX_ACTIVE_LACKEY]))
                 {
@@ -287,13 +287,13 @@ struct MANGOS_DLL_DECL boss_priestess_delrissaAI : public ScriptedAI
             Unit* target = NULL;
             bool friendly = false;
 
-            if (rand()%2 == 1)
+            if (urand(0, 1))
                 target = SelectUnit(SELECT_TARGET_RANDOM, 0);
             else
             {
                 friendly = true;
 
-                if (rand()%2 == 1)
+                if (urand(0, 1))
                     target = m_creature;
                 else
                 {
@@ -358,7 +358,7 @@ struct MANGOS_DLL_DECL boss_priestess_lackey_commonAI : public ScriptedAI
         // For later development, some alternative threat system should be made
         // We do not know what this system is based upon, but one theory is class (healers=high threat, dps=medium, etc)
         // We reset their threat frequently as an alternative until such a system exist
-        m_uiResetThreatTimer = 5000 + rand()%15000;
+        m_uiResetThreatTimer = urand(5000, 15000);
 
         // in case she is not alive and Reset was for some reason called, respawn her (most likely party wipe after killing her)
         if (Creature* pDelrissa = (Creature*)Unit::GetUnit(*m_creature, m_pInstance->GetData64(DATA_DELRISSA)))
@@ -382,7 +382,7 @@ struct MANGOS_DLL_DECL boss_priestess_lackey_commonAI : public ScriptedAI
                     if (!pAdd->getVictim() && pAdd != m_creature)
                     {
                         pWho->SetInCombatWith(pAdd);
-                        pAdd->AddThreat(pWho, 0.0f);
+                        pAdd->AddThreat(pWho);
                     }
                 }
             }
@@ -392,7 +392,7 @@ struct MANGOS_DLL_DECL boss_priestess_lackey_commonAI : public ScriptedAI
                 if (pDelrissa->isAlive() && !pDelrissa->getVictim())
                 {
                     pWho->SetInCombatWith(pDelrissa);
-                    pDelrissa->AddThreat(pWho, 0.0f);
+                    pDelrissa->AddThreat(pWho);
                 }
             }
         }
@@ -464,7 +464,7 @@ struct MANGOS_DLL_DECL boss_priestess_lackey_commonAI : public ScriptedAI
         if (m_uiResetThreatTimer < uiDiff)
         {
             DoResetThreat();
-            m_uiResetThreatTimer = 5000 + rand()%15000;
+            m_uiResetThreatTimer = urand(5000, 15000);
         }else m_uiResetThreatTimer -= uiDiff;
     }
 };
@@ -506,7 +506,7 @@ struct MANGOS_DLL_DECL boss_kagani_nightstrikeAI : public boss_priestess_lackey_
 
     void UpdateAI(const uint32 diff)
     {
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         boss_priestess_lackey_commonAI::UpdateAI(diff);
@@ -606,7 +606,7 @@ struct MANGOS_DLL_DECL boss_ellris_duskhallowAI : public boss_priestess_lackey_c
 
     void UpdateAI(const uint32 diff)
     {
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         boss_priestess_lackey_commonAI::UpdateAI(diff);
@@ -680,7 +680,7 @@ struct MANGOS_DLL_DECL boss_eramas_brightblazeAI : public boss_priestess_lackey_
 
     void UpdateAI(const uint32 diff)
     {
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         boss_priestess_lackey_commonAI::UpdateAI(diff);
@@ -751,7 +751,7 @@ struct MANGOS_DLL_DECL boss_yazzaiAI : public boss_priestess_lackey_commonAI
 
     void UpdateAI(const uint32 diff)
     {
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         boss_priestess_lackey_commonAI::UpdateAI(diff);
@@ -800,8 +800,8 @@ struct MANGOS_DLL_DECL boss_yazzaiAI : public boss_priestess_lackey_commonAI
         if (Blink_Timer < diff)
         {
             bool InMeleeRange = false;
-            std::list<HostilReference*>& t_list = m_creature->getThreatManager().getThreatList();
-            for(std::list<HostilReference*>::iterator itr = t_list.begin(); itr!= t_list.end(); ++itr)
+            std::list<HostileReference*>& t_list = m_creature->getThreatManager().getThreatList();
+            for(std::list<HostileReference*>::iterator itr = t_list.begin(); itr!= t_list.end(); ++itr)
             {
                 if (Unit* target = Unit::GetUnit(*m_creature, (*itr)->getUnitGuid()))
                 {
@@ -872,7 +872,7 @@ struct MANGOS_DLL_DECL boss_warlord_salarisAI : public boss_priestess_lackey_com
 
     void UpdateAI(const uint32 diff)
     {
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         boss_priestess_lackey_commonAI::UpdateAI(diff);
@@ -880,8 +880,8 @@ struct MANGOS_DLL_DECL boss_warlord_salarisAI : public boss_priestess_lackey_com
         if (Intercept_Stun_Timer < diff)
         {
             bool InMeleeRange = false;
-            std::list<HostilReference*>& t_list = m_creature->getThreatManager().getThreatList();
-            for(std::list<HostilReference*>::iterator itr = t_list.begin(); itr!= t_list.end(); ++itr)
+            std::list<HostileReference*>& t_list = m_creature->getThreatManager().getThreatList();
+            for(std::list<HostileReference*>::iterator itr = t_list.begin(); itr!= t_list.end(); ++itr)
             {
                 if (Unit* target = Unit::GetUnit(*m_creature, (*itr)->getUnitGuid()))
                 {
@@ -997,7 +997,7 @@ struct MANGOS_DLL_DECL boss_garaxxasAI : public boss_priestess_lackey_commonAI
 
     void UpdateAI(const uint32 diff)
     {
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         boss_priestess_lackey_commonAI::UpdateAI(diff);
@@ -1099,14 +1099,14 @@ struct MANGOS_DLL_DECL boss_apokoAI : public boss_priestess_lackey_commonAI
 
     void UpdateAI(const uint32 diff)
     {
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         boss_priestess_lackey_commonAI::UpdateAI(diff);
 
         if (Totem_Timer < diff)
         {
-            switch(rand()%3)
+            switch(urand(0, 2))
             {
                 case 0: DoCast(m_creature, SPELL_WINDFURY_TOTEM); break;
                 case 1: DoCast(m_creature, SPELL_FIRE_NOVA_TOTEM); break;
@@ -1194,7 +1194,7 @@ struct MANGOS_DLL_DECL boss_zelfanAI : public boss_priestess_lackey_commonAI
 
     void UpdateAI(const uint32 diff)
     {
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         boss_priestess_lackey_commonAI::UpdateAI(diff);

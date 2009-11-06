@@ -179,6 +179,8 @@ enum WorldConfigs
     CONFIG_SILENTLY_GM_JOIN_TO_CHANNEL,
     CONFIG_TALENTS_INSPECTING,
     CONFIG_CHAT_FAKE_MESSAGE_PREVENTING,
+    CONFIG_CHAT_STRICT_LINK_CHECKING_SEVERITY,
+    CONFIG_CHAT_STRICT_LINK_CHECKING_KICK,
     CONFIG_CORPSE_DECAY_NORMAL,
     CONFIG_CORPSE_DECAY_RARE,
     CONFIG_CORPSE_DECAY_ELITE,
@@ -192,7 +194,6 @@ enum WorldConfigs
     CONFIG_DEATH_BONES_BG_OR_ARENA,
     CONFIG_THREAT_RADIUS,
     CONFIG_INSTANT_LOGOUT,
-    CONFIG_DISABLE_BREATHING,
     CONFIG_ALL_TAXI_PATHS,
     CONFIG_DECLINED_NAMES_USED,
     CONFIG_LISTEN_RANGE_SAY,
@@ -212,10 +213,16 @@ enum WorldConfigs
     CONFIG_ARENA_QUEUE_ANNOUNCER_ENABLE,
     CONFIG_ARENA_SEASON_ID,
     CONFIG_ARENA_SEASON_IN_PROGRESS,
-    CONFIG_OFFHAND_CHECK_AT_TALENTS_RESET,
+    CONFIG_OFFHAND_CHECK_AT_SPELL_UNLEARN,
     CONFIG_CLIENTCACHE_VERSION,
     CONFIG_GUILD_EVENT_LOG_COUNT,
     CONFIG_GUILD_BANK_EVENT_LOG_COUNT,
+    CONFIG_TIMERBAR_FATIGUE_GMLEVEL,
+    CONFIG_TIMERBAR_FATIGUE_MAX,
+    CONFIG_TIMERBAR_BREATH_GMLEVEL,
+    CONFIG_TIMERBAR_BREATH_MAX,
+    CONFIG_TIMERBAR_FIRE_GMLEVEL,
+    CONFIG_TIMERBAR_FIRE_MAX,
     CONFIG_VALUE_COUNT
 };
 
@@ -337,6 +344,7 @@ enum RealmZone
 #define SCRIPT_COMMAND_FLAG_REMOVE           5              // source = any, datalong = field_id, datalog2 = bitmask
 #define SCRIPT_COMMAND_TELEPORT_TO           6              // source or target with Player, datalong = map_id, x/y/z
 #define SCRIPT_COMMAND_QUEST_EXPLORED        7              // one from source or target must be Player, another GO/Creature, datalong=quest_id, datalong2=distance or 0
+#define SCRIPT_COMMAND_KILL_CREDIT           8              // source or target with Player, datalong = creature entry, datalong2 = bool (0=personal credit, 1=group credit)
 #define SCRIPT_COMMAND_RESPAWN_GAMEOBJECT    9              // source = any (summoner), datalong=db_guid, datalong2=despawn_delay
 #define SCRIPT_COMMAND_TEMP_SUMMON_CREATURE 10              // source = any (summoner), datalong=creature entry, datalong2=despawn_delay
 #define SCRIPT_COMMAND_OPEN_DOOR            11              // source = unit, datalong=db_guid, datalong2=reset_delay
@@ -492,10 +500,6 @@ class World
         uint32 DecreaseScheduledScriptCount(size_t count) { return (uint32)(m_scheduledScripts -= count); }
         bool IsScriptScheduled() const { return m_scheduledScripts > 0; }
 
-        int32 GetVisibilityNotifyPeriodOnContinents()    { return m_visibility_notify_periodOnContinents; }
-        int32 GetVisibilityNotifyPeriodInInstances()     { return m_visibility_notify_periodInInctances;  }
-        int32 GetVisibilityNotifyPeriodInBGArenas()      { return m_visibility_notify_periodInBGArenas;   }
-
         // for max speed access
         static float GetMaxVisibleDistanceOnContinents()    { return m_MaxVisibleDistanceOnContinents; }
         static float GetMaxVisibleDistanceInInstances()     { return m_MaxVisibleDistanceInInctances;  }
@@ -511,6 +515,7 @@ class World
         static uint32 GetMistimingDelta()  {return m_MistimingDelta;}
         static uint32 GetMistimingAlarms() {return m_MistimingAlarms;}
         //<<< end movement anticheat
+
         void ProcessCliCommands();
         void QueueCliCommand( CliCommandHolder::Print* zprintf, char const* input ) { cliCmdQueue.add(new CliCommandHolder(input, zprintf)); }
 
@@ -568,10 +573,6 @@ class World
         bool m_allowMovement;
         std::string m_motd;
         std::string m_dataPath;
-
-        int32 m_visibility_notify_periodOnContinents;
-        int32 m_visibility_notify_periodInInctances;
-        int32 m_visibility_notify_periodInBGArenas;
 
         // for max speed access
         static float m_MaxVisibleDistanceOnContinents;

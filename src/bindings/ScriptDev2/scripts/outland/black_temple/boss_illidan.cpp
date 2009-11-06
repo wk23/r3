@@ -22,7 +22,7 @@ SDCategory: Black Temple
 EndScriptData */
 
 #include "precompiled.h"
-#include "def_black_temple.h"
+#include "black_temple.h"
 #include "WorldPacket.h"
 
 /**** Creature Summon and Recognition IDs ****/
@@ -464,7 +464,7 @@ struct MANGOS_DLL_DECL npc_akama_illidanAI : public ScriptedAI
 
     void KillAllElites()
     {
-        std::list<HostilReference*>::iterator itr;
+        std::list<HostileReference*>::iterator itr;
         for(itr = m_creature->getThreatManager().getThreatList().begin(); itr != m_creature->getThreatManager().getThreatList().end(); ++itr)
         {
             Unit* pUnit = Unit::GetUnit((*m_creature), (*itr)->getUnitGuid());
@@ -610,7 +610,7 @@ struct MANGOS_DLL_DECL npc_akama_illidanAI : public ScriptedAI
         if (!Illidan)
             return;
 
-        std::list<HostilReference*>::iterator itr = Illidan->getThreatManager().getThreatList().begin();
+        std::list<HostileReference*>::iterator itr = Illidan->getThreatManager().getThreatList().begin();
         for(; itr != Illidan->getThreatManager().getThreatList().end(); ++itr)
         {
             // Loop through threatlist till our GUID is found in it.
@@ -822,12 +822,12 @@ struct MANGOS_DLL_DECL npc_akama_illidanAI : public ScriptedAI
                     Elite->AddThreat(m_creature, 1000000.0f);
                     AttackStart(Elite);
                 }
-                SummonMinionTimer = 10000 + rand()%6000;
+                SummonMinionTimer = urand(10000, 16000);
             }else SummonMinionTimer -= diff;
         }
 
         // If we don't have a target, or is talking, or has run away, return
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim()) return;
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim()) return;
 
         DoMeleeAttackIfReady();
     }
@@ -942,7 +942,7 @@ struct MANGOS_DLL_DECL boss_illidan_stormrageAI : public ScriptedAI
         DemonFormSequence = 0;
 
         /** Normal Form **/
-        ShearTimer = 20000 + (rand()%11 * 1000);            // 20 to 30 seconds
+        ShearTimer = urand(20000, 30000);                   // 20 to 30 seconds
         FlameCrashTimer = 30000;                            // 30 seconds
         ParasiticShadowFiendTimer = 25000;                  // 25 seconds
         DrawSoulTimer = 50000;                              // 50 seconds
@@ -1004,7 +1004,7 @@ struct MANGOS_DLL_DECL boss_illidan_stormrageAI : public ScriptedAI
 
         if (m_creature->Attack(who, true))
         {
-            m_creature->AddThreat(who, 0.0f);
+            m_creature->AddThreat(who);
             m_creature->SetInCombatWith(who);
             who->SetInCombatWith(m_creature);
 
@@ -1059,11 +1059,7 @@ struct MANGOS_DLL_DECL boss_illidan_stormrageAI : public ScriptedAI
         if (victim == m_creature)
             return;
 
-        switch(rand()%2)
-        {
-            case 0: DoScriptText(SAY_KILL1, m_creature, victim); break;
-            case 1: DoScriptText(SAY_KILL2, m_creature, victim); break;
-        }
+        DoScriptText(urand(0, 1) ? SAY_KILL1 : SAY_KILL2, m_creature);
     }
 
     void DamageTaken(Unit *done_by, uint32 &damage)
@@ -1094,7 +1090,7 @@ struct MANGOS_DLL_DECL boss_illidan_stormrageAI : public ScriptedAI
 
         DoScriptText(SAY_EYE_BLAST, m_creature);
 
-        uint32 initial = rand()%4;
+        uint32 initial = urand(0, 3);
         uint32 final = 0;
 
         if (initial < 3)
@@ -1463,7 +1459,6 @@ struct MANGOS_DLL_DECL boss_illidan_stormrageAI : public ScriptedAI
                         }
                         // We are now attackable!
                         m_creature->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
-                        m_creature->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_UNK_8);
                         debug_log("SD2: Black Temple: Illidan intro complete, players can attack Illidan.");
                         break;
                     case 11:
@@ -1532,7 +1527,7 @@ struct MANGOS_DLL_DECL boss_illidan_stormrageAI : public ScriptedAI
         }
 
         // If we don't have a target, return.
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim() || IsTalking)
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim() || IsTalking)
             return;
 
         // If we are 'caged', then we shouldn't do anything such as cast spells or transform into Demon Form.
@@ -1583,7 +1578,7 @@ struct MANGOS_DLL_DECL boss_illidan_stormrageAI : public ScriptedAI
         {
             if (TauntTimer < diff)                           // His random taunt/yell timer.
             {
-                uint32 random = rand()%4;
+                uint32 random = urand(0, 3);
                 int32 yell = RandomTaunts[random].textId;
                 if (yell)
                     DoScriptText(yell, m_creature);
@@ -1596,7 +1591,7 @@ struct MANGOS_DLL_DECL boss_illidan_stormrageAI : public ScriptedAI
                 if (ShearTimer < diff)
                 {
                     DoCast(m_creature->getVictim(), SPELL_SHEAR);
-                    ShearTimer = 25000 + (rand()%16 * 1000);
+                    ShearTimer = urand(25000, 40000);
                     GlobalTimer += 2000;
                 }else ShearTimer -= diff;
 
@@ -2014,17 +2009,17 @@ struct MANGOS_DLL_DECL boss_maievAI : public ScriptedAI
         }
 
         // Return if we don't have a target
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         if (TauntTimer < diff)
         {
-            uint32 random = rand()%4;
+            uint32 random = urand(0, 3);
             int32 text = MaievTaunts[random].textId;
 
             DoScriptText(text, m_creature);
 
-            TauntTimer = 22000 + rand()%21 * 1000;
+            TauntTimer = urand(22000, 42000);
         }else TauntTimer -= diff;
 
         DoMeleeAttackIfReady();
@@ -2086,7 +2081,7 @@ struct MANGOS_DLL_DECL cage_trap_triggerAI : public ScriptedAI
     {
         if (DespawnTimer)
         {
-            if (DespawnTimer < diff)
+            if (DespawnTimer <= diff)
                 m_creature->DealDamage(m_creature, m_creature->GetHealth(), NULL, DIRECT_DAMAGE, SPELL_SCHOOL_MASK_NORMAL, NULL, false);
             else DespawnTimer -= diff;
         }
@@ -2130,22 +2125,22 @@ struct MANGOS_DLL_DECL flame_of_azzinothAI : public ScriptedAI
 
     void Reset()
     {
-        FlameBlastTimer = 15000 + rand()%15000;
-        SummonBlazeTimer = 10000 + rand()%20000;
+        FlameBlastTimer = urand(15000, 30000);
+        SummonBlazeTimer = urand(10000, 30000);
         ChargeTimer = 5000;
     }
 
     void Charge()
     {
         // Get the Threat List
-        std::list<HostilReference*>& m_threatlist = m_creature->getThreatManager().getThreatList();
+        std::list<HostileReference*>& m_threatlist = m_creature->getThreatManager().getThreatList();
 
         // He doesn't have anyone in his threatlist, useless to continue
         if (!m_threatlist.size())
             return;
 
         std::list<Unit*> targets;
-        std::list<HostilReference *>::iterator itr = m_threatlist.begin();
+        std::list<HostileReference *>::iterator itr = m_threatlist.begin();
 
         //store the threat list in a different container
         for(; itr!= m_threatlist.end(); ++itr)
@@ -2171,7 +2166,7 @@ struct MANGOS_DLL_DECL flame_of_azzinothAI : public ScriptedAI
 
     void UpdateAI(const uint32 diff)
     {
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         if (FlameBlastTimer < diff)
@@ -2183,7 +2178,7 @@ struct MANGOS_DLL_DECL flame_of_azzinothAI : public ScriptedAI
         if (SummonBlazeTimer < diff)
         {
             DoCast(m_creature, SPELL_BLAZE_SUMMON);
-            SummonBlazeTimer = 30000 + rand()%20000;
+            SummonBlazeTimer = urand(30000, 50000);
         }else SummonBlazeTimer -= diff;
 
         if (ChargeTimer < diff)
@@ -2216,7 +2211,7 @@ struct MANGOS_DLL_DECL shadow_demonAI : public ScriptedAI
 
     void UpdateAI(const uint32 diff)
     {
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim()) return;
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim()) return;
 
         // Only cast the below on players.
         if (m_creature->getVictim()->GetTypeId() != TYPEID_PLAYER) return;
@@ -2244,7 +2239,7 @@ struct MANGOS_DLL_DECL flamecrashAI : public ScriptedAI
 
     void Reset()
     {
-        FlameCrashTimer = 3000 +rand()%5000;
+        FlameCrashTimer = urand(3000, 8000);
         DespawnTimer = 60000;
     }
 

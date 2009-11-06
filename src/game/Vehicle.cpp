@@ -33,21 +33,23 @@ Vehicle::Vehicle() : Creature(), m_vehicleId(0), m_vehicleInfo(NULL), m_spawndur
 
 Vehicle::~Vehicle()
 {
-    if(m_uint32Values)                                      // only for fully created Object
-        ObjectAccessor::Instance().RemoveObject(this);
 }
 
 void Vehicle::AddToWorld()
 {
     ///- Register the vehicle for guid lookup
-    if(!IsInWorld()) ObjectAccessor::Instance().AddObject(this);
+    if(!IsInWorld())
+        GetMap()->GetObjectsStore().insert<Vehicle>(GetGUID(), (Vehicle*)this);
+
     Unit::AddToWorld();
 }
 
 void Vehicle::RemoveFromWorld()
 {
     ///- Remove the vehicle from the accessor
-    if(IsInWorld()) ObjectAccessor::Instance().RemoveObject(this);
+    if(IsInWorld())
+        GetMap()->GetObjectsStore().erase<Vehicle>(GetGUID(), (Vehicle*)NULL);
+
     ///- Don't call the function for Creature, normal mobs + totems go in a different storage
     Unit::RemoveFromWorld();
 }
@@ -287,7 +289,7 @@ void Vehicle::EmptySeatsCountChanged()
 
     if(uint64 vehicleGUID = GetVehicleGUID())
     {
-        if(Vehicle *vehicle = ObjectAccessor::GetVehicle(vehicleGUID))
+        if(Vehicle *vehicle = GetMap()->GetVehicle(vehicleGUID))
         {
             if(u_count > 0)
                 vehicle->ChangeSeatFlag(m_SeatData.seat, SEAT_VEHICLE_FREE);

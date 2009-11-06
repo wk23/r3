@@ -22,7 +22,7 @@ SDCategory: Scholomance
 EndScriptData */
 
 #include "precompiled.h"
-#include "def_scholomance.h"
+#include "scholomance.h"
 
 #define SPELL_ARCANEMISSILES           22272
 #define SPELL_SHADOWSHIELD             22417                //Not right ID. But 12040 is wrong either.
@@ -81,7 +81,7 @@ struct MANGOS_DLL_DECL boss_darkmaster_gandlingAI : public ScriptedAI
 
     void UpdateAI(const uint32 diff)
     {
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         //ArcaneMissiles_Timer
@@ -95,14 +95,14 @@ struct MANGOS_DLL_DECL boss_darkmaster_gandlingAI : public ScriptedAI
         if (ShadowShield_Timer < diff)
         {
             DoCast(m_creature,SPELL_SHADOWSHIELD);
-            ShadowShield_Timer = 14000 + rand()%14000;
+            ShadowShield_Timer = urand(14000, 28000);
         }else ShadowShield_Timer -= diff;
 
         //Curse_Timer
         if (Curse_Timer < diff)
         {
             DoCast(m_creature->getVictim(),SPELL_CURSE);
-            Curse_Timer = 15000 + rand()%12000;
+            Curse_Timer = urand(15000, 27000);
         }else Curse_Timer -= diff;
 
         //Teleporting Random Target to one of the six pre boss rooms and spawn 3-4 skeletons near the gamer.
@@ -118,7 +118,7 @@ struct MANGOS_DLL_DECL boss_darkmaster_gandlingAI : public ScriptedAI
                     if (m_creature->getThreatManager().getThreat(target))
                         m_creature->getThreatManager().modifyThreatPercent(target, -100);
 
-                    switch(rand()%6)
+                    switch(urand(0, 5))
                     {
                         case 0:
                             DoTeleportPlayer(target, 250.0696,0.3921,84.8408,3.149);
@@ -200,7 +200,7 @@ struct MANGOS_DLL_DECL boss_darkmaster_gandlingAI : public ScriptedAI
                             break;
                     }
                 }
-                Teleport_Timer = 20000 + rand()%15000;
+                Teleport_Timer = urand(20000, 35000);
             }else Teleport_Timer -= diff;
         }
 

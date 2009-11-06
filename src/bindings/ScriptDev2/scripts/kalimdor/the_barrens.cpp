@@ -82,8 +82,7 @@ enum
     SAY_GIL_FREED               = -1000380,
 
     QUEST_FREE_FROM_HOLD        = 898,
-    AREA_MERCHANT_COAST         = 391,
-    FACTION_ESCORTEE            = 232                       //guessed, possible not needed for this quest
+    AREA_MERCHANT_COAST         = 391
 };
 
 struct MANGOS_DLL_DECL npc_giltharesAI : public npc_escortAI
@@ -126,14 +125,14 @@ struct MANGOS_DLL_DECL npc_giltharesAI : public npc_escortAI
     void Aggro(Unit* pWho)
     {
         //not always use
-        if (rand()%4)
+        if (urand(0, 3))
             return;
 
         //only aggro text if not player and only in this area
         if (pWho->GetTypeId() != TYPEID_PLAYER && m_creature->GetAreaId() == AREA_MERCHANT_COAST)
         {
             //appears to be pretty much random (possible only if escorter not in combat with pWho yet?)
-            switch(rand()%4)
+            switch(urand(0, 3))
             {
                 case 0: DoScriptText(SAY_GIL_AGGRO_1, m_creature, pWho); break;
                 case 1: DoScriptText(SAY_GIL_AGGRO_2, m_creature, pWho); break;
@@ -153,7 +152,7 @@ bool QuestAccept_npc_gilthares(Player* pPlayer, Creature* pCreature, const Quest
 {
     if (pQuest->GetQuestId() == QUEST_FREE_FROM_HOLD)
     {
-        pCreature->setFaction(FACTION_ESCORTEE);
+        pCreature->setFaction(FACTION_ESCORT_H_NEUTRAL_ACTIVE);
         pCreature->SetStandState(UNIT_STAND_STATE_STAND);
 
         DoScriptText(SAY_GIL_START, pCreature, pPlayer);
@@ -256,7 +255,7 @@ struct MANGOS_DLL_DECL npc_taskmaster_fizzuleAI : public ScriptedAI
             } else Reset_Timer -= diff;
         }
 
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         DoMeleeAttackIfReady();
@@ -385,7 +384,7 @@ struct MANGOS_DLL_DECL npc_twiggy_flatheadAI : public ScriptedAI
 
         if (ChallengerDeath_Timer)
         {
-            if (ChallengerDeath_Timer < diff)
+            if (ChallengerDeath_Timer <= diff)
             {
                 for(uint8 i = 0; i < 6; ++i)
                 {
@@ -527,7 +526,7 @@ struct MANGOS_DLL_DECL npc_wizzlecranks_shredderAI : public npc_escortAI
 
     void Reset()
     {
-        if (!IsBeingEscorted)
+        if (!HasEscortState(STATE_ESCORT_ESCORTING))
         {
             if (m_creature->getStandState() == UNIT_STAND_STATE_DEAD)
                 m_creature->SetStandState(UNIT_STAND_STATE_STAND);
@@ -589,7 +588,7 @@ struct MANGOS_DLL_DECL npc_wizzlecranks_shredderAI : public npc_escortAI
 
     void UpdateEscortAI(const uint32 uiDiff)
     {
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
         {
             if (m_bIsPostEvent)
             {

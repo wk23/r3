@@ -22,6 +22,7 @@ SDCategory: Naxxramas
 EndScriptData */
 
 #include "precompiled.h"
+#include "naxxramas.h"
 
 #define SPELL_WEBTRAP           28622                       //Spell is normally used by the webtrap on the wall NOT by Maexxna
 
@@ -77,7 +78,8 @@ struct MANGOS_DLL_DECL mob_webwrapAI : public ScriptedAI
             {
                 Unit* victim = NULL;
                 victim = Unit::GetUnit((*m_creature), victimGUID);
-                victim->RemoveAurasDueToSpell(SPELL_WEBTRAP);
+                if (victim)
+                    victim->RemoveAurasDueToSpell(SPELL_WEBTRAP);
             }
         }
     }
@@ -88,8 +90,15 @@ struct MANGOS_DLL_DECL mob_webwrapAI : public ScriptedAI
 
 struct MANGOS_DLL_DECL boss_maexxnaAI : public ScriptedAI
 {
-    boss_maexxnaAI(Creature* pCreature) : ScriptedAI(pCreature) {Reset();}
+    boss_maexxnaAI(Creature* pCreature) : ScriptedAI(pCreature)
+    {
+        pInstance = ((ScriptedInstance*)pCreature->GetInstanceData());
+        Heroic = pCreature->GetMap()->GetSpawnMode() > 0;
+        Reset();
+    }
 
+    ScriptedInstance *pInstance;
+    bool Heroic;
     uint32 WebTrap_Timer;
     uint32 WebSpray_Timer;
     uint32 PoisonShock_Timer;
@@ -105,11 +114,23 @@ struct MANGOS_DLL_DECL boss_maexxnaAI : public ScriptedAI
         NecroticPoison_Timer = 30000;                       //30 seconds
         SummonSpiderling_Timer = 30000;                     //30 sec init, 40 sec normal
         Enraged = false;
+
+        if(pInstance) pInstance->SetData(TYPE_MAEXXNA, NOT_STARTED);
+    }
+
+    void Aggro(Unit *who)
+    {
+        if(pInstance) pInstance->SetData(TYPE_MAEXXNA, IN_PROGRESS);
+    }
+
+    void JustDied(Unit *killer)
+    {
+        if(pInstance) pInstance->SetData(TYPE_MAEXXNA, DONE);
     }
 
     void DoCastWebWrap()
     {
-        std::list<HostilReference *> t_list = m_creature->getThreatManager().getThreatList();
+        std::list<HostileReference *> t_list = m_creature->getThreatManager().getThreatList();
         std::vector<Unit *> targets;
 
         //This spell doesn't work if we only have 1 player on threat list
@@ -117,7 +138,7 @@ struct MANGOS_DLL_DECL boss_maexxnaAI : public ScriptedAI
             return;
 
         //begin + 1 , so we don't target the one with the highest threat
-        std::list<HostilReference *>::iterator itr = t_list.begin();
+        std::list<HostileReference *>::iterator itr = t_list.begin();
         std::advance(itr, 1);
 
         //store the threat list in a different container
@@ -162,7 +183,7 @@ struct MANGOS_DLL_DECL boss_maexxnaAI : public ScriptedAI
 
     void UpdateAI(const uint32 diff)
     {
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         //WebTrap_Timer
@@ -175,21 +196,21 @@ struct MANGOS_DLL_DECL boss_maexxnaAI : public ScriptedAI
         //WebSpray_Timer
         if (WebSpray_Timer < diff)
         {
-            DoCast(m_creature->getVictim(), SPELL_WEBSPRAY);
+            DoCast(m_creature->getVictim(), Heroic ? H_SPELL_WEBSPRAY : SPELL_WEBSPRAY);
             WebSpray_Timer = 40000;
         }else WebSpray_Timer -= diff;
 
         //PoisonShock_Timer
         if (PoisonShock_Timer < diff)
         {
-            DoCast(m_creature->getVictim(), SPELL_POISONSHOCK);
+            DoCast(m_creature->getVictim(), Heroic ? H_SPELL_POISONSHOCK : SPELL_POISONSHOCK);
             PoisonShock_Timer = 20000;
         }else PoisonShock_Timer -= diff;
 
         //NecroticPoison_Timer
         if (NecroticPoison_Timer < diff)
         {
-            DoCast(m_creature->getVictim(), SPELL_NECROTICPOISON);
+            DoCast(m_creature->getVictim(), Heroic ? H_SPELL_NECROTICPOISON : SPELL_NECROTICPOISON);
             NecroticPoison_Timer = 30000;
         }else NecroticPoison_Timer -= diff;
 
@@ -203,7 +224,7 @@ struct MANGOS_DLL_DECL boss_maexxnaAI : public ScriptedAI
         //Enrage if not already enraged and below 30%
         if (!Enraged && (m_creature->GetHealth()*100 / m_creature->GetMaxHealth()) < 30)
         {
-            DoCast(m_creature,SPELL_FRENZY);
+            DoCast(m_creature, Heroic ? H_SPELL_FRENZY : SPELL_FRENZY);
             Enraged = true;
         }
 

@@ -38,6 +38,7 @@
 #include "RASocket.h"
 #include "ScriptCalls.h"
 #include "Util.h"
+#include "revision_sql.h"
 
 #include "sockets/TcpSocket.h"
 #include "sockets/Utility.h"
@@ -50,8 +51,6 @@
 #include "ServiceWin32.h"
 extern int m_ServiceStatus;
 #endif
-
-extern Database loginDatabase;
 
 /// \todo Warning disabling not useful under VC++2005. Can somebody say on which compiler it is useful?
 #pragma warning(disable:4305)
@@ -294,10 +293,6 @@ int Master::Run()
 
     uint32 socketSelecttime = sWorld.getConfig(CONFIG_SOCKET_SELECTTIME);
 
-    // maximum counter for next ping
-    uint32 numLoops = (sConfig.GetIntDefault( "MaxPingTime", 30 ) * (MINUTE * 1000000 / socketSelecttime));
-    uint32 loopCounter = 0;
-
     ///- Start up freeze catcher thread
     if(uint32 freeze_delay = sConfig.GetIntDefault("MaxCoreStuckTime", 0))
     {
@@ -382,7 +377,7 @@ int Master::Run()
 
         cliThread->wait();
 
-        #else 
+        #else
 
         cliThread->destroy();
 
@@ -403,8 +398,8 @@ int Master::Run()
 bool Master::_StartDB()
 {
     ///- Get world database info from configuration file
-    std::string dbstring;
-    if(!sConfig.GetString("WorldDatabaseInfo", &dbstring))
+    std::string dbstring = sConfig.GetStringDefault("WorldDatabaseInfo", "");
+    if(dbstring.empty())
     {
         sLog.outError("Database not specified in configuration file");
         return false;
@@ -418,7 +413,11 @@ bool Master::_StartDB()
         return false;
     }
 
-    if(!sConfig.GetString("CharacterDatabaseInfo", &dbstring))
+    if(!WorldDatabase.CheckRequiredField("db_version",REVISION_DB_MANGOS))
+        return false;
+
+    dbstring = sConfig.GetStringDefault("CharacterDatabaseInfo", "");
+    if(dbstring.empty())
     {
         sLog.outError("Character Database not specified in configuration file");
         return false;
@@ -432,8 +431,12 @@ bool Master::_StartDB()
         return false;
     }
 
+    if(!CharacterDatabase.CheckRequiredField("character_db_version",REVISION_DB_CHARACTERS))
+        return false;
+
     ///- Get login database info from configuration file
-    if(!sConfig.GetString("LoginDatabaseInfo", &dbstring))
+    dbstring = sConfig.GetStringDefault("LoginDatabaseInfo", "");
+    if(dbstring.empty())
     {
         sLog.outError("Login database not specified in configuration file");
         return false;
@@ -447,6 +450,9 @@ bool Master::_StartDB()
         return false;
     }
 
+    if(!loginDatabase.CheckRequiredField("realmd_db_version",REVISION_DB_REALMD))
+        return false;
+
     ///- Get the realm Id from the configuration file
     realmID = sConfig.GetIntDefault("RealmID", 0);
     if(!realmID)
@@ -454,6 +460,7 @@ bool Master::_StartDB()
         sLog.outError("Realm ID not defined in configuration file");
         return false;
     }
+
     sLog.outString("Realm running as realm ID %d", realmID);
 
     ///- Clean the database before starting
@@ -471,9 +478,7 @@ void Master::clearOnlineAccounts()
 {
     // Cleanup online status for characters hosted at current realm
     /// \todo Only accounts with characters logged on *this* realm should have online status reset. Move the online column from 'account' to 'realmcharacters'?
-    loginDatabase.PExecute(
-        "UPDATE account SET online = 0 WHERE online > 0 "
-        "AND id IN (SELECT acctid FROM realmcharacters WHERE realmid = '%d')",realmID);
+    loginDatabase.PExecute("UPDATE account SET active_realm_id = 0 WHERE active_realm_id = '%d'", realmID);
 
     CharacterDatabase.Execute("UPDATE characters SET online = 0 WHERE online<>0");
 

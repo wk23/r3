@@ -22,7 +22,7 @@ SDCategory: Halls of Lightning
 EndScriptData */
 
 #include "precompiled.h"
-#include "def_halls_of_lightning.h"
+#include "halls_of_lightning.h"
 
 enum
 {
@@ -125,7 +125,7 @@ struct MANGOS_DLL_DECL boss_volkhanAI : public ScriptedAI
     {
         if (m_creature->Attack(pWho, true))
         {
-            m_creature->AddThreat(pWho, 0.0f);
+            m_creature->AddThreat(pWho);
             m_creature->SetInCombatWith(pWho);
             pWho->SetInCombatWith(m_creature);
 
@@ -145,7 +145,7 @@ struct MANGOS_DLL_DECL boss_volkhanAI : public ScriptedAI
 
     void KilledUnit(Unit* pVictim)
     {
-        switch(rand()%3)
+        switch(urand(0, 2))
         {
             case 0: DoScriptText(SAY_SLAY_1, m_creature); break;
             case 1: DoScriptText(SAY_SLAY_2, m_creature); break;
@@ -209,7 +209,7 @@ struct MANGOS_DLL_DECL boss_volkhanAI : public ScriptedAI
     void UpdateAI(const uint32 uiDiff)
     {
         //Return since we have no target
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         if (m_bIsStriking)
@@ -239,11 +239,7 @@ struct MANGOS_DLL_DECL boss_volkhanAI : public ScriptedAI
             {
                 //should he stomp even if he has no brittle golem to shatter?
 
-                switch(rand()%2)
-                {
-                    case 0: DoScriptText(SAY_STOMP_1, m_creature); break;
-                    case 1: DoScriptText(SAY_STOMP_2, m_creature); break;
-                }
+                DoScriptText(urand(0, 1) ? SAY_STOMP_1 : SAY_STOMP_2, m_creature);
 
                 DoCast(m_creature, m_bIsHeroic ? SPELL_SHATTERING_STOMP_H : SPELL_SHATTERING_STOMP_N);
 
@@ -277,11 +273,7 @@ struct MANGOS_DLL_DECL boss_volkhanAI : public ScriptedAI
             if (m_creature->IsNonMeleeSpellCasted(false))
                 m_creature->InterruptNonMeleeSpells(false);
 
-            switch(rand()%2)
-            {
-                case 0: DoScriptText(SAY_FORGE_1, m_creature); break;
-                case 1: DoScriptText(SAY_FORGE_2, m_creature); break;
-            }
+            DoScriptText(urand(0, 1) ? SAY_FORGE_1 : SAY_FORGE_2, m_creature);
 
             m_bHasTemper = true;
 
@@ -391,7 +383,7 @@ struct MANGOS_DLL_DECL mob_molten_golemAI : public ScriptedAI
     {
         if (m_creature->Attack(pWho, true))
         {
-            m_creature->AddThreat(pWho, 0.0f);
+            m_creature->AddThreat(pWho);
             m_creature->SetInCombatWith(pWho);
             pWho->SetInCombatWith(m_creature);
 
@@ -442,7 +434,7 @@ struct MANGOS_DLL_DECL mob_molten_golemAI : public ScriptedAI
     void UpdateAI(const uint32 uiDiff)
     {
         //Return since we have no target or if we are frozen
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim() || m_bIsFrozen)
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim() || m_bIsFrozen)
             return;
 
         if (m_uiBlast_Timer < uiDiff)

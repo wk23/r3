@@ -22,7 +22,7 @@ SDCategory: Tempest Keep, The Eye
 EndScriptData */
 
 #include "precompiled.h"
-#include "def_the_eye.h"
+#include "the_eye.h"
 
 enum
 {
@@ -124,7 +124,7 @@ struct MANGOS_DLL_DECL boss_high_astromancer_solarianAI : public ScriptedAI
 
     void KilledUnit(Unit *victim)
     {
-        switch(rand()%3)
+        switch(urand(0, 2))
         {
             case 0: DoScriptText(SAY_KILL1, m_creature); break;
             case 1: DoScriptText(SAY_KILL2, m_creature); break;
@@ -164,7 +164,7 @@ struct MANGOS_DLL_DECL boss_high_astromancer_solarianAI : public ScriptedAI
 
     float Portal_X(float radius)
     {
-        if ((rand()%2)==1)
+        if (urand(0, 1))
             radius = -radius;
 
         return (radius * (float)(rand()%100)/100.0f + CENTER_X);
@@ -174,7 +174,7 @@ struct MANGOS_DLL_DECL boss_high_astromancer_solarianAI : public ScriptedAI
     {
         float z = 0.0f;
 
-        switch(rand()%2)
+        switch(urand(0, 1))
         {
             case 0: z = 1; break;
             case 1: z = -1; break;
@@ -184,7 +184,7 @@ struct MANGOS_DLL_DECL boss_high_astromancer_solarianAI : public ScriptedAI
 
     void UpdateAI(const uint32 diff)
     {
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         if (AppearDelay)
@@ -327,7 +327,7 @@ struct MANGOS_DLL_DECL boss_high_astromancer_solarianAI : public ScriptedAI
                 Phase = 1;
 
                 //15 seconds later Solarian reappears out of one of the 3 portals. Simultaneously, 2 healers appear in the two other portals.
-                int i = rand()%3;
+                int i = irand(0, 2);
                 m_creature->GetMotionMaster()->Clear();
                 m_creature->GetMap()->CreatureRelocation(m_creature, Portals[i][0], Portals[i][1], Portals[i][2], CENTER_O);
 
@@ -405,14 +405,14 @@ struct MANGOS_DLL_DECL mob_solarium_priestAI : public ScriptedAI
 
     void UpdateAI(const uint32 diff)
     {
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         if (healTimer < diff)
         {
             Unit* target = NULL;
 
-            switch(rand()%2)
+            switch(urand(0, 1))
             {
                 case 0:
                     if (m_pInstance)

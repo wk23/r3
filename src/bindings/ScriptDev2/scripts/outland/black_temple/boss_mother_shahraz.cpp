@@ -22,7 +22,7 @@ SDCategory: Black Temple
 EndScriptData */
 
 #include "precompiled.h"
-#include "def_black_temple.h"
+#include "black_temple.h"
 
 //Speech'n'Sounds
 #define SAY_TAUNT1              -1564018
@@ -112,7 +112,7 @@ struct MANGOS_DLL_DECL boss_shahrazAI : public ScriptedAI
         FatalAttractionTimer = 60000;
         FatalAttractionExplodeTimer = 70000;
         ShriekTimer = 30000;
-        RandomYellTimer = 70000 + rand()%41 * 1000;
+        RandomYellTimer = urand(70000, 110000);
         EnrageTimer = 600000;
         ExplosionCount = 0;
 
@@ -137,11 +137,7 @@ struct MANGOS_DLL_DECL boss_shahrazAI : public ScriptedAI
 
     void KilledUnit(Unit *victim)
     {
-        switch(rand()%2)
-        {
-            case 0: DoScriptText(SAY_SLAY1, m_creature); break;
-            case 1: DoScriptText(SAY_SLAY2, m_creature); break;
-        }
+        DoScriptText(urand(0, 1) ? SAY_SLAY1 : SAY_SLAY2, m_creature);
     }
 
     void JustDied(Unit *victim)
@@ -154,7 +150,7 @@ struct MANGOS_DLL_DECL boss_shahrazAI : public ScriptedAI
 
     void TeleportPlayers()
     {
-        uint32 random = rand()%7;
+        uint32 random = urand(0, 6);
         float X = TeleportPoint[random].x;
         float Y = TeleportPoint[random].y;
         float Z = TeleportPoint[random].z;
@@ -173,7 +169,7 @@ struct MANGOS_DLL_DECL boss_shahrazAI : public ScriptedAI
 
     void UpdateAI(const uint32 diff)
     {
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         if (((m_creature->GetHealth()*100 / m_creature->GetMaxHealth()) < 10) && !Enraged)
@@ -212,14 +208,14 @@ struct MANGOS_DLL_DECL boss_shahrazAI : public ScriptedAI
 
             if (BeamCount > 3)
                 while(CurrentBeam == Beam)
-                    CurrentBeam = rand()%3;
+                    CurrentBeam = urand(0, 2);
 
         }else BeamTimer -= diff;
 
         // Random Prismatic Shield every 15 seconds.
         if (PrismaticShieldTimer < diff)
         {
-            uint32 random = rand()%6;
+            uint32 random = urand(0, 5);
             if (PrismaticAuras[random])
                 DoCast(m_creature, PrismaticAuras[random]);
             PrismaticShieldTimer = 15000;
@@ -232,14 +228,10 @@ struct MANGOS_DLL_DECL boss_shahrazAI : public ScriptedAI
 
             TeleportPlayers();
 
-            switch(rand()%2)
-            {
-                case 0: DoScriptText(SAY_SPELL2, m_creature); break;
-                case 1: DoScriptText(SAY_SPELL3, m_creature); break;
-            }
+            DoScriptText(urand(0, 1) ? SAY_SPELL2 : SAY_SPELL3, m_creature);
 
             FatalAttractionExplodeTimer = 2000;
-            FatalAttractionTimer = 40000 + rand()%31 * 1000;
+            FatalAttractionTimer = urand(40000, 70000);
         }else FatalAttractionTimer -= diff;
 
         if (FatalAttractionExplodeTimer < diff)
@@ -288,14 +280,14 @@ struct MANGOS_DLL_DECL boss_shahrazAI : public ScriptedAI
         //Random taunts
         if (RandomYellTimer < diff)
         {
-            switch(rand()%3)
+            switch(urand(0, 2))
             {
                 case 0: DoScriptText(SAY_TAUNT1, m_creature); break;
                 case 1: DoScriptText(SAY_TAUNT2, m_creature); break;
                 case 2: DoScriptText(SAY_TAUNT3, m_creature); break;
             }
 
-            RandomYellTimer = 60000 + rand()%91 * 1000;
+            RandomYellTimer = urand(60000, 150000);
         }else RandomYellTimer -= diff;
 
         DoMeleeAttackIfReady();

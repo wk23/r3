@@ -39,8 +39,13 @@ EndScriptData */
 
 struct MANGOS_DLL_DECL boss_patchwerkAI : public ScriptedAI
 {
-    boss_patchwerkAI(Creature* pCreature) : ScriptedAI(pCreature) {Reset();}
+    boss_patchwerkAI(Creature* pCreature) : ScriptedAI(pCreature)
+    {
+        Heroic = pCreature->GetMap()->GetSpawnMode() > 0;
+        Reset();
+    }
 
+    bool Heroic;
     uint32 HatefullStrike_Timer;
     uint32 Enrage_Timer;
     uint32 Slimebolt_Timer;
@@ -56,7 +61,7 @@ struct MANGOS_DLL_DECL boss_patchwerkAI : public ScriptedAI
 
     void KilledUnit(Unit* Victim)
     {
-        if (rand()%5)
+        if (urand(0, 4))
             return;
 
         DoScriptText(SAY_SLAY, m_creature);
@@ -69,7 +74,7 @@ struct MANGOS_DLL_DECL boss_patchwerkAI : public ScriptedAI
 
     void Aggro(Unit *who)
     {
-        if (rand()%2)
+        if (urand(0, 1))
             DoScriptText(SAY_AGGRO1, m_creature);
         else
             DoScriptText(SAY_AGGRO2, m_creature);
@@ -77,7 +82,7 @@ struct MANGOS_DLL_DECL boss_patchwerkAI : public ScriptedAI
 
     void UpdateAI(const uint32 diff)
     {
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         //HatefullStrike_Timer
@@ -88,7 +93,7 @@ struct MANGOS_DLL_DECL boss_patchwerkAI : public ScriptedAI
             uint32 MostHP = 0;
             Unit* pMostHPTarget = NULL;
             Unit* pTemp = NULL;
-            std::list<HostilReference*>::iterator i = m_creature->getThreatManager().getThreatList().begin();
+            std::list<HostileReference*>::iterator i = m_creature->getThreatManager().getThreatList().begin();
 
             for (i = m_creature->getThreatManager().getThreatList().begin(); i!=m_creature->getThreatManager().getThreatList().end(); ++i)
             {
@@ -101,7 +106,7 @@ struct MANGOS_DLL_DECL boss_patchwerkAI : public ScriptedAI
             }
 
             if (pMostHPTarget)
-                DoCast(pMostHPTarget, SPELL_HATEFULSTRIKE);
+                DoCast(pMostHPTarget, Heroic ? H_SPELL_HATEFULSTRIKE : SPELL_HATEFULSTRIKE);
 
             HatefullStrike_Timer = 1200;
         }else HatefullStrike_Timer -= diff;

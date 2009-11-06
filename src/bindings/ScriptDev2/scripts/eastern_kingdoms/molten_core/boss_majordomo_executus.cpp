@@ -73,7 +73,7 @@ struct MANGOS_DLL_DECL boss_majordomoAI : public ScriptedAI
 
     void KilledUnit(Unit* victim)
     {
-        if (rand()%5)
+        if (urand(0, 4))
             return;
 
         DoScriptText(SAY_SLAY, m_creature);
@@ -86,7 +86,7 @@ struct MANGOS_DLL_DECL boss_majordomoAI : public ScriptedAI
 
     void UpdateAI(const uint32 diff)
     {
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         //Cast Ageis if less than 50% hp

@@ -68,14 +68,10 @@ struct MANGOS_DLL_DECL boss_gatewatcher_iron_handAI : public ScriptedAI
 
     void KilledUnit(Unit* victim)
     {
-        if (rand()%2)
+        if (urand(0, 1))
             return;
 
-        switch(rand()%2)
-        {
-            case 0: DoScriptText(SAY_SLAY_1, m_creature); break;
-            case 1: DoScriptText(SAY_SLAY_2, m_creature); break;
-        }
+        DoScriptText(urand(0, 1) ? SAY_SLAY_1 : SAY_SLAY_2, m_creature);
     }
 
     void JustDied(Unit* Killer)
@@ -91,14 +87,14 @@ struct MANGOS_DLL_DECL boss_gatewatcher_iron_handAI : public ScriptedAI
     void UpdateAI(const uint32 diff)
     {
         //Return since we have no target
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         //Shadow Power
         if (Shadow_Power_Timer < diff)
         {
             DoCast(m_creature, m_bIsHeroicMode ? H_SPELL_SHADOW_POWER : SPELL_SHADOW_POWER);
-            Shadow_Power_Timer = 20000 + rand()%8000;
+            Shadow_Power_Timer = urand(20000, 28000);
         }else Shadow_Power_Timer -= diff;
 
         //Jack Hammer
@@ -109,14 +105,8 @@ struct MANGOS_DLL_DECL boss_gatewatcher_iron_handAI : public ScriptedAI
             DoCast(m_creature->getVictim(), m_bIsHeroicMode ? H_SPELL_JACKHAMMER : SPELL_JACKHAMMER);
 
             //chance to yell, but not same time as emote (after spell in fact casted)
-            if (rand()%5)
-            {
-                switch(rand()%2)
-                {
-                    case 0: DoScriptText(SAY_HAMMER_1, m_creature); break;
-                    case 1: DoScriptText(SAY_HAMMER_2, m_creature); break;
-                }
-            }
+            if (urand(0, 4))
+                DoScriptText(urand(0, 1) ? SAY_HAMMER_1 : SAY_HAMMER_2, m_creature);
 
             Jackhammer_Timer = 30000;
         }else Jackhammer_Timer -= diff;
@@ -125,7 +115,7 @@ struct MANGOS_DLL_DECL boss_gatewatcher_iron_handAI : public ScriptedAI
         if (Stream_of_Machine_Fluid_Timer < diff)
         {
             DoCast(m_creature->getVictim(),SPELL_STREAM_OF_MACHINE_FLUID);
-            Stream_of_Machine_Fluid_Timer = 35000 + rand()%15000;
+            Stream_of_Machine_Fluid_Timer = urand(35000, 50000);
         }else Stream_of_Machine_Fluid_Timer -= diff;
 
         DoMeleeAttackIfReady();

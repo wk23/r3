@@ -22,7 +22,7 @@ SDCategory: Scholomance
 EndScriptData */
 
 #include "precompiled.h"
-#include "def_scholomance.h"
+#include "scholomance.h"
 
 #define SPELL_CALLOFGRAVES         17831
 #define SPELL_CORRUPTION           11672
@@ -66,7 +66,7 @@ struct MANGOS_DLL_DECL boss_instructormaliciaAI : public ScriptedAI
 
     void UpdateAI(const uint32 diff)
     {
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         //CallOfGraves_Timer

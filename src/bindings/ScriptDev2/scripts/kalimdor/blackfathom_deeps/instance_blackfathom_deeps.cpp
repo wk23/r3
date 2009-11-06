@@ -22,7 +22,7 @@ SDCategory: Blackfathom Deeps
 EndScriptData */
 
 #include "precompiled.h"
-#include "def_blackfathom_deeps.h"
+#include "blackfathom_deeps.h"
 
 /* Encounter 0 = Twilight Lord Kelris
    Encounter 1 = Shrine event
@@ -60,7 +60,7 @@ struct MANGOS_DLL_DECL instance_blackfathom_deeps : public ScriptedInstance
 
     void OnCreatureCreate(Creature* pCreature)
     {
-        if (pCreature->GetEntry() == 4832) 
+        if (pCreature->GetEntry() == 4832)
             m_uiTwilightLordKelrisGUID = pCreature->GetGUID();
     }
 

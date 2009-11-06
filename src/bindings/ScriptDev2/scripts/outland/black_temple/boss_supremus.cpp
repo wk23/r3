@@ -22,7 +22,7 @@ SDCategory: Black Temple
 EndScriptData */
 
 #include "precompiled.h"
-#include "def_black_temple.h"
+#include "black_temple.h"
 
 #define EMOTE_NEW_TARGET            -1564010
 #define EMOTE_PUNCH_GROUND          -1564011                //DoScriptText(EMOTE_PUNCH_GROUND, m_creature);
@@ -87,7 +87,7 @@ struct MANGOS_DLL_DECL molten_flameAI : public ScriptedAI
 
     void UpdateAI(const uint32 diff)
     {
-        if (!m_creature->SelectHostilTarget())
+        if (!m_creature->SelectHostileTarget())
             return;
 
         if (m_creature->getVictim() && m_creature->isAlive())
@@ -205,7 +205,7 @@ struct MANGOS_DLL_DECL boss_supremusAI : public ScriptedAI
     {
         float coord = 0;
 
-        switch(rand()%2)
+        switch(urand(0, 1))
         {
             case 0: coord = initial + 20 + rand()%20; break;
             case 1: coord = initial - 20 - rand()%20; break;
@@ -234,8 +234,8 @@ struct MANGOS_DLL_DECL boss_supremusAI : public ScriptedAI
         uint32 health = 0;
         Unit* target = NULL;
 
-        std::list<HostilReference*>& m_threatlist = m_creature->getThreatManager().getThreatList();
-        std::list<HostilReference*>::iterator i = m_threatlist.begin();
+        std::list<HostileReference*>& m_threatlist = m_creature->getThreatManager().getThreatList();
+        std::list<HostileReference*>::iterator i = m_threatlist.begin();
         for (i = m_threatlist.begin(); i!= m_threatlist.end();++i)
         {
             Unit* pUnit = Unit::GetUnit((*m_creature), (*i)->getUnitGuid());
@@ -254,7 +254,7 @@ struct MANGOS_DLL_DECL boss_supremusAI : public ScriptedAI
 
     void UpdateAI(const uint32 diff)
     {
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         if (!m_creature->HasAura(SPELL_BERSERK, 0))

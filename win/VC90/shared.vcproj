@@ -527,19 +527,15 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\src\shared\Database\MySQLPreparedStatement.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\shared\Database\MySQLPreparedStatement.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\shared\Database\PreparedStatement.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\src\shared\Database\DatabaseImpl.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\shared\Database\DatabaseMysql.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\shared\Database\DatabaseMysql.h"
 				>
 			</File>
 			<File
@@ -551,11 +547,19 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\src\shared\Database\QueryResult.cpp"
+				RelativePath="..\..\src\shared\Database\MySQLDelayThread.h"
 				>
 			</File>
 			<File
 				RelativePath="..\..\src\shared\Database\QueryResult.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\shared\Database\QueryResultMysql.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\shared\Database\QueryResultMysql.h"
 				>
 			</File>
 			<File

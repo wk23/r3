@@ -132,7 +132,7 @@ struct MANGOS_DLL_DECL example_creatureAI : public ScriptedAI
             if (m_uiSay_Timer < uiDiff)
             {
                 //Random switch between 5 outcomes
-                switch (rand()%5)
+                switch(urand(0, 4))
                 {
                     case 0: DoScriptText(SAY_RANDOM_0, m_creature); break;
                     case 1: DoScriptText(SAY_RANDOM_1, m_creature); break;
@@ -157,7 +157,7 @@ struct MANGOS_DLL_DECL example_creatureAI : public ScriptedAI
         }
 
         //Return since we have no target
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         //Spell 1 timer

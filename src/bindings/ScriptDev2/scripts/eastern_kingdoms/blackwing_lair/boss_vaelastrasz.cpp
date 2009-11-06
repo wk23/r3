@@ -42,7 +42,6 @@ struct MANGOS_DLL_DECL boss_vaelAI : public ScriptedAI
 {
     boss_vaelAI(Creature* pCreature) : ScriptedAI(pCreature)
     {
-        pCreature->SetUInt32Value(UNIT_NPC_FLAGS,1);
         pCreature->setFaction(35);
         pCreature->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
         Reset();
@@ -90,7 +89,7 @@ struct MANGOS_DLL_DECL boss_vaelAI : public ScriptedAI
 
     void KilledUnit(Unit *victim)
     {
-        if (rand()%5)
+        if (urand(0, 4))
             return;
 
         DoScriptText(SAY_KILLTARGET, m_creature, victim);
@@ -139,7 +138,7 @@ struct MANGOS_DLL_DECL boss_vaelAI : public ScriptedAI
         }
 
         //Return since we have no target
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         // Yell if hp lower than 15%
@@ -160,7 +159,7 @@ struct MANGOS_DLL_DECL boss_vaelAI : public ScriptedAI
         if (FlameBreath_Timer < diff)
         {
             DoCast(m_creature->getVictim(),SPELL_FLAMEBREATH);
-            FlameBreath_Timer = 4000 + rand()%4000;
+            FlameBreath_Timer = urand(4000, 8000);
         }else FlameBreath_Timer -= diff;
 
         //BurningAdrenalineCaster_Timer
@@ -216,26 +215,25 @@ struct MANGOS_DLL_DECL boss_vaelAI : public ScriptedAI
     }
 };
 
-void SendDefaultMenu_boss_vael(Player* pPlayer, Creature* pCreature, uint32 uiAction)
+bool GossipSelect_boss_vael(Player* pPlayer, Creature* pCreature, uint32 uiSender, uint32 uiAction)
 {
     if (uiAction == GOSSIP_ACTION_INFO_DEF + 1)               //Fight time
     {
         pPlayer->CLOSE_GOSSIP_MENU();
-        ((boss_vaelAI*)pCreature->AI())->BeginSpeach((Unit*)pPlayer);
-    }
-}
 
-bool GossipSelect_boss_vael(Player* pPlayer, Creature* pCreature, uint32 uiSender, uint32 uiAction)
-{
-    if (uiSender == GOSSIP_SENDER_MAIN)
-        SendDefaultMenu_boss_vael(pPlayer, pCreature, uiAction);
+        if (boss_vaelAI* pVaelAI = dynamic_cast<boss_vaelAI*>(pCreature->AI()))
+            pVaelAI->BeginSpeach((Unit*)pPlayer);
+    }
 
     return true;
 }
 
 bool GossipHello_boss_vael(Player* pPlayer, Creature* pCreature)
 {
-    pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_ITEM        , GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF + 1);
+    if (pCreature->isQuestGiver())
+        pPlayer->PrepareQuestMenu(pCreature->GetGUID());
+
+    pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_ITEM, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF + 1);
     pPlayer->SEND_GOSSIP_MENU(907, pCreature->GetGUID());
 
     return true;

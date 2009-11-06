@@ -22,7 +22,7 @@ SDCategory: Sunwell Plateau
 EndScriptData */
 
 #include "precompiled.h"
-#include "def_sunwell_plateau.h"
+#include "sunwell_plateau.h"
 
 enum KalecgosEncounter
 {
@@ -39,7 +39,7 @@ enum KalecgosEncounter
     SAY_GOOD_NEAR_DEATH             = -1580007,
     SAY_GOOD_NEAR_DEATH2            = -1580008,
     SAY_GOOD_PLRWIN                 = -1580009,
-    
+
     SAY_SATH_AGGRO                  = -1580010,
     SAY_SATH_DEATH                  = -1580011,
     SAY_SATH_SPELL1                 = -1580012,
@@ -165,11 +165,7 @@ struct MANGOS_DLL_DECL boss_kalecgosAI : public ScriptedAI
 
     void KilledUnit(Unit* pVictim)
     {
-        switch(rand()%2)
-        {
-            case 0: DoScriptText(SAY_EVIL_SLAY1, m_creature); break;
-            case 1: DoScriptText(SAY_EVIL_SLAY2, m_creature); break;
-        }
+        DoScriptText(urand(0, 1) ? SAY_EVIL_SLAY1 : SAY_EVIL_SLAY2, m_creature);
     }
 
     void SendToInnerVeil(Unit* pTarget)
@@ -250,7 +246,7 @@ struct MANGOS_DLL_DECL boss_kalecgosAI : public ScriptedAI
 
     void UpdateAI(const uint32 diff)
     {
-        if (!m_creature->getVictim() || !m_creature->SelectHostilTarget() || m_bBanished)
+        if (!m_creature->getVictim() || !m_creature->SelectHostileTarget() || m_bBanished)
             return;
 
         if (!m_bEnraged && ((m_creature->GetHealth()*100 / m_creature->GetMaxHealth()) < 10))
@@ -294,7 +290,7 @@ struct MANGOS_DLL_DECL boss_kalecgosAI : public ScriptedAI
 
         if (m_uiArcaneBuffetTimer < diff)
         {
-            if (rand()%3 == 0)
+            if (!urand(0, 2))
                 DoScriptText(SAY_EVIL_SPELL1, m_creature);
 
             DoCast(m_creature->getVictim(), SPELL_ARCANE_BUFFET);
@@ -305,7 +301,7 @@ struct MANGOS_DLL_DECL boss_kalecgosAI : public ScriptedAI
 
         if (m_uiFrostBreathTimer < diff)
         {
-            if (!(rand()%2))
+            if (!urand(0, 1))
                 DoScriptText(SAY_EVIL_SPELL2, m_creature);
 
             DoCast(m_creature->getVictim(), SPELL_FROST_BREATH);
@@ -406,16 +402,12 @@ struct MANGOS_DLL_DECL boss_sathrovarrAI : public ScriptedAI
 
     void KilledUnit(Unit* victim)
     {
-        switch(rand()%2)
-        {
-            case 0: DoScriptText(SAY_SATH_SLAY1, m_creature); break;
-            case 1: DoScriptText(SAY_SATH_SLAY2, m_creature); break;
-        }
+        DoScriptText(urand(0, 1) ? SAY_SATH_SLAY1 : SAY_SATH_SLAY2, m_creature);
     }
 
     void UpdateAI(const uint32 diff)
     {
-        if (!m_creature->getVictim() || !m_creature->SelectHostilTarget() || m_bBanished)
+        if (!m_creature->getVictim() || !m_creature->SelectHostileTarget() || m_bBanished)
             return;
 
         if (!m_bEnraged && ((m_creature->GetHealth()*100 / m_creature->GetMaxHealth()) <= 10))
@@ -429,7 +421,7 @@ struct MANGOS_DLL_DECL boss_sathrovarrAI : public ScriptedAI
 
         if (CorruptingStrikeTimer < diff)
         {
-            if (!(rand()%2))
+            if (!urand(0, 1))
                 DoScriptText(SAY_SATH_SPELL2, m_creature);
 
             DoCast(m_creature->getVictim(), SPELL_CORRUPTING_STRIKE);
@@ -446,7 +438,7 @@ struct MANGOS_DLL_DECL boss_sathrovarrAI : public ScriptedAI
 
         if (ShadowBoltVolleyTimer < diff)
         {
-            if (!(rand()%2))
+            if (!urand(0, 1))
                 DoScriptText(SAY_SATH_SPELL1, m_creature);
 
             DoCast(m_creature->getVictim(), SPELL_SHADOW_BOLT_VOLLEY);
@@ -497,7 +489,7 @@ struct MANGOS_DLL_DECL boss_kalecgos_humanoidAI : public ScriptedAI
 
     void UpdateAI(const uint32 diff)
     {
-        if (!m_creature->getVictim() || !m_creature->SelectHostilTarget())
+        if (!m_creature->getVictim() || !m_creature->SelectHostileTarget())
             return;
 
         if (RevitalizeTimer < diff)
@@ -552,7 +544,7 @@ bool GOHello_go_spectral_rift(Player* pPlayer, GameObject* pGo)
             if (pSath->isAlive())
             {
                 debug_log("SD2: Adding %s in pSath' threatlist", pPlayer->GetName());
-                pSath->AddThreat(pPlayer, 0.0f);
+                pSath->AddThreat(pPlayer);
             }
         }
 
@@ -561,7 +553,7 @@ bool GOHello_go_spectral_rift(Player* pPlayer, GameObject* pGo)
         {
             if (pKalecgos->isAlive())
             {
-                if (HostilReference* pRef = pKalecgos->getThreatManager().getOnlineContainer().getReferenceByTarget(pPlayer))
+                if (HostileReference* pRef = pKalecgos->getThreatManager().getOnlineContainer().getReferenceByTarget(pPlayer))
                 {
                     pRef->removeReference();
                     debug_log("SD2: Deleting %s from pKalecgos's threatlist", pPlayer->GetName());

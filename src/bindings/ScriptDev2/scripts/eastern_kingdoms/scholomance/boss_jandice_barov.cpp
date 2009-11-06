@@ -54,14 +54,14 @@ struct MANGOS_DLL_DECL boss_jandicebarovAI : public ScriptedAI
     void SummonIllusions(Unit* victim)
     {
         Rand = rand()%10;
-        switch (rand()%2)
+        switch(urand(0, 1))
         {
         case 0: RandX = 0 - Rand; break;
         case 1: RandX = 0 + Rand; break;
         }
         Rand = 0;
         Rand = rand()%10;
-        switch (rand()%2)
+        switch(urand(0, 1))
         {
         case 0: RandY = 0 - Rand; break;
         case 1: RandY = 0 + Rand; break;
@@ -89,7 +89,7 @@ struct MANGOS_DLL_DECL boss_jandicebarovAI : public ScriptedAI
         }
 
         //Return since we have no target
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         //CurseOfBlood_Timer
@@ -155,21 +155,21 @@ struct MANGOS_DLL_DECL mob_illusionofjandicebarovAI : public ScriptedAI
 
     void Reset()
     {
-        Cleave_Timer = 2000 + rand()%6000;
+        Cleave_Timer = urand(2000, 8000);
         m_creature->ApplySpellImmune(0, IMMUNITY_DAMAGE, SPELL_SCHOOL_MASK_MAGIC, true);
     }
 
     void UpdateAI(const uint32 diff)
     {
         //Return since we have no target
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         //Cleave_Timer
         if (Cleave_Timer < diff)
         {
             DoCast(m_creature->getVictim(),SPELL_CLEAVE);
-            Cleave_Timer = 5000 + rand()%3000;
+            Cleave_Timer = urand(5000, 8000);
         }else Cleave_Timer -= diff;
 
         DoMeleeAttackIfReady();

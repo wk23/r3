@@ -125,7 +125,7 @@ struct MANGOS_DLL_DECL boss_ragnarosAI : public ScriptedAI
 
     void KilledUnit(Unit* victim)
     {
-        if (rand()%5)
+        if (urand(0, 4))
             return;
 
         DoScriptText(SAY_KILL, m_creature);
@@ -148,7 +148,7 @@ struct MANGOS_DLL_DECL boss_ragnarosAI : public ScriptedAI
         }
 
         //Return since we have no target
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         //WrathOfRagnaros_Timer
@@ -156,10 +156,8 @@ struct MANGOS_DLL_DECL boss_ragnarosAI : public ScriptedAI
         {
             DoCast(m_creature->getVictim(),SPELL_WRATHOFRAGNAROS);
 
-            if (rand()%2 == 0)
-            {
+            if (urand(0, 1))
                 DoScriptText(SAY_WRATH, m_creature);
-            }
 
             WrathOfRagnaros_Timer = 30000;
         }else WrathOfRagnaros_Timer -= diff;
@@ -169,10 +167,8 @@ struct MANGOS_DLL_DECL boss_ragnarosAI : public ScriptedAI
         {
             DoCast(m_creature,SPELL_HANDOFRAGNAROS);
 
-            if (rand()%2==0)
-            {
+            if (urand(0, 1))
                 DoScriptText(SAY_HAND, m_creature);
-            }
 
             HandOfRagnaros_Timer = 25000;
         }else HandOfRagnaros_Timer -= diff;
@@ -188,14 +184,14 @@ struct MANGOS_DLL_DECL boss_ragnarosAI : public ScriptedAI
         if (LavaBurst_Timer < diff)
         {
             DoCast(m_creature->getVictim(),SPELL_ERRUPTION);
-            Erruption_Timer = 20000 + rand()%25000;
+            Erruption_Timer = urand(20000, 45000);
         }else Erruption_Timer -= diff;
 
         //ElementalFire_Timer
         if (ElementalFire_Timer < diff)
         {
             DoCast(m_creature->getVictim(),SPELL_ELEMENTALFIRE);
-            ElementalFire_Timer = 10000 + rand()%4000;
+            ElementalFire_Timer = urand(10000, 14000);
         }else ElementalFire_Timer -= diff;
 
         //Submerge_Timer

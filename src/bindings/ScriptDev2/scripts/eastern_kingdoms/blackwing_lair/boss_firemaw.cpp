@@ -49,14 +49,14 @@ struct MANGOS_DLL_DECL boss_firemawAI : public ScriptedAI
 
     void UpdateAI(const uint32 diff)
     {
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         //ShadowFlame_Timer
         if (ShadowFlame_Timer < diff)
         {
             DoCast(m_creature->getVictim(),SPELL_SHADOWFLAME);
-            ShadowFlame_Timer = 15000 + rand()%3000;
+            ShadowFlame_Timer = urand(15000, 18000);
         }else ShadowFlame_Timer -= diff;
 
         //WingBuffet_Timer

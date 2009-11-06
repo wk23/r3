@@ -22,7 +22,7 @@ SDCategory: Stratholme
 EndScriptData */
 
 #include "precompiled.h"
-#include "def_stratholme.h"
+#include "stratholme.h"
 
 #define SPELL_ENCASINGWEBS          4962
 #define SPELL_PIERCEARMOR           6016
@@ -60,14 +60,14 @@ struct MANGOS_DLL_DECL boss_nerubenkanAI : public ScriptedAI
     void RaiseUndeadScarab(Unit* victim)
     {
         Rand = rand()%10;
-        switch (rand()%2)
+        switch(urand(0, 1))
         {
         case 0: RandX = 0 - Rand; break;
         case 1: RandX = 0 + Rand; break;
         }
         Rand = 0;
         Rand = rand()%10;
-        switch (rand()%2)
+        switch(urand(0, 1))
         {
         case 0: RandY = 0 - Rand; break;
         case 1: RandY = 0 + Rand; break;
@@ -86,7 +86,7 @@ struct MANGOS_DLL_DECL boss_nerubenkanAI : public ScriptedAI
 
     void UpdateAI(const uint32 diff)
     {
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         //EncasingWebs

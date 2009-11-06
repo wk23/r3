@@ -54,7 +54,7 @@ struct MANGOS_DLL_DECL boss_pandemoniusAI : public ScriptedAI
 
     void Reset()
     {
-        VoidBlast_Timer = 8000+rand()%15000;
+        VoidBlast_Timer = urand(8000, 23000);
         DarkShell_Timer = 20000;
         VoidBlast_Counter = 0;
     }
@@ -66,16 +66,12 @@ struct MANGOS_DLL_DECL boss_pandemoniusAI : public ScriptedAI
 
     void KilledUnit(Unit* victim)
     {
-        switch(rand()%2)
-        {
-            case 0: DoScriptText(SAY_KILL_1, m_creature); break;
-            case 1: DoScriptText(SAY_KILL_2, m_creature); break;
-        }
+        DoScriptText(urand(0, 1) ? SAY_KILL_1 : SAY_KILL_2, m_creature);
     }
 
     void Aggro(Unit *who)
     {
-        switch(rand()%3)
+        switch(urand(0, 2))
         {
             case 0: DoScriptText(SAY_AGGRO_1, m_creature); break;
             case 1: DoScriptText(SAY_AGGRO_2, m_creature); break;
@@ -86,7 +82,7 @@ struct MANGOS_DLL_DECL boss_pandemoniusAI : public ScriptedAI
 
     void UpdateAI(const uint32 diff)
     {
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         if (VoidBlast_Timer < diff)
@@ -100,7 +96,7 @@ struct MANGOS_DLL_DECL boss_pandemoniusAI : public ScriptedAI
 
             if (VoidBlast_Counter == 5)
             {
-                VoidBlast_Timer = 15000+rand()%10000;
+                VoidBlast_Timer = urand(15000, 25000);
                 VoidBlast_Counter = 0;
             }
         }else VoidBlast_Timer -= diff;

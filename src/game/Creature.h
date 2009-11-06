@@ -57,7 +57,7 @@ enum Gossip_Option
     GOSSIP_OPTION_UNLEARNTALENTS    = 16,                   //UNIT_NPC_FLAG_TRAINER (bonus option for GOSSIP_OPTION_TRAINER)
     GOSSIP_OPTION_UNLEARNPETSKILLS  = 17,                   //UNIT_NPC_FLAG_TRAINER (bonus option for GOSSIP_OPTION_TRAINER)
     GOSSIP_OPTION_OUTDOORPVP        = 18,                    //UNIT_NPC_FLAG_OUTDOORPVP (option for outdoor pvp creatures)
-    GOSSIP_OPTION_LEARNDUALSPEC     = 19                    //UNIT_NPC_FLAG_TRAINER (bonus option for GOSSIP_OPTION_TRAINER)
+    GOSSIP_OPTION_LEARNDUALSPEC     = 19					//UNIT_NPC_FLAG_TRAINER (bonus option for GOSSIP_OPTION_TRAINER)
 };
 
 enum Gossip_Guard
@@ -160,7 +160,7 @@ enum CreatureFlagsExtra
 struct CreatureInfo
 {
     uint32  Entry;
-    uint32  HeroicEntry;
+    uint32  DifficultyEntry[MAX_DIFFICULTY - 1];
     uint32  KillCredit[MAX_KILL_CREDIT];
     uint32  DisplayID_A[2];
     uint32  DisplayID_H[2];
@@ -219,7 +219,7 @@ struct CreatureInfo
     float   unk16;
     float   unk17;
     bool    RacialLeader;
-    uint32  questItems[4];
+    uint32  questItems[6];
     uint32  movementId;
     bool    RegenHealth;
     uint32  equipmentId;
@@ -240,13 +240,18 @@ struct CreatureInfo
             return SKILL_SKINNING;                          // normal case
     }
 
+    bool IsExotic() const
+    {
+        return (type_flags & CREATURE_TYPEFLAGS_EXOTIC);
+    }
+
     bool isTameable(bool exotic) const
     {
-        if(type != CREATURE_TYPE_BEAST || family == 0 || (type_flags & CREATURE_TYPEFLAGS_TAMEABLE)==0)
+        if(type != CREATURE_TYPE_BEAST || family == 0 || (type_flags & CREATURE_TYPEFLAGS_TAMEABLE) == 0)
             return false;
 
         // if can tame exotic then can tame any temable
-        return exotic || (type_flags & CREATURE_TYPEFLAGS_EXOTIC)==0;
+        return exotic || !IsExotic();
     }
 };
 
@@ -303,7 +308,10 @@ struct CreatureDataAddonAura
 
 struct CreatureDataAddonPassengers
 {
-    int32 guidOrEntry;                                      // entry - negative, guid positive
+    CreatureDataAddonPassengers() : entry(0), guid(0), seat_idx(-1) {}
+
+    uint32 entry;
+    uint32 guid;
     int8 seat_idx;
 };
 
@@ -412,15 +420,14 @@ struct VendorItemData
 
 struct VendorItemCount
 {
-    explicit VendorItemCount(uint32 _item, uint32 _count)
-        : itemId(_item), count(_count), lastIncrementTime(time(NULL)) {}
+    VendorItemCount() : count(0), lastIncrementTime(time(NULL)) {}
+    VendorItemCount(uint32 _count) : count(_count), lastIncrementTime(time(NULL)) {}
 
-    uint32 itemId;
     uint32 count;
     time_t lastIncrementTime;
 };
 
-typedef std::list<VendorItemCount> VendorItemCounts;
+typedef std::map<uint32/*item_id*/, VendorItemCount*> VendorItemCounts;
 
 struct TrainerSpell
 {
@@ -475,7 +482,7 @@ class MANGOS_DLL_SPEC Creature : public Unit
         void AddToWorld();
         void RemoveFromWorld();
 
-        bool Create (uint32 guidlow, Map *map, uint32 phaseMask, uint32 Entry, uint32 team, const CreatureData *data = NULL);
+        bool Create(uint32 guidlow, Map *map, uint32 phaseMask, uint32 Entry, uint32 team, const CreatureData *data = NULL);
         bool LoadCreaturesAddon(bool reload = false);
         void SelectLevel(const CreatureInfo *cinfo);
         void LoadEquipment(uint32 equip_entry, bool force=false);
@@ -629,6 +636,8 @@ class MANGOS_DLL_SPEC Creature : public Unit
 
         float GetAttackDistance(Unit const* pl) const;
 
+        void SendAIReaction(AiReaction reactionType);
+
         void DoFleeToGetAssistance();
         void CallForHelp(float fRadius);
         void CallAssistance();
@@ -692,8 +701,10 @@ class MANGOS_DLL_SPEC Creature : public Unit
 
         void SetDeadByDefault (bool death_state) { m_isDeadByDefault = death_state; }
 
-        bool isActiveObject() const { return m_isActiveObject; }
+        bool isActiveObject() const { return m_isActiveObject || HasAuraType(SPELL_AURA_BIND_SIGHT) || HasAuraType(SPELL_AURA_FAR_SIGHT); }
         void SetActiveObjectState(bool on);
+
+        void SendAreaSpiritHealerQueryOpcode(Player *pl);
         
         void IncrementReceivedDamage(Unit* pAttacker, uint32 unDamage) 
         {
@@ -712,7 +723,7 @@ class MANGOS_DLL_SPEC Creature : public Unit
                 return;
 		    }
         }
-        bool AreLootAndRewardAllowed() { return (!m_unUnitDamageDone || (m_unPlayerDamageDone > m_unUnitDamageDone)); }
+        bool AreLootAndRewardAllowed() { return (m_unPlayerDamageDone > m_unUnitDamageDone); }
         void ResetObtainedDamage() 
         {
 		    m_unPlayerDamageDone = 0;
@@ -769,7 +780,7 @@ class MANGOS_DLL_SPEC Creature : public Unit
         float CombatStartZ;
     private:
         GridReference<Creature> m_gridRef;
-        CreatureInfo const* m_creatureInfo;                 // in heroic mode can different from ObjMgr::GetCreatureTemplate(GetEntry())
+        CreatureInfo const* m_creatureInfo;                 // in difficulty mode > 0 can different from ObjMgr::GetCreatureTemplate(GetEntry())
         bool m_isActiveObject;
         MonsterMovementFlags m_monsterMoveFlags;
 };

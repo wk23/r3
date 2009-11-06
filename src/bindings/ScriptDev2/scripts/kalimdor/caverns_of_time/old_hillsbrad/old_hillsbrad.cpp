@@ -29,7 +29,7 @@ npc_taretha
 EndContentData */
 
 #include "precompiled.h"
-#include "def_old_hillsbrad.h"
+#include "old_hillsbrad.h"
 #include "escort_ai.h"
 
 enum
@@ -266,7 +266,7 @@ struct MANGOS_DLL_DECL npc_thrall_old_hillsbradAI : public npc_escortAI
                 m_creature->SummonCreature(ENTRY_SCARLOC,2036.48,271.22,63.43,5.27,TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT,30000);
                 break;
             case 30:
-                IsOnHold = true;
+                SetEscortPaused(true);
                 m_creature->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
                 SetRun(false);
                 break;
@@ -290,7 +290,7 @@ struct MANGOS_DLL_DECL npc_thrall_old_hillsbradAI : public npc_escortAI
             case 60:
                 m_creature->HandleEmoteCommand(EMOTE_ONESHOT_EXCLAMATION);
                 //make horsie run off
-                IsOnHold = true;
+                SetEscortPaused(true);
                 m_creature->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
                 m_pInstance->SetData(TYPE_THRALL_PART2, DONE);
                 SetRun();
@@ -339,7 +339,7 @@ struct MANGOS_DLL_DECL npc_thrall_old_hillsbradAI : public npc_escortAI
             case 95:
                 DoScriptText(SAY_TH_MEET_TARETHA, m_creature);
                 m_pInstance->SetData(TYPE_THRALL_PART3,DONE);
-                IsOnHold = true;
+                SetEscortPaused(true);
                 break;
             case 96:
                 DoScriptText(SAY_TH_EPOCH_WONDER, m_creature);
@@ -385,7 +385,7 @@ struct MANGOS_DLL_DECL npc_thrall_old_hillsbradAI : public npc_escortAI
         if (HadMount)
             DoMount();
 
-        if (!IsBeingEscorted)
+        if (!HasEscortState(STATE_ESCORT_ESCORTING))
         {
             DoUnmount();
             HadMount = false;
@@ -393,9 +393,9 @@ struct MANGOS_DLL_DECL npc_thrall_old_hillsbradAI : public npc_escortAI
             m_creature->SetDisplayId(THRALL_MODEL_UNEQUIPPED);
         }
 
-        if (IsBeingEscorted)
+        if (HasEscortState(STATE_ESCORT_ESCORTING))
         {
-            switch(rand()%3)
+            switch(urand(0, 2))
             {
                 case 0: DoScriptText(SAY_TH_LEAVE_COMBAT1, m_creature); break;
                 case 1: DoScriptText(SAY_TH_LEAVE_COMBAT2, m_creature); break;
@@ -407,7 +407,7 @@ struct MANGOS_DLL_DECL npc_thrall_old_hillsbradAI : public npc_escortAI
     void StartWP()
     {
         m_creature->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
-        IsOnHold = false;
+        SetEscortPaused(false);
     }
 
     void DoMount()
@@ -424,7 +424,7 @@ struct MANGOS_DLL_DECL npc_thrall_old_hillsbradAI : public npc_escortAI
 
     void Aggro(Unit* who)
     {
-        switch(rand()%4)
+        switch(urand(0, 3))
         {
             case 0: DoScriptText(SAY_TH_RANDOM_AGGRO1, m_creature); break;
             case 1: DoScriptText(SAY_TH_RANDOM_AGGRO2, m_creature); break;
@@ -458,7 +458,7 @@ struct MANGOS_DLL_DECL npc_thrall_old_hillsbradAI : public npc_escortAI
 
     void KilledUnit(Unit *victim)
     {
-        switch(rand()%3)
+        switch(urand(0, 2))
         {
             case 0: DoScriptText(SAY_TH_RANDOM_KILL1, m_creature); break;
             case 1: DoScriptText(SAY_TH_RANDOM_KILL2, m_creature); break;
@@ -475,31 +475,23 @@ struct MANGOS_DLL_DECL npc_thrall_old_hillsbradAI : public npc_escortAI
         if (slayer == m_creature)
             return;
 
-        switch(rand()%2)
-        {
-            case 0: DoScriptText(SAY_TH_RANDOM_DIE1, m_creature); break;
-            case 1: DoScriptText(SAY_TH_RANDOM_DIE2, m_creature); break;
-        }
+        DoScriptText(urand(0, 1) ? SAY_TH_RANDOM_DIE1 : SAY_TH_RANDOM_DIE2, m_creature);
     }
 
-    void UpdateAI(const uint32 diff)
+    void UpdateEscortAI(const uint32 diff)
     {
-        npc_escortAI::UpdateAI(diff);
-
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         //TODO: add his abilities'n-crap here
 
         if (!LowHp && ((m_creature->GetHealth()*100 / m_creature->GetMaxHealth()) < 20))
         {
-            switch(rand()%2)
-            {
-                case 0: DoScriptText(SAY_TH_RANDOM_LOW_HP1, m_creature); break;
-                case 1: DoScriptText(SAY_TH_RANDOM_LOW_HP2, m_creature); break;
-            }
+            DoScriptText(urand(0, 1) ? SAY_TH_RANDOM_LOW_HP1 : SAY_TH_RANDOM_LOW_HP2, m_creature);
             LowHp = true;
         }
+
+        DoMeleeAttackIfReady();
     }
 };
 
@@ -616,12 +608,8 @@ struct MANGOS_DLL_DECL npc_tarethaAI : public npc_escortAI
     }
 
     void Reset() {}
-
-    void UpdateAI(const uint32 diff)
-    {
-        npc_escortAI::UpdateAI(diff);
-    }
 };
+
 CreatureAI* GetAI_npc_taretha(Creature* pCreature)
 {
     return new npc_tarethaAI(pCreature);

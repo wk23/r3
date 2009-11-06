@@ -22,7 +22,7 @@ SDCategory: Coilfang Resevoir, The Steamvault
 EndScriptData */
 
 #include "precompiled.h"
-#include "def_steam_vault.h"
+#include "steam_vault.h"
 
 #define SAY_INTRO                   -1545016
 #define SAY_REGEN                   -1545017
@@ -103,7 +103,7 @@ struct MANGOS_DLL_DECL boss_warlord_kalithreshAI : public ScriptedAI
     void Reset()
     {
         Reflection_Timer = 10000;
-        Impale_Timer = 7000+rand()%7000;
+        Impale_Timer = urand(7000, 14000);
         Rage_Timer = 45000;
         CanRage = false;
 
@@ -113,7 +113,7 @@ struct MANGOS_DLL_DECL boss_warlord_kalithreshAI : public ScriptedAI
 
     void Aggro(Unit *who)
     {
-        switch(rand()%3)
+        switch(urand(0, 2))
         {
             case 0: DoScriptText(SAY_AGGRO1, m_creature); break;
             case 1: DoScriptText(SAY_AGGRO2, m_creature); break;
@@ -126,11 +126,7 @@ struct MANGOS_DLL_DECL boss_warlord_kalithreshAI : public ScriptedAI
 
     void KilledUnit(Unit* victim)
     {
-        switch(rand()%2)
-        {
-            case 0: DoScriptText(SAY_SLAY1, m_creature); break;
-            case 1: DoScriptText(SAY_SLAY2, m_creature); break;
-        }
+        DoScriptText(urand(0, 1) ? SAY_SLAY1 : SAY_SLAY2, m_creature);
     }
 
     void SpellHit(Unit *caster, const SpellEntry *spell)
@@ -152,7 +148,7 @@ struct MANGOS_DLL_DECL boss_warlord_kalithreshAI : public ScriptedAI
 
     void UpdateAI(const uint32 diff)
     {
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         if (Rage_Timer < diff)
@@ -163,14 +159,14 @@ struct MANGOS_DLL_DECL boss_warlord_kalithreshAI : public ScriptedAI
                 DoCast(m_creature,SPELL_WARLORDS_RAGE);
                 ((mob_naga_distillerAI*)pDistiller->AI())->StartRageGen(m_creature);
             }
-            Rage_Timer = 3000+rand()%15000;
+            Rage_Timer = urand(3000, 18000);
         }else Rage_Timer -= diff;
 
         //Reflection_Timer
         if (Reflection_Timer < diff)
         {
             DoCast(m_creature, SPELL_SPELL_REFLECTION);
-            Reflection_Timer = 15000+rand()%10000;
+            Reflection_Timer = urand(15000, 25000);
         }else Reflection_Timer -= diff;
 
         //Impale_Timer
@@ -179,7 +175,7 @@ struct MANGOS_DLL_DECL boss_warlord_kalithreshAI : public ScriptedAI
             if (Unit* target = SelectUnit(SELECT_TARGET_RANDOM,0))
                 DoCast(target,SPELL_IMPALE);
 
-            Impale_Timer = 7500+rand()%5000;
+            Impale_Timer = urand(7500, 12500);
         }else Impale_Timer -= diff;
 
         DoMeleeAttackIfReady();

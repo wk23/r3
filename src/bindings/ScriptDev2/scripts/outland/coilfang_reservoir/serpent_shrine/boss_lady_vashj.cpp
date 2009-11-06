@@ -22,7 +22,7 @@ SDCategory: Coilfang Resevoir, Serpent Shrine Cavern
 EndScriptData */
 
 #include "precompiled.h"
-#include "def_serpent_shrine.h"
+#include "serpent_shrine.h"
 #include "simple_ai.h"
 #include "Item.h"
 #include "Spell.h"
@@ -149,12 +149,12 @@ struct MANGOS_DLL_DECL boss_lady_vashjAI : public ScriptedAI
     {
         SetCombatMovement(true);
 
-        m_uiShockBlast_Timer           = 1+rand()%60000;
+        m_uiShockBlast_Timer           = urand(1000, 60000);
         m_uiEntangle_Timer             = 30000;
-        m_uiStaticCharge_Timer         = 10000+rand()%15000;
+        m_uiStaticCharge_Timer         = urand(10000, 25000);
         m_uiCheck_Timer                = 1000;
 
-        m_uiForkedLightning_Timer      = 43000+rand()%6000;
+        m_uiForkedLightning_Timer      = urand(43000, 49000);
         m_uiEnchantedElemental_Timer   = 10000;
         m_uiTaintedElemental_Timer     = 50000;
         m_uiCoilfangElite_Timer        = 45000;
@@ -189,7 +189,7 @@ struct MANGOS_DLL_DECL boss_lady_vashjAI : public ScriptedAI
 
     void Aggro(Unit* pWho)
     {
-        switch(rand()%4)
+        switch(urand(0, 3))
         {
             case 0: DoScriptText(SAY_AGGRO1, m_creature); break;
             case 1: DoScriptText(SAY_AGGRO2, m_creature); break;
@@ -253,7 +253,7 @@ struct MANGOS_DLL_DECL boss_lady_vashjAI : public ScriptedAI
 
     void KilledUnit(Unit* pVictim)
     {
-        switch(rand()%3)
+        switch(urand(0, 2))
         {
             case 0: DoScriptText(SAY_SLAY1, m_creature); break;
             case 1: DoScriptText(SAY_SLAY2, m_creature); break;
@@ -275,14 +275,14 @@ struct MANGOS_DLL_DECL boss_lady_vashjAI : public ScriptedAI
         //Multishot: Used in m_uiPhases 1 and 3 after Entangle or while having nobody in melee range. A shot that hits 1 person and 4 people around him for 6475-7525 physical damage.
         DoCast(m_creature->getVictim(), urand(0,1) ? SPELL_SHOOT : SPELL_MULTI_SHOT);
 
-        if (rand()%3)
+        if (urand(0, 2))
             DoScriptText(urand(0,1) ? SAY_BOWSHOT1 : SAY_BOWSHOT2, m_creature);
     }
 
     void UpdateAI(const uint32 uiDiff)
     {
         //Return since we have no target
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         if (m_uiPhase == PHASE_1 || m_uiPhase == PHASE_3)
@@ -293,7 +293,7 @@ struct MANGOS_DLL_DECL boss_lady_vashjAI : public ScriptedAI
                 //Randomly used in m_uiPhases 1 and 3 on Vashj's target, it's a Shock spell doing 8325-9675 nature damage and stunning the target for 5 seconds, during which she will not attack her target but switch to the next person on the aggro list.
                 DoCast(m_creature->getVictim(), SPELL_SHOCK_BLAST);
 
-                m_uiShockBlast_Timer = 1000+rand()%14000;   //random cooldown
+                m_uiShockBlast_Timer = urand(1000, 15000);  //random cooldown
             }else m_uiShockBlast_Timer -= uiDiff;
 
             //m_uiStaticCharge_Timer
@@ -306,7 +306,7 @@ struct MANGOS_DLL_DECL boss_lady_vashjAI : public ScriptedAI
                 if (pTarget && !pTarget->HasAura(SPELL_STATIC_CHARGE_TRIGGER))
                     DoCast(pTarget, SPELL_STATIC_CHARGE_TRIGGER);
 
-                m_uiStaticCharge_Timer = 10000+rand()%20000;
+                m_uiStaticCharge_Timer = urand(10000, 30000);
             }else m_uiStaticCharge_Timer -= uiDiff;
 
             //m_uiEntangle_Timer
@@ -323,7 +323,7 @@ struct MANGOS_DLL_DECL boss_lady_vashjAI : public ScriptedAI
                 {
                     CastShootOrMultishot();
                     m_bEntangle = false;
-                    m_uiEntangle_Timer = 20000+rand()%5000;
+                    m_uiEntangle_Timer = urand(20000, 25000);
                 }
             }else m_uiEntangle_Timer -= uiDiff;
 
@@ -373,8 +373,8 @@ struct MANGOS_DLL_DECL boss_lady_vashjAI : public ScriptedAI
             if (m_uiCheck_Timer < uiDiff)
             {
                 bool bInMeleeRange = false;
-                std::list<HostilReference *> t_list = m_creature->getThreatManager().getThreatList();
-                for(std::list<HostilReference *>::iterator itr = t_list.begin(); itr!= t_list.end(); ++itr)
+                std::list<HostileReference *> t_list = m_creature->getThreatManager().getThreatList();
+                for(std::list<HostileReference *>::iterator itr = t_list.begin(); itr!= t_list.end(); ++itr)
                 {
                     Unit* pTarget = Unit::GetUnit(*m_creature, (*itr)->getUnitGuid());
 
@@ -407,7 +407,7 @@ struct MANGOS_DLL_DECL boss_lady_vashjAI : public ScriptedAI
 
                 DoCast(pTarget, SPELL_FORKED_LIGHTNING);
 
-                m_uiForkedLightning_Timer = 3000+rand()%6000;
+                m_uiForkedLightning_Timer = urand(3000, 9000);
             }else m_uiForkedLightning_Timer -= uiDiff;
 
             //NPC_ENCHANTED_ELEMENTAL
@@ -421,7 +421,7 @@ struct MANGOS_DLL_DECL boss_lady_vashjAI : public ScriptedAI
                 else
                     ++m_uiEnchantedElemental_Pos;
 
-                m_uiEnchantedElemental_Timer = 10000+rand()%5000;
+                m_uiEnchantedElemental_Timer = urand(10000, 15000);
             }else m_uiEnchantedElemental_Timer -= uiDiff;
 
             //NPC_TAINTED_ELEMENTAL
@@ -446,7 +446,7 @@ struct MANGOS_DLL_DECL boss_lady_vashjAI : public ScriptedAI
                     TEMPSUMMON_TIMED_OR_DEAD_DESPAWN, 45000);
 
                 //wowwiki says 50 seconds, bosskillers says 45
-                m_uiCoilfangElite_Timer = 45000+rand()%5000;
+                m_uiCoilfangElite_Timer = urand(45000, 50000);
             }else m_uiCoilfangElite_Timer -= uiDiff;
 
             //NPC_COILFANG_STRIDER
@@ -459,7 +459,7 @@ struct MANGOS_DLL_DECL boss_lady_vashjAI : public ScriptedAI
                     TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 5000);
 
                 //wowwiki says 60 seconds, bosskillers says 60-70
-                m_uiCoilfangStrider_Timer = 60000+rand()%10000;
+                m_uiCoilfangStrider_Timer = urand(60000, 70000);
             }else m_uiCoilfangStrider_Timer -= uiDiff;
 
             //m_uiCheck_Timer
@@ -543,12 +543,12 @@ struct MANGOS_DLL_DECL mob_tainted_elementalAI : public ScriptedAI
 
     void Reset()
     {
-        m_uiPoisonBolt_Timer = 5000+rand()%5000;
+        m_uiPoisonBolt_Timer = urand(5000, 10000);
     }
 
     void UpdateAI(const uint32 uiDiff)
     {
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         //m_uiPoisonBolt_Timer
@@ -559,7 +559,7 @@ struct MANGOS_DLL_DECL mob_tainted_elementalAI : public ScriptedAI
             if (pTarget && pTarget->IsWithinDistInMap(m_creature, 30.0f))
                 DoCast(pTarget, SPELL_POISON_BOLT);
 
-            m_uiPoisonBolt_Timer = 5000+rand()%5000;
+            m_uiPoisonBolt_Timer = urand(5000, 10000);
         }else m_uiPoisonBolt_Timer -= uiDiff;
     }
 };
@@ -589,7 +589,7 @@ struct MANGOS_DLL_DECL mob_toxic_sporebatAI : public ScriptedAI
     void UpdateAI(const uint32 uiDiff)
     {
         //Return since we have no target
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         //m_uiToxicSpore_Timer
@@ -599,7 +599,7 @@ struct MANGOS_DLL_DECL mob_toxic_sporebatAI : public ScriptedAI
             if (Unit* pTarget = SelectUnit(SELECT_TARGET_RANDOM, 0))
                 DoCast(pTarget, SPELL_TOXIC_SPORES);
 
-            m_uiToxicSpore_Timer = 20000+rand()%5000;
+            m_uiToxicSpore_Timer = urand(20000, 25000);
         }else m_uiToxicSpore_Timer -= uiDiff;
 
         //m_uiCheck_Timer

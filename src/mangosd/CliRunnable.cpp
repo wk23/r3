@@ -35,8 +35,6 @@
 #include "Player.h"
 #include "Chat.h"
 
-extern Database loginDatabase;
-
 void utf8print(const char* str)
 {
 #if PLATFORM == PLATFORM_WINDOWS

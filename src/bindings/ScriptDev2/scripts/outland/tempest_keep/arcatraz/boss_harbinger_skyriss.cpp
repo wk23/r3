@@ -27,7 +27,7 @@ boss_harbinger_skyriss_illusion
 EndContentData */
 
 #include "precompiled.h"
-#include "def_arcatraz.h"
+#include "arcatraz.h"
 
 #define SAY_INTRO               -1552000
 #define SAY_AGGRO               -1552001
@@ -79,8 +79,6 @@ struct MANGOS_DLL_DECL boss_harbinger_skyrissAI : public ScriptedAI
 
     void Reset()
     {
-        m_creature->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_UNK_8);
-
         IsImage33 = false;
         IsImage66 = false;
 
@@ -108,11 +106,6 @@ struct MANGOS_DLL_DECL boss_harbinger_skyrissAI : public ScriptedAI
         ScriptedAI::AttackStart(who);
     }
 
-    void Aggro(Unit *who)
-    {
-        m_creature->RemoveFlag(UNIT_FIELD_FLAGS,UNIT_FLAG_UNK_8);
-    }
-
     void JustDied(Unit* Killer)
     {
         DoScriptText(SAY_DEATH, m_creature);
@@ -127,11 +120,7 @@ struct MANGOS_DLL_DECL boss_harbinger_skyrissAI : public ScriptedAI
         if (victim->GetTypeId() != TYPEID_PLAYER)
             return;
 
-        switch(rand()%2)
-        {
-            case 0: DoScriptText(SAY_KILL_1, m_creature); break;
-            case 1: DoScriptText(SAY_KILL_2, m_creature); break;
-        }
+        DoScriptText(urand(0, 1) ? SAY_KILL_1 : SAY_KILL_2, m_creature);
     }
 
     void JustSummoned(Creature *summoned)
@@ -139,17 +128,14 @@ struct MANGOS_DLL_DECL boss_harbinger_skyrissAI : public ScriptedAI
         summoned->AI()->AttackStart(m_creature->getVictim());
     }
 
-    void DoSplit(uint32 val)
+    void DoSplit()
     {
         if (m_creature->IsNonMeleeSpellCasted(false))
             m_creature->InterruptNonMeleeSpells(false);
 
         DoScriptText(SAY_IMAGE, m_creature);
 
-        if (val == 66)
-            DoCast(m_creature, SPELL_66_ILLUSION);
-        else
-            DoCast(m_creature, SPELL_33_ILLUSION);
+        DoCast(m_creature, IsImage33 ? SPELL_33_ILLUSION : SPELL_66_ILLUSION);
     }
 
     void UpdateAI(const uint32 diff)
@@ -188,19 +174,19 @@ struct MANGOS_DLL_DECL boss_harbinger_skyrissAI : public ScriptedAI
             }else Intro_Timer -=diff;
         }
 
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         if (!IsImage66 && ((m_creature->GetHealth()*100) / m_creature->GetMaxHealth() <= 66))
         {
-            DoSplit(66);
             IsImage66 = true;
+            DoSplit();
         }
 
         if (!IsImage33 && ((m_creature->GetHealth()*100) / m_creature->GetMaxHealth() <= 33))
         {
-            DoSplit(33);
             IsImage33 = true;
+            DoSplit();
         }
 
         if (MindRend_Timer < diff)
@@ -218,11 +204,7 @@ struct MANGOS_DLL_DECL boss_harbinger_skyrissAI : public ScriptedAI
             if (m_creature->IsNonMeleeSpellCasted(false))
                 return;
 
-            switch(rand()%2)
-            {
-                case 0: DoScriptText(SAY_FEAR_1, m_creature); break;
-                case 1: DoScriptText(SAY_FEAR_2, m_creature); break;
-            }
+            DoScriptText(urand(0, 1) ? SAY_FEAR_1 : SAY_FEAR_2, m_creature);
 
             if (Unit* target = SelectUnit(SELECT_TARGET_RANDOM,1))
                 DoCast(target,SPELL_FEAR);
@@ -237,18 +219,14 @@ struct MANGOS_DLL_DECL boss_harbinger_skyrissAI : public ScriptedAI
             if (m_creature->IsNonMeleeSpellCasted(false))
                 return;
 
-            switch(rand()%2)
-            {
-                case 0: DoScriptText(SAY_MIND_1, m_creature); break;
-                case 1: DoScriptText(SAY_MIND_2, m_creature); break;
-            }
+            DoScriptText(urand(0, 1) ? SAY_MIND_1 : SAY_MIND_2, m_creature);
 
             if (Unit* target = SelectUnit(SELECT_TARGET_RANDOM,1))
                 DoCast(target, m_bIsHeroicMode ? H_SPELL_DOMINATION : SPELL_DOMINATION);
             else
                 DoCast(m_creature->getVictim(), m_bIsHeroicMode ? H_SPELL_DOMINATION : SPELL_DOMINATION);
 
-            Domination_Timer = 16000+rand()%16000;
+            Domination_Timer = urand(16000, 32000);
         }else Domination_Timer -=diff;
 
         if (m_bIsHeroicMode)
@@ -261,7 +239,7 @@ struct MANGOS_DLL_DECL boss_harbinger_skyrissAI : public ScriptedAI
                 if (Unit* target = SelectUnit(SELECT_TARGET_RANDOM,1))
                     DoCast(target,H_SPELL_MANA_BURN);
 
-                ManaBurn_Timer = 16000+rand()%16000;
+                ManaBurn_Timer = urand(16000, 32000);
             }else ManaBurn_Timer -=diff;
         }
 

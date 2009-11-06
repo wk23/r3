@@ -29,7 +29,7 @@ mobs_spectral_ghostly_citizen
 EndContentData */
 
 #include "precompiled.h"
-#include "def_stratholme.h"
+#include "stratholme.h"
 
 /*######
 ## go_gauntlet_gate (this is the _first_ of the gauntlet gates, two exist)
@@ -83,7 +83,7 @@ struct MANGOS_DLL_DECL mob_freed_soulAI : public ScriptedAI
 
     void Reset()
     {
-        switch (rand()%4)
+        switch(urand(0, 3))
         {
             case 0: DoScriptText(SAY_ZAPPED0, m_creature); break;
             case 1: DoScriptText(SAY_ZAPPED1, m_creature); break;
@@ -220,7 +220,7 @@ struct MANGOS_DLL_DECL mobs_spectral_ghostly_citizenAI : public ScriptedAI
             }else Die_Timer -= diff;
         }
 
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         DoMeleeAttackIfReady();

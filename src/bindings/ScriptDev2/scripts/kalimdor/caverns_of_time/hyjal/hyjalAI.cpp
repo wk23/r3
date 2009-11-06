@@ -239,7 +239,7 @@ void hyjalAI::JustSummoned(Creature* pSummoned)
 void hyjalAI::SummonNextWave()
 {
     // 1 in 4 chance we give a rally yell. Not sure if the chance is offilike.
-    if (rand()%4 == 0)
+    if (!urand(0, 3))
         DoTalk(RALLY);
 
     if (!m_pInstance)
@@ -337,7 +337,7 @@ void hyjalAI::DoTalk(YellType pYellType)
             //this would not be safe unless we knew these had two entries in m_aYell
             if (pYellType == ATTACKED || pYellType== RALLY)
             {
-                if (!bGetNext && rand()%2)
+                if (!bGetNext && urand(0, 1))
                 {
                     bGetNext = true;
                     continue;
@@ -460,7 +460,7 @@ void hyjalAI::UpdateAI(const uint32 uiDiff)
     else
         m_uiCheckTimer -= uiDiff;
 
-    if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+    if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
         return;
 
     for(uint8 i = 0; i < MAX_SPELL; ++i)

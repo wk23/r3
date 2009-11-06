@@ -22,7 +22,7 @@ SDCategory: Scarlet Monastery
 EndScriptData */
 
 #include "precompiled.h"
-#include "def_scarlet_monastery.h"
+#include "scarlet_monastery.h"
 
 enum
 {
@@ -78,7 +78,7 @@ struct MANGOS_DLL_DECL boss_interrogator_vishasAI : public ScriptedAI
 
     void UpdateAI(const uint32 diff)
     {
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         //If we are low on hp Do sayings
@@ -98,7 +98,7 @@ struct MANGOS_DLL_DECL boss_interrogator_vishasAI : public ScriptedAI
         if (ShadowWordPain_Timer < diff)
         {
             DoCast(m_creature->getVictim(),SPELL_SHADOWWORDPAIN);
-            ShadowWordPain_Timer = 5000 + rand()%10000;;
+            ShadowWordPain_Timer = urand(5000, 15000);
         }else ShadowWordPain_Timer -= diff;
 
         DoMeleeAttackIfReady();

@@ -38,6 +38,7 @@ enum
     QUEST_MISSING_DIPLO_PT11    = 1249,
     FACTION_ENEMY               = 168,
     SPELL_STEALTH               = 1785,
+    SPELL_CALL_FRIENDS          = 16457,                    //summons 1x friend
     NPC_SLIMS_FRIEND            = 4971,
     NPC_TAPOKE_SLIM_JAHN        = 4962
 };
@@ -50,7 +51,7 @@ struct MANGOS_DLL_DECL npc_tapoke_slim_jahnAI : public npc_escortAI
 
     void Reset()
     {
-        if (!IsBeingEscorted)
+        if (!HasEscortState(STATE_ESCORT_ESCORTING))
             m_bFriendSummoned = false;
     }
 
@@ -72,11 +73,11 @@ struct MANGOS_DLL_DECL npc_tapoke_slim_jahnAI : public npc_escortAI
     {
         Player* pPlayer = GetPlayerForEscort();
 
-        if (IsBeingEscorted && !m_bFriendSummoned && pPlayer)
+        if (HasEscortState(STATE_ESCORT_ESCORTING) && !m_bFriendSummoned && pPlayer)
         {
-            m_creature->SummonCreature(NPC_SLIMS_FRIEND, 0.0f, 0.0f, 0.0f, 3.10f, TEMPSUMMON_CORPSE_TIMED_DESPAWN, 30000);
-            m_creature->SummonCreature(NPC_SLIMS_FRIEND, 0.0f, 0.0f, 0.0f, 2.35f, TEMPSUMMON_CORPSE_TIMED_DESPAWN, 30000);
-            m_creature->SummonCreature(NPC_SLIMS_FRIEND, 0.0f, 0.0f, 0.0f, 2.02f, TEMPSUMMON_CORPSE_TIMED_DESPAWN, 30000);
+            for(uint8 i = 0; i < 3; ++i)
+                m_creature->CastSpell(m_creature, SPELL_CALL_FRIENDS, true);
+
             m_bFriendSummoned = true;
         }
     }

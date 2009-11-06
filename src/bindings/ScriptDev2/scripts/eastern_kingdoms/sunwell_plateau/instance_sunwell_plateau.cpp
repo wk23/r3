@@ -10,7 +10,7 @@ SDCategory: Sunwell_Plateau
 EndScriptData */
 
 #include "precompiled.h"
-#include "def_sunwell_plateau.h"
+#include "sunwell_plateau.h"
 
 /* Sunwell Plateau:
 0 - Kalecgos and Sathrovarr
@@ -224,12 +224,12 @@ struct MANGOS_DLL_DECL instance_sunwell_plateau : public ScriptedInstance
                 m_auiEncounter[1] = uiData;
                 break;
             case TYPE_FELMYST:
-                m_auiEncounter[2] = uiData; 
+                m_auiEncounter[2] = uiData;
                 if (uiData == DONE)
                     DoUseDoorOrButton(m_uiDoorFireBarrierGUID);
                 break;
-            case TYPE_EREDAR_TWINS:  
-                m_auiEncounter[3] = uiData; 
+            case TYPE_EREDAR_TWINS:
+                m_auiEncounter[3] = uiData;
                 if (uiData == DONE)
                 {
                     DoUseDoorOrButton(m_uiDoorTheSecondGateGUID);
@@ -281,7 +281,7 @@ struct MANGOS_DLL_DECL instance_sunwell_plateau : public ScriptedInstance
             if (pKalecgos->isAlive())
             {
                 debug_log("SD2: Adding %s in Kalecgos' threatlist", pPlayer->GetName());
-                pKalecgos->AddThreat(pPlayer, 0.0f);
+                pKalecgos->AddThreat(pPlayer);
             }
         }
 
@@ -290,7 +290,7 @@ struct MANGOS_DLL_DECL instance_sunwell_plateau : public ScriptedInstance
         {
             if (pSath->isAlive())
             {
-                if (HostilReference* pRef = pSath->getThreatManager().getOnlineContainer().getReferenceByTarget(pPlayer))
+                if (HostileReference* pRef = pSath->getThreatManager().getOnlineContainer().getReferenceByTarget(pPlayer))
                 {
                     pRef->removeReference();
                     debug_log("SD2: Deleting %s from Sathrovarr's threatlist", pPlayer->GetName());

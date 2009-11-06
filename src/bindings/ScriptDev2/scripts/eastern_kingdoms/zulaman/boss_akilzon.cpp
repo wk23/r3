@@ -22,7 +22,7 @@ SDCategory: Zul'Aman
 EndScriptData */
 
 #include "precompiled.h"
-#include "def_zulaman.h"
+#include "zulaman.h"
 
 enum
 {
@@ -77,9 +77,9 @@ struct MANGOS_DLL_DECL boss_akilzonAI : public ScriptedAI
 
     void Reset()
     {
-        m_uiStaticDisruptTimer = 7000 + rand()%7000;
-        m_uiCallLightTimer = 15000 + rand()%10000;
-        m_uiGustOfWindTimer = 20000 + rand()%10000;
+        m_uiStaticDisruptTimer = urand(7000, 14000);
+        m_uiCallLightTimer = urand(15000, 25000);
+        m_uiGustOfWindTimer = urand(20000, 30000);
         m_uiStormTimer = 50000;
         m_uiSummonEagleTimer = 65000;
         m_uiBerserkTimer = MINUTE*8*IN_MILISECONDS;
@@ -94,11 +94,7 @@ struct MANGOS_DLL_DECL boss_akilzonAI : public ScriptedAI
 
     void KilledUnit(Unit* pVictim)
     {
-        switch(rand()%2)
-        {
-            case 0: DoScriptText(SAY_SLAY1, m_creature); break;
-            case 1: DoScriptText(SAY_SLAY2, m_creature); break;
-        }
+        DoScriptText(urand(0, 1) ? SAY_SLAY1 : SAY_SLAY2, m_creature);
     }
 
     void JustDied(Unit* pKiller)
@@ -130,13 +126,13 @@ struct MANGOS_DLL_DECL boss_akilzonAI : public ScriptedAI
 
     void UpdateAI(const uint32 uiDiff)
     {
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         if (m_uiCallLightTimer < uiDiff)
         {
             m_creature->CastSpell(m_creature->getVictim(), SPELL_CALL_LIGHTNING, false);
-            m_uiCallLightTimer = 15000 + rand()%10000;
+            m_uiCallLightTimer = urand(15000, 25000);
         }else m_uiCallLightTimer -= uiDiff;
 
         if (m_uiStaticDisruptTimer < uiDiff)
@@ -144,7 +140,7 @@ struct MANGOS_DLL_DECL boss_akilzonAI : public ScriptedAI
             if (Unit* pTarget = SelectUnit(SELECT_TARGET_RANDOM, 1))
                 m_creature->CastSpell(pTarget, SPELL_STATIC_DISRUPTION, false);
 
-            m_uiStaticDisruptTimer = 7000 + rand()%7000;
+            m_uiStaticDisruptTimer = urand(7000, 14000);
         }else m_uiStaticDisruptTimer -= uiDiff;
 
         if (m_uiStormTimer < uiDiff)
@@ -166,7 +162,7 @@ struct MANGOS_DLL_DECL boss_akilzonAI : public ScriptedAI
             if (Unit* pTarget = SelectUnit(SELECT_TARGET_RANDOM, 1))
                 m_creature->CastSpell(pTarget, SPELL_GUST_OF_WIND, false);
 
-            m_uiGustOfWindTimer = 20000 + rand()%10000;
+            m_uiGustOfWindTimer = urand(20000, 30000);
         }else m_uiGustOfWindTimer -= uiDiff;
 
         if (m_uiSummonEagleTimer < uiDiff)
@@ -215,7 +211,7 @@ struct MANGOS_DLL_DECL mob_soaring_eagleAI : public ScriptedAI
 
     void Reset()
     {
-        m_uiEagleSwoopTimer = 2000 + rand()%4000;
+        m_uiEagleSwoopTimer = urand(2000, 6000);
         m_uiReturnTimer = 800;
         m_bCanMoveToRandom = false;
         m_bCanCast = true;
@@ -229,7 +225,7 @@ struct MANGOS_DLL_DECL mob_soaring_eagleAI : public ScriptedAI
 
         if (m_creature->Attack(pWho, false))
         {
-            m_creature->AddThreat(pWho, 0.0f);
+            m_creature->AddThreat(pWho);
             m_creature->SetInCombatWith(pWho);
             pWho->SetInCombatWith(m_creature);
         }
@@ -264,7 +260,7 @@ struct MANGOS_DLL_DECL mob_soaring_eagleAI : public ScriptedAI
 
     void UpdateAI(const uint32 uiDiff)
     {
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         if (m_bCanMoveToRandom)
@@ -289,7 +285,7 @@ struct MANGOS_DLL_DECL mob_soaring_eagleAI : public ScriptedAI
                 m_bCanCast = false;
             }
 
-            m_uiEagleSwoopTimer = 4000 + rand()%2000;
+            m_uiEagleSwoopTimer = urand(4000, 6000);
         }else m_uiEagleSwoopTimer -= uiDiff;
     }
 };

@@ -33,15 +33,21 @@ libmangosdatabase_a_SOURCES = \
 	Database.cpp \
 	Database.h \
 	DatabaseEnv.h \
-	MySQLPreparedStatement.cpp \
-	MySQLPreparedStatement.h \
-	PreparedStatement.h \
-	DBCEnums.h \
 	DatabaseImpl.h \
+	DatabaseMysql.cpp \
+	DatabasePostgre.cpp \
+	DatabaseMysql.h \
+	DatabasePostgre.h \
+	DBCEnums.h \
 	Field.cpp \
 	Field.h \
-	QueryResult.cpp \
+	MySQLDelayThread.h \
+	PGSQLDelayThread.h \
 	QueryResult.h \
+	QueryResultMysql.cpp \
+	QueryResultMysql.h \
+	QueryResultPostgre.cpp \
+	QueryResultPostgre.h \
 	SQLStorage.cpp \
 	SQLStorage.h \
 	SQLStorageImpl.h \

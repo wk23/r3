@@ -95,11 +95,11 @@ struct MANGOS_DLL_DECL boss_warchief_kargath_bladefistAI : public ScriptedAI
 
     void Aggro(Unit *who)
     {
-        switch (rand()%3)
+        switch(urand(0, 2))
         {
-            case 0:DoScriptText(SAY_AGGRO1, m_creature);break;
-            case 1:DoScriptText(SAY_AGGRO2, m_creature);break;
-            case 2:DoScriptText(SAY_AGGRO3, m_creature);break;
+            case 0: DoScriptText(SAY_AGGRO1, m_creature); break;
+            case 1: DoScriptText(SAY_AGGRO2, m_creature); break;
+            case 2: DoScriptText(SAY_AGGRO3, m_creature); break;
         }
     }
 
@@ -122,13 +122,7 @@ struct MANGOS_DLL_DECL boss_warchief_kargath_bladefistAI : public ScriptedAI
     void KilledUnit(Unit *victim)
     {
         if (victim->GetTypeId() == TYPEID_PLAYER)
-        {
-            switch(rand()%2)
-            {
-                case 0: DoScriptText(SAY_SLAY1, m_creature); break;
-                case 1: DoScriptText(SAY_SLAY2, m_creature); break;
-            }
-        }
+            DoScriptText(urand(0, 1) ? SAY_SLAY1 : SAY_SLAY2, m_creature);
     }
 
     void JustDied(Unit* Killer)
@@ -188,11 +182,11 @@ struct MANGOS_DLL_DECL boss_warchief_kargath_bladefistAI : public ScriptedAI
 
     void UpdateAI(const uint32 diff)
     {
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         if (Assassins_Timer)
-            if (Assassins_Timer < diff)
+            if (Assassins_Timer <= diff)
             {
                 SpawnAssassin();
                 Assassins_Timer = 0;
@@ -201,7 +195,7 @@ struct MANGOS_DLL_DECL boss_warchief_kargath_bladefistAI : public ScriptedAI
         if (InBlade)
         {
             if (Wait_Timer)
-                if (Wait_Timer < diff)
+                if (Wait_Timer <= diff)
                 {
                     if (target_num <= 0)
                     {
@@ -209,7 +203,6 @@ struct MANGOS_DLL_DECL boss_warchief_kargath_bladefistAI : public ScriptedAI
                         InBlade = false;
                         m_creature->SetSpeed(MOVE_RUN,2);
                         (*m_creature).GetMotionMaster()->MoveChase(m_creature->getVictim());
-                        Blade_Dance_Timer = 30000;
                         Wait_Timer = 0;
                         if (m_bIsHeroicMode)
                             Charge_timer = 5000;
@@ -229,19 +222,18 @@ struct MANGOS_DLL_DECL boss_warchief_kargath_bladefistAI : public ScriptedAI
         }
         else
         {
-            if (Blade_Dance_Timer)
-                if (Blade_Dance_Timer < diff)
-                {
-                    target_num = TARGET_NUM;
-                    Wait_Timer = 1;
-                    InBlade = true;
-                    Blade_Dance_Timer = 0;
-                    m_creature->SetSpeed(MOVE_RUN,4);
-                    return;
-                }else Blade_Dance_Timer -= diff;
+            if (Blade_Dance_Timer < diff)
+            {
+                target_num = TARGET_NUM;
+                Wait_Timer = 1;
+                InBlade = true;
+                Blade_Dance_Timer = 30000;
+                m_creature->SetSpeed(MOVE_RUN,4);
+                return;
+            }else Blade_Dance_Timer -= diff;
 
             if (Charge_timer)
-                if (Charge_timer < diff)
+                if (Charge_timer <= diff)
                 {
                     DoCast(SelectUnit(SELECT_TARGET_RANDOM,0),H_SPELL_CHARGE);
                     Charge_timer = 0;
@@ -253,7 +245,7 @@ struct MANGOS_DLL_DECL boss_warchief_kargath_bladefistAI : public ScriptedAI
 
                 for(int i = 0; i < summoned; ++i)
                 {
-                    switch(rand()%3)
+                    switch(urand(0, 2))
                     {
                         case 0: m_creature->SummonCreature(MOB_HEARTHEN_GUARD,AddsEntrance[0],AddsEntrance[1], AddsEntrance[2], 0,TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT,30000); break;
                         case 1: m_creature->SummonCreature(MOB_SHARPSHOOTER_GUARD,AddsEntrance[0],AddsEntrance[1], AddsEntrance[2], 0,TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT,30000); break;
@@ -261,13 +253,12 @@ struct MANGOS_DLL_DECL boss_warchief_kargath_bladefistAI : public ScriptedAI
                     }
                 }
 
-                if (rand()%100 < 20)
+                if (!urand(0, 4))
                     ++summoned;
 
-                Summon_Assistant_Timer = 25000 + (rand()%10000) ;
+                Summon_Assistant_Timer = urand(25000, 35000);
             }
-            else
-                Summon_Assistant_Timer -= diff;
+            else Summon_Assistant_Timer -= diff;
 
             DoMeleeAttackIfReady();
         }

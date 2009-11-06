@@ -22,7 +22,7 @@ SDCategory: Tempest Keep, The Mechanar
 EndScriptData */
 
 #include "precompiled.h"
-#include "def_mechanar.h"
+#include "mechanar.h"
 
 #define SAY_AGGRO                       -1554013
 #define SAY_SUMMON                      -1554014
@@ -60,10 +60,10 @@ struct MANGOS_DLL_DECL boss_nethermancer_sepethreaAI : public ScriptedAI
 
     void Reset()
     {
-        frost_attack_Timer = 7000 + rand()%3000;
-        arcane_blast_Timer = 12000 + rand()%6000;
-        dragons_breath_Timer = 18000 + rand()%4000;
-        knockback_Timer = 22000 + rand()%6000;
+        frost_attack_Timer = urand(7000, 10000);
+        arcane_blast_Timer = urand(12000, 18000);
+        dragons_breath_Timer = urand(18000, 22000);
+        knockback_Timer = urand(22000, 28000);
         solarburn_Timer = 30000;
     }
 
@@ -83,11 +83,7 @@ struct MANGOS_DLL_DECL boss_nethermancer_sepethreaAI : public ScriptedAI
 
     void KilledUnit(Unit* victim)
     {
-        switch(rand()%2)
-        {
-            case 0: DoScriptText(SAY_SLAY1, m_creature); break;
-            case 1: DoScriptText(SAY_SLAY2, m_creature); break;
-        }
+        DoScriptText(urand(0, 1) ? SAY_SLAY1 : SAY_SLAY2, m_creature);
     }
 
     void JustDied(Unit* Killer)
@@ -101,14 +97,14 @@ struct MANGOS_DLL_DECL boss_nethermancer_sepethreaAI : public ScriptedAI
     void UpdateAI(const uint32 diff)
     {
         //Return since we have no target
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         //Frost Attack
         if (frost_attack_Timer < diff)
         {
             DoCast(m_creature->getVictim(),SPELL_FROST_ATTACK);
-            frost_attack_Timer = 7000 + rand()%3000;
+            frost_attack_Timer = urand(7000, 10000);
         }else frost_attack_Timer -= diff;
 
         //Arcane Blast
@@ -123,23 +119,17 @@ struct MANGOS_DLL_DECL boss_nethermancer_sepethreaAI : public ScriptedAI
         {
             DoCast(m_creature->getVictim(),SPELL_DRAGONS_BREATH);
 
-            if (rand()%2)
-            {
-                switch(rand()%2)
-                {
-                    case 0: DoScriptText(SAY_DRAGONS_BREATH_1, m_creature); break;
-                    case 1: DoScriptText(SAY_DRAGONS_BREATH_2, m_creature); break;
-                }
-            }
+            if (urand(0, 1))
+                DoScriptText(urand(0, 1) ? SAY_DRAGONS_BREATH_1 : SAY_DRAGONS_BREATH_2, m_creature);
 
-            dragons_breath_Timer = 12000 + rand()%10000;
+            dragons_breath_Timer = urand(12000, 22000);
         }else dragons_breath_Timer -= diff;
 
         //Check for Knockback
         if (knockback_Timer < diff)
         {
             DoCast(m_creature->getVictim(),SPELL_KNOCKBACK);
-            knockback_Timer = 15000 + rand()%10000;
+            knockback_Timer = urand(15000, 25000);
         }else knockback_Timer -= diff;
 
         //Check for Solarburn
@@ -192,7 +182,7 @@ struct MANGOS_DLL_DECL mob_ragin_flamesAI : public ScriptedAI
 
     void UpdateAI(const uint32 diff)
     {
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         if (!onlyonce)

@@ -28,7 +28,7 @@ npc_saat
 EndContentData */
 
 #include "precompiled.h"
-#include "def_dark_portal.h"
+#include "dark_portal.h"
 
 #define SAY_ENTER               -1269020                    //where does this belong?
 #define SAY_INTRO               -1269021
@@ -220,7 +220,7 @@ struct MANGOS_DLL_DECL npc_medivh_bmAI : public ScriptedAI
             }else Check_Timer -= diff;
         }
 
-        //if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        //if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             //return;
 
         //DoMeleeAttackIfReady();
@@ -301,7 +301,7 @@ struct MANGOS_DLL_DECL npc_time_riftAI : public ScriptedAI
         if (Summon)
         {
             if (Unit *temp = Unit::GetUnit(*m_creature, m_pInstance->GetData64(DATA_MEDIVH)))
-                Summon->AddThreat(temp,0.0f);
+                Summon->AddThreat(temp);
         }
     }
 

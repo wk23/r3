@@ -22,7 +22,7 @@ SDCategory: Coilfang Resevoir, Serpent Shrine Cavern
 EndScriptData */
 
 #include "precompiled.h"
-#include "def_serpent_shrine.h"
+#include "serpent_shrine.h"
 
 enum
 {
@@ -172,7 +172,7 @@ struct MANGOS_DLL_DECL boss_fathomlord_karathressAI : public ScriptedAI
 
     void KilledUnit(Unit* pVictim)
     {
-        switch(rand()%3)
+        switch(urand(0, 2))
         {
             case 0: DoScriptText(SAY_SLAY1, m_creature); break;
             case 1: DoScriptText(SAY_SLAY2, m_creature); break;
@@ -194,7 +194,7 @@ struct MANGOS_DLL_DECL boss_fathomlord_karathressAI : public ScriptedAI
     void UpdateAI(const uint32 uiDiff)
     {
         //Return since we have no target
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
         {
             //check if the event is started
             if (m_pInstance && m_pInstance->GetData(TYPE_KARATHRESS_EVENT) == IN_PROGRESS)
@@ -338,7 +338,7 @@ struct MANGOS_DLL_DECL boss_fathomguard_sharkkisAI : public Advisor_Base_AI
 
         if (m_creature->Attack(pWho, false))
         {
-            m_creature->AddThreat(pWho, 0.0f);
+            m_creature->AddThreat(pWho);
             m_creature->SetInCombatWith(pWho);
             pWho->SetInCombatWith(m_creature);
 
@@ -365,7 +365,7 @@ struct MANGOS_DLL_DECL boss_fathomguard_sharkkisAI : public Advisor_Base_AI
     void UpdateAI(const uint32 uiDiff)
     {
         //Return since we have no target
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
         {
             //check if the event is started
             if (m_pInstance && m_pInstance->GetData(TYPE_KARATHRESS_EVENT) == IN_PROGRESS)
@@ -445,7 +445,7 @@ struct MANGOS_DLL_DECL boss_fathomguard_tidalvessAI : public Advisor_Base_AI
     void UpdateAI(const uint32 uiDiff)
     {
         //Return since we have no target
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
         {
             //check if the event is started
             if (m_pInstance && m_pInstance->GetData(TYPE_KARATHRESS_EVENT) == IN_PROGRESS)
@@ -467,7 +467,7 @@ struct MANGOS_DLL_DECL boss_fathomguard_tidalvessAI : public Advisor_Base_AI
         if (m_uiFrostShock_Timer < uiDiff)
         {
             DoCast(m_creature->getVictim(), SPELL_FROST_SHOCK);
-            m_uiFrostShock_Timer = 25000+rand()%5000;
+            m_uiFrostShock_Timer = urand(25000, 30000);
         }else m_uiFrostShock_Timer -= uiDiff;
 
         DoMeleeAttackIfReady();
@@ -491,14 +491,14 @@ struct MANGOS_DLL_DECL boss_fathomguard_caribdisAI : public Advisor_Base_AI
     void Reset()
     {
         m_uiWaterBoltVolley_Timer = 35000;
-        m_uiTidalSurge_Timer      = 15000+rand()%5000;
+        m_uiTidalSurge_Timer      = urand(15000, 20000);
         m_uiHeal_Timer            = 55000;
     }
 
     void UpdateAI(const uint32 uiDiff)
     {
         //Return since we have no target
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
         {
             //check if the event is started
             if (m_pInstance && m_pInstance->GetData(TYPE_KARATHRESS_EVENT) == IN_PROGRESS)
@@ -528,7 +528,7 @@ struct MANGOS_DLL_DECL boss_fathomguard_caribdisAI : public Advisor_Base_AI
         {
             // the victim has to cast it on himself because in the spell.dbc the EffectImplicitTargetA1 is 1 (TARGET_SELF)
             m_creature->getVictim()->CastSpell(m_creature->getVictim(), SPELL_TIDAL_SURGE, true);
-            m_uiTidalSurge_Timer = 15000+rand()%5000;
+            m_uiTidalSurge_Timer = urand(15000, 20000);
         }else m_uiTidalSurge_Timer -= uiDiff;
 
         //m_uiHeal_Timer
@@ -539,7 +539,7 @@ struct MANGOS_DLL_DECL boss_fathomguard_caribdisAI : public Advisor_Base_AI
 
             if (m_pInstance)
             {
-                switch(rand()%4)
+                switch(urand(0, 3))
                 {
                     case 0: pUnit = Unit::GetUnit((*m_creature), m_pInstance->GetData64(DATA_KARATHRESS)); break;
                     case 1: pUnit = Unit::GetUnit((*m_creature), m_pInstance->GetData64(DATA_SHARKKIS)); break;

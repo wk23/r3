@@ -54,9 +54,9 @@ struct MANGOS_DLL_DECL boss_sarturaAI : public ScriptedAI
     void Reset()
     {
         WhirlWind_Timer = 30000;
-        WhirlWindRandom_Timer = 3000 + rand()%4000;
+        WhirlWindRandom_Timer = urand(3000, 7000);
         WhirlWindEnd_Timer = 15000;
-        AggroReset_Timer = 45000 + rand()%10000;
+        AggroReset_Timer = urand(45000, 55000);
         AggroResetEnd_Timer = 5000;
         EnrageHard_Timer = 10*60000;
 
@@ -85,7 +85,7 @@ struct MANGOS_DLL_DECL boss_sarturaAI : public ScriptedAI
 
     void UpdateAI(const uint32 diff)
     {
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         if (WhirlWind)
@@ -96,17 +96,17 @@ struct MANGOS_DLL_DECL boss_sarturaAI : public ScriptedAI
                 Unit* target = NULL;
                 target = SelectUnit(SELECT_TARGET_RANDOM,1);
                 if (target)
-                m_creature->AddThreat(target, 1.0f);
+                m_creature->AddThreat(target);
                 m_creature->TauntApply(target);
                 AttackStart(target);
 
-                WhirlWindRandom_Timer = 3000 + rand()%4000;
+                WhirlWindRandom_Timer = urand(3000, 7000);
             }else WhirlWindRandom_Timer -= diff;
 
             if (WhirlWindEnd_Timer < diff)
             {
                 WhirlWind = false;
-                WhirlWind_Timer = 25000 + rand()%15000;
+                WhirlWind_Timer = urand(25000, 40000);
             }else WhirlWindEnd_Timer -= diff;
         }
 
@@ -125,12 +125,12 @@ struct MANGOS_DLL_DECL boss_sarturaAI : public ScriptedAI
                 Unit* target = NULL;
                 target = SelectUnit(SELECT_TARGET_RANDOM,1);
                 if (target)
-                m_creature->AddThreat(target, 1.0f);
+                m_creature->AddThreat(target);
                 m_creature->TauntApply(target);
                 AttackStart(target);
 
                     AggroReset = true;
-                    AggroReset_Timer = 2000 + rand()%3000;
+                    AggroReset_Timer = urand(2000, 5000);
             }else AggroReset_Timer -= diff;
 
             if (AggroReset)
@@ -139,7 +139,7 @@ struct MANGOS_DLL_DECL boss_sarturaAI : public ScriptedAI
                 {
                     AggroReset = false;
                     AggroResetEnd_Timer = 5000;
-                    AggroReset_Timer = 35000 + rand()%10000;
+                    AggroReset_Timer = urand(35000, 45000);
                 } else AggroResetEnd_Timer -= diff;
             }
 
@@ -185,9 +185,9 @@ struct MANGOS_DLL_DECL mob_sartura_royal_guardAI : public ScriptedAI
     void Reset()
     {
         WhirlWind_Timer = 30000;
-        WhirlWindRandom_Timer = 3000 + rand()%4000;
+        WhirlWindRandom_Timer = urand(3000, 7000);
         WhirlWindEnd_Timer = 15000;
-        AggroReset_Timer = 45000 + rand()%10000;
+        AggroReset_Timer = urand(45000, 55000);
         AggroResetEnd_Timer = 5000;
         KnockBack_Timer = 10000;
 
@@ -198,14 +198,14 @@ struct MANGOS_DLL_DECL mob_sartura_royal_guardAI : public ScriptedAI
 
     void UpdateAI(const uint32 diff)
     {
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         if (!WhirlWind && WhirlWind_Timer < diff)
         {
             DoCast(m_creature, SPELL_WHIRLWINDADD);
             WhirlWind = true;
-            WhirlWind_Timer = 25000 + rand()%15000;
+            WhirlWind_Timer = urand(25000, 40000);
             WhirlWindEnd_Timer = 15000;
         }else WhirlWind_Timer -= diff;
 
@@ -217,11 +217,11 @@ struct MANGOS_DLL_DECL mob_sartura_royal_guardAI : public ScriptedAI
                 Unit* target = NULL;
                 target = SelectUnit(SELECT_TARGET_RANDOM,1);
                 if (target)
-                m_creature->AddThreat(target, 1.0f);
+                m_creature->AddThreat(target);
                 m_creature->TauntApply(target);
                 AttackStart(target);
 
-                WhirlWindRandom_Timer = 3000 + rand()%4000;
+                WhirlWindRandom_Timer = urand(3000, 7000);
             }else WhirlWindRandom_Timer -= diff;
 
             if (WhirlWindEnd_Timer < diff)
@@ -238,18 +238,18 @@ struct MANGOS_DLL_DECL mob_sartura_royal_guardAI : public ScriptedAI
                 Unit* target = NULL;
                 target = SelectUnit(SELECT_TARGET_RANDOM,1);
                 if (target)
-                m_creature->AddThreat(target, 1.0f);
+                m_creature->AddThreat(target);
                 m_creature->TauntApply(target);
                 AttackStart(target);
 
                 AggroReset = true;
-                AggroReset_Timer = 2000 + rand()%3000;
+                AggroReset_Timer = urand(2000, 5000);
             }else AggroReset_Timer -= diff;
 
             if (KnockBack_Timer < diff)
             {
                 DoCast(m_creature, SPELL_WHIRLWINDADD);
-                KnockBack_Timer = 10000 + rand()%10000;
+                KnockBack_Timer = urand(10000, 20000);
             }else KnockBack_Timer -= diff;
         }
 
@@ -259,7 +259,7 @@ struct MANGOS_DLL_DECL mob_sartura_royal_guardAI : public ScriptedAI
             {
                 AggroReset = false;
                 AggroResetEnd_Timer = 5000;
-                AggroReset_Timer = 30000 + rand()%10000;
+                AggroReset_Timer = urand(30000, 40000);
             } else AggroResetEnd_Timer -= diff;
         }
 

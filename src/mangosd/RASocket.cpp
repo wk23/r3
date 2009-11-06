@@ -29,8 +29,6 @@
 #include "Util.h"
 #include "AccountMgr.h"
 
-extern Database loginDatabase;
-
 /// \todo Make this thread safe if in the future 2 admins should be able to log at the same time.
 SOCKET r;
 
@@ -244,7 +242,7 @@ void RASocket::zprint( const char * szText )
 
     #ifdef RA_CRYPT
 
-    char *megabuffer=strdup(szText);
+    char *megabuffer = mangos_strdup(szText);
     unsigned int sz=strlen(megabuffer);
     Encrypt(megabuffer,sz);
     send(r,megabuffer,sz,0);

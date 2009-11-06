@@ -51,22 +51,22 @@ struct MANGOS_DLL_DECL boss_fankrissAI : public ScriptedAI
 
     void Reset()
     {
-        MortalWound_Timer = 10000 + rand()%5000;
-        SpawnHatchlings_Timer = 6000 + rand()%6000;
-        SpawnSpawns_Timer = 15000 + rand()%30000;
+        MortalWound_Timer = urand(10000, 15000);
+        SpawnHatchlings_Timer = urand(6000, 12000);
+        SpawnSpawns_Timer = urand(15000, 45000);
     }
 
     void SummonSpawn(Unit* victim)
     {
         Rand = 10 + (rand()%10);
-        switch (rand()%2)
+        switch(urand(0, 1))
         {
             case 0: RandX = 0 - Rand; break;
             case 1: RandX = 0 + Rand; break;
         }
         Rand = 0;
         Rand =  10 + (rand()%10);
-        switch (rand()%2)
+        switch(urand(0, 1))
         {
             case 0: RandY = 0 - Rand; break;
             case 1: RandY = 0 + Rand; break;
@@ -80,20 +80,20 @@ struct MANGOS_DLL_DECL boss_fankrissAI : public ScriptedAI
     void UpdateAI(const uint32 diff)
     {
         //Return since we have no target
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         //MortalWound_Timer
         if (MortalWound_Timer < diff)
         {
             DoCast(m_creature->getVictim(),SPELL_MORTAL_WOUND);
-            MortalWound_Timer = 10000 + rand()%10000;
+            MortalWound_Timer = urand(10000, 20000);
         }else MortalWound_Timer -= diff;
 
         //Summon 1-3 Spawns of Fankriss at random time.
         if (SpawnSpawns_Timer < diff)
         {
-            switch(rand()%3)
+            switch(urand(0, 2))
             {
                 case 0:
                     SummonSpawn(SelectUnit(SELECT_TARGET_RANDOM,0));
@@ -108,7 +108,7 @@ struct MANGOS_DLL_DECL boss_fankrissAI : public ScriptedAI
                     SummonSpawn(SelectUnit(SELECT_TARGET_RANDOM,0));
                     break;
             }
-            SpawnSpawns_Timer = 30000 + rand()%30000;
+            SpawnSpawns_Timer = urand(30000, 60000);
         }else SpawnSpawns_Timer -= diff;
 
         // Teleporting Random Target to one of the three tunnels and spawn 4 hatchlings near the gamer.
@@ -126,7 +126,7 @@ struct MANGOS_DLL_DECL boss_fankrissAI : public ScriptedAI
                     if (m_creature->getThreatManager().getThreat(target))
                         m_creature->getThreatManager().modifyThreatPercent(target, -100);
 
-                    switch(rand()%3)
+                    switch(urand(0, 2))
                     {
                         case 0:
                             DoTeleportPlayer(target, -8106.0142,1289.2900,-74.419533,5.112);
@@ -175,7 +175,7 @@ struct MANGOS_DLL_DECL boss_fankrissAI : public ScriptedAI
                             break;
                     }
                 }
-                SpawnHatchlings_Timer = 45000 + rand()%15000;
+                SpawnHatchlings_Timer = urand(45000, 60000);
             }else SpawnHatchlings_Timer -= diff;
         }
 

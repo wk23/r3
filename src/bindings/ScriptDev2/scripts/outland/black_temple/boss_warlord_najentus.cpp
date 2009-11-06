@@ -22,7 +22,7 @@ SDCategory: Black Temple
 EndScriptData */
 
 #include "precompiled.h"
-#include "def_black_temple.h"
+#include "black_temple.h"
 
 enum
 {
@@ -72,7 +72,7 @@ struct MANGOS_DLL_DECL boss_najentusAI : public ScriptedAI
 
         m_uiNeedleSpineTimer = 10000;
         m_uiEnrageTimer = MINUTE*8*IN_MILISECONDS;
-        m_uiSpecialYellTimer = 45000 + (rand()%76)*1000;
+        m_uiSpecialYellTimer = urand(45000, 120000);
         m_uiTidalShieldTimer = 60000;
         m_uiImpalingSpineTimer = 20000;
     }
@@ -85,11 +85,7 @@ struct MANGOS_DLL_DECL boss_najentusAI : public ScriptedAI
 
     void KilledUnit(Unit *victim)
     {
-        switch(rand()%2)
-        {
-            case 0: DoScriptText(SAY_SLAY1, m_creature); break;
-            case 1: DoScriptText(SAY_SLAY2, m_creature); break;
-        }
+        DoScriptText(urand(0, 1) ? SAY_SLAY1 : SAY_SLAY2, m_creature);
     }
 
     void JustDied(Unit *victim)
@@ -127,7 +123,7 @@ struct MANGOS_DLL_DECL boss_najentusAI : public ScriptedAI
 
     void UpdateAI(const uint32 diff)
     {
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         if (m_uiEnrageTimer < diff)
@@ -167,12 +163,8 @@ struct MANGOS_DLL_DECL boss_najentusAI : public ScriptedAI
 
         if (m_uiSpecialYellTimer < diff)
         {
-            switch(rand()%2)
-            {
-                case 0: DoScriptText(SAY_SPECIAL1, m_creature); break;
-                case 1: DoScriptText(SAY_SPECIAL2, m_creature); break;
-            }
-            m_uiSpecialYellTimer = 25000 + (rand()%76)*1000;
+            DoScriptText(urand(0, 1) ? SAY_SPECIAL1 : SAY_SPECIAL2, m_creature);
+            m_uiSpecialYellTimer = urand(25000, 100000);
         }else m_uiSpecialYellTimer -= diff;
 
         if (m_uiImpalingSpineTimer < diff)
@@ -187,11 +179,7 @@ struct MANGOS_DLL_DECL boss_najentusAI : public ScriptedAI
                 DoCast(target, SPELL_IMPALING_SPINE);
                 m_uiImpalingSpineTimer = 20000;
 
-                switch(rand()%2)
-                {
-                    case 0: DoScriptText(SAY_NEEDLE1, m_creature); break;
-                    case 1: DoScriptText(SAY_NEEDLE2, m_creature); break;
-                }
+                DoScriptText(urand(0, 1) ? SAY_NEEDLE1 : SAY_NEEDLE2, m_creature);
             }
         }else m_uiImpalingSpineTimer -= diff;
 

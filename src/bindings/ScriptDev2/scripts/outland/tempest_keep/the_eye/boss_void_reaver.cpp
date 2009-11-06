@@ -22,7 +22,7 @@ SDCategory: Tempest Keep, The Eye
 EndScriptData */
 
 #include "precompiled.h"
-#include "def_the_eye.h"
+#include "the_eye.h"
 
 #define SAY_AGGRO                   -1550000
 #define SAY_SLAY1                   -1550001
@@ -68,7 +68,7 @@ struct MANGOS_DLL_DECL boss_void_reaverAI : public ScriptedAI
 
     void KilledUnit(Unit *victim)
     {
-        switch(rand()%3)
+        switch(urand(0, 2))
         {
             case 0: DoScriptText(SAY_SLAY1, m_creature); break;
             case 1: DoScriptText(SAY_SLAY2, m_creature); break;
@@ -95,19 +95,14 @@ struct MANGOS_DLL_DECL boss_void_reaverAI : public ScriptedAI
 
     void UpdateAI(const uint32 diff)
     {
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         // Pounding
         if (Pounding_Timer < diff)
         {
             DoCast(m_creature->getVictim(),SPELL_POUNDING);
-
-            switch(rand()%2)
-            {
-                case 0: DoScriptText(SAY_POUNDING1, m_creature); break;
-                case 1: DoScriptText(SAY_POUNDING2, m_creature); break;
-            }
+            DoScriptText(urand(0, 1) ? SAY_POUNDING1 : SAY_POUNDING2, m_creature);
 
             Pounding_Timer = 15000;                         //cast time(3000) + cooldown time(12000)
         }else Pounding_Timer -= diff;
@@ -116,9 +111,9 @@ struct MANGOS_DLL_DECL boss_void_reaverAI : public ScriptedAI
         if (ArcaneOrb_Timer < diff)
         {
             Unit *target = NULL;
-            std::list<HostilReference *> t_list = m_creature->getThreatManager().getThreatList();
+            std::list<HostileReference *> t_list = m_creature->getThreatManager().getThreatList();
             std::vector<Unit *> target_list;
-            for(std::list<HostilReference *>::iterator itr = t_list.begin(); itr!= t_list.end(); ++itr)
+            for(std::list<HostileReference *>::iterator itr = t_list.begin(); itr!= t_list.end(); ++itr)
             {
                 target = Unit::GetUnit(*m_creature, (*itr)->getUnitGuid());
                 // exclude pets & totems

@@ -28,6 +28,8 @@
 
 #define OPVP_TRIGGER_CREATURE_ENTRY 12999
 
+class Map;
+
 enum ObjectiveStates{
     OBJECTIVESTATE_NEUTRAL = 0,
     OBJECTIVESTATE_ALLIANCE = 1,
@@ -228,12 +230,17 @@ class OutdoorPvP
         virtual bool HandleGossipOption(Player *plr, uint64 guid, uint32 gossipid);
 
         virtual bool CanTalkTo(Player * plr, Creature * c, GossipOption &gso);
+
+        void SetMap(Map* map) { m_Map = map; }
+        Map* GetMap() { return m_Map; }
     protected:
         // the map of the objectives belonging to this outdoorpvp
         OutdoorPvPObjectiveSet m_OutdoorPvPObjectives;
         // players in the zones of this outdoorpvp, 0 - alliance, 1 - horde
         std::set<uint64> m_PlayerGuids[2];
         uint32 m_TypeId;
+
+        Map* m_Map;
 };
 
 #endif /*OUTDOOR_PVP_H_*/

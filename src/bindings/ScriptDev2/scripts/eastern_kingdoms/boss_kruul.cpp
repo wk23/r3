@@ -68,14 +68,14 @@ struct MANGOS_DLL_DECL boss_kruulAI : public ScriptedAI
     void SummonHounds(Unit* victim)
     {
         Rand = rand()%10;
-        switch (rand()%2)
+        switch(urand(0, 1))
         {
             case 0: RandX = 0 - Rand; break;
             case 1: RandX = 0 + Rand; break;
         }
         Rand = 0;
         Rand = rand()%10;
-        switch (rand()%2)
+        switch(urand(0, 1))
         {
             case 0: RandY = 0 - Rand; break;
             case 1: RandY = 0 + Rand; break;
@@ -89,7 +89,7 @@ struct MANGOS_DLL_DECL boss_kruulAI : public ScriptedAI
     void UpdateAI(const uint32 diff)
     {
         //Return since we have no target
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         //ShadowVolley_Timer

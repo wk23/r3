@@ -28,7 +28,7 @@ mob_lesser_shadow_fissure
 EndContentData */
 
 #include "precompiled.h"
-#include "def_shattered_halls.h"
+#include "shattered_halls.h"
 
 struct Say
 {
@@ -147,7 +147,7 @@ struct MANGOS_DLL_DECL boss_grand_warlock_nethekurseAI : public ScriptedAI
 
     void DoTauntPeons()
     {
-        switch(rand()%3)
+        switch(urand(0, 2))
         {
             case 0: DoScriptText(SAY_TAUNT_1, m_creature); break;
             case 1: DoScriptText(SAY_TAUNT_2, m_creature); break;
@@ -169,7 +169,7 @@ struct MANGOS_DLL_DECL boss_grand_warlock_nethekurseAI : public ScriptedAI
 
         if (m_creature->Attack(who, true))
         {
-            m_creature->AddThreat(who, 0.0f);
+            m_creature->AddThreat(who);
             m_creature->SetInCombatWith(who);
             who->SetInCombatWith(m_creature);
 
@@ -203,7 +203,7 @@ struct MANGOS_DLL_DECL boss_grand_warlock_nethekurseAI : public ScriptedAI
 
     void Aggro(Unit *who)
     {
-        switch(rand()%3)
+        switch(urand(0, 2))
         {
             case 0: DoScriptText(SAY_AGGRO_1, m_creature); break;
             case 1: DoScriptText(SAY_AGGRO_2, m_creature); break;
@@ -224,11 +224,7 @@ struct MANGOS_DLL_DECL boss_grand_warlock_nethekurseAI : public ScriptedAI
 
     void KilledUnit(Unit* victim)
     {
-        switch(rand()%2)
-        {
-            case 0: DoScriptText(SAY_SLAY_1, m_creature); break;
-            case 1: DoScriptText(SAY_SLAY_2, m_creature); break;
-        }
+        DoScriptText(urand(0, 1) ? SAY_SLAY_1 : SAY_SLAY_2, m_creature);
     }
 
     void JustDied(Unit* Killer)
@@ -263,7 +259,7 @@ struct MANGOS_DLL_DECL boss_grand_warlock_nethekurseAI : public ScriptedAI
             }
         }
 
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         if (!IsMainEvent)
@@ -280,7 +276,7 @@ struct MANGOS_DLL_DECL boss_grand_warlock_nethekurseAI : public ScriptedAI
             if (Cleave_Timer < diff)
             {
                 DoCast(m_creature->getVictim(), m_bIsHeroicMode ? H_SPELL_SHADOW_SLAM : SPELL_SHADOW_CLEAVE);
-                Cleave_Timer = 6000+rand()%2500;
+                Cleave_Timer = urand(6000, 8500);
             }else Cleave_Timer -= diff;
         }
         else
@@ -289,14 +285,14 @@ struct MANGOS_DLL_DECL boss_grand_warlock_nethekurseAI : public ScriptedAI
             {
                 if (Unit *target = SelectUnit(SELECT_TARGET_RANDOM,0))
                     DoCast(target,SPELL_SHADOW_FISSURE);
-                ShadowFissure_Timer = 7500+rand()%7500;
+                ShadowFissure_Timer = urand(7500, 15000);
             }else ShadowFissure_Timer -= diff;
 
             if (DeathCoil_Timer < diff)
             {
                 if (Unit *target = SelectUnit(SELECT_TARGET_RANDOM,0))
                     DoCast(target,SPELL_DEATH_COIL);
-                DeathCoil_Timer = 15000+rand()%5000;
+                DeathCoil_Timer = urand(15000, 20000);
             }else DeathCoil_Timer -= diff;
 
             if ((m_creature->GetHealth()*100) / m_creature->GetMaxHealth() <= 20)
@@ -366,7 +362,7 @@ struct MANGOS_DLL_DECL mob_fel_orc_convertAI : public ScriptedAI
 
     void UpdateAI(const uint32 diff)
     {
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         if (Hemorrhage_Timer < diff)

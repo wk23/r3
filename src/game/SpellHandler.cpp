@@ -346,10 +346,18 @@ void WorldSession::HandleCastSpellOpcode(WorldPacket& recvPacket)
     {
         recvPacket.read_skip<float>();                      // unk1, coords?
         recvPacket.read_skip<float>();                      // unk1, coords?
-        recvPacket.read_skip<uint8>();                      // >> 1
-        recvPacket.read_skip<uint32>();                     // >> MSG_MOVE_STOP
-        MovementInfo movementInfo;
-        ReadMovementInfo(recvPacket, &movementInfo);
+        uint8 unk1;
+        recvPacket >> unk1;                                 // >> 1 or 0
+        if(unk1)
+        {
+            recvPacket.read_skip<uint32>();                 // >> MSG_MOVE_STOP
+            uint64 guid;                                    // guid - unused
+            if(!recvPacket.readPackGUID(guid))
+                return;
+
+            MovementInfo movementInfo;
+            ReadMovementInfo(recvPacket, &movementInfo);
+        }
     }
 
     // auto-selection buff level base at target level (in spellInfo)
@@ -456,7 +464,7 @@ void WorldSession::HandlePetCancelAuraOpcode( WorldPacket& recvPacket)
         return;
     }
 
-    Creature* pet=ObjectAccessor::GetCreatureOrPetOrVehicle(*_player,guid);
+    Creature* pet = GetPlayer()->GetMap()->GetCreatureOrPetOrVehicle(guid);
 
     if(!pet)
     {
@@ -548,7 +556,7 @@ void WorldSession::HandleSpellClick( WorldPacket & recv_data )
     if (_player->isInCombat())                              // client prevent click and set different icon at combat state
         return;
 
-    Creature *unit = ObjectAccessor::GetCreatureOrPetOrVehicle(*_player, guid);
+    Creature *unit = _player->GetMap()->GetCreatureOrPetOrVehicle(guid);
     if (!unit || unit->isInCombat())                        // client prevent click and set different icon at combat state
         return;
 
@@ -611,83 +619,4 @@ void WorldSession::HandleSpellClick( WorldPacket & recv_data )
             }
         }
     }
-}
-
-void WorldSession::HandleMirrrorImageDataRequest( WorldPacket & recv_data )
-{
-    sLog.outDebug("WORLD: CMSG_GET_MIRRORIMAGE_DATA");
-    //11CHECK_PACKET_SIZE(recv_data, 8);
-    uint64 guid;
-    recv_data >> guid;
-
-    // Get unit for which data is needed by client
-    Unit *unit = ObjectAccessor::GetObjectInWorld(guid, (Unit*)NULL);
-    if (!unit)
-        return;
-
-    // Get creator of the unit
-    Unit *creator = ObjectAccessor::GetObjectInWorld(unit->GetCreatorGUID(), (Unit*)NULL);
-    if (!creator)
-        return;
-
-    WorldPacket data(SMSG_MIRRORIMAGE_DATA, 68);
-    data << (uint64)guid;
-    data << (uint32)creator->GetDisplayId();
-    if (creator->GetTypeId() == TYPEID_PLAYER)
-    {
-        Player* pCreator = (Player *)creator;
-        data << (uint8)pCreator->getRace();                         // race
-        data << (uint8)pCreator->getGender();                       // gender
-        data << (uint8)pCreator->getClass();                        // class
-        data << (uint8)pCreator->GetByteValue(PLAYER_BYTES, 0);     // skin
-        data << (uint8)pCreator->GetByteValue(PLAYER_BYTES, 1);     // face
-        data << (uint8)pCreator->GetByteValue(PLAYER_BYTES, 2);     // hair
-        data << (uint8)pCreator->GetByteValue(PLAYER_BYTES, 3);     // haircolor
-        data << (uint8)pCreator->GetByteValue(PLAYER_BYTES_2, 0);   // facialhair
-
-        data << (uint32)0;                                          // unknown
-
-        static const EquipmentSlots ItemSlots[] = 
-        {
-            EQUIPMENT_SLOT_HEAD,
-            EQUIPMENT_SLOT_SHOULDERS,
-            EQUIPMENT_SLOT_BODY,
-            EQUIPMENT_SLOT_CHEST,
-            EQUIPMENT_SLOT_WAIST,
-            EQUIPMENT_SLOT_LEGS,
-            EQUIPMENT_SLOT_FEET,
-            EQUIPMENT_SLOT_WRISTS,
-            EQUIPMENT_SLOT_HANDS,
-            EQUIPMENT_SLOT_BACK,
-            EQUIPMENT_SLOT_TABARD,
-            EQUIPMENT_SLOT_END
-        };
-
-        // Display items in visible slots
-        for (EquipmentSlots const* itr = &ItemSlots[0]; *itr != EQUIPMENT_SLOT_END; ++itr)
-            if (Item const* item =  pCreator->GetItemByPos(INVENTORY_SLOT_BAG_0, *itr))
-                data << (uint32)item->GetProto()->DisplayInfoID;    // display id
-            else
-                data << (uint32)0;                                  // no item found, so no id
-    }
-    else
-    {
-        // Skip player data for creatures
-        data << (uint32)0;
-        data << (uint32)0;
-        data << (uint32)0;
-        data << (uint32)0;
-        data << (uint32)0;
-        data << (uint32)0;
-        data << (uint32)0;
-        data << (uint32)0;
-        data << (uint32)0;
-        data << (uint32)0;
-        data << (uint32)0;
-        data << (uint32)0;
-        data << (uint32)0;
-        data << (uint32)0;
-    }
-
-    SendPacket( &data );
 }

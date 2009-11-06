@@ -26,13 +26,8 @@ update creature_template set ScriptName="mob_loatheb_spores" where entry=16286
 update creature_template set ScriptName="boss_loatheb" where entry=16011
 */
 
-/*USED
-http://www.youtube.com/watch?v=_RboWVb4IFc
-http://www.wowhead.com/?npc=16011#comments:0
-http://www.noob-club.ru/index.php?page=23#Loatheb
-off-players stories
-*/
 #include "precompiled.h"
+#include "naxxramas.h"
 
 //Boss Loatheb spells
 #define SPELL_NECROTIC_AURA         55593
@@ -58,8 +53,13 @@ off-players stories
 
 struct MANGOS_DLL_DECL boss_loathebAI : public ScriptedAI
 {
-	boss_loathebAI(Creature *c) : ScriptedAI(c) {Reset();}
+	boss_loathebAI(Creature *c) : ScriptedAI(c)
+    {
+        pInstance = (ScriptedInstance*)c->GetInstanceData();
+        Reset();
+    }
 
+    ScriptedInstance *pInstance;
     uint32 NecroticAura_Timer;
     uint32 Deathbloom_Timer;
     uint32 InevitableDoom_Timer;
@@ -71,18 +71,28 @@ struct MANGOS_DLL_DECL boss_loathebAI : public ScriptedAI
         NecroticAura_Timer = 20000;
         Deathbloom_Timer = 30000;
         InevitableDoom_Timer = 120000;
-        InevitableDoom_Cooldown = 40000;//This is cooldown for Doom spell. 40000 means 30sec cooldown + 10sec spelltime, so next doom will be cast 30 sec
-										//after first ends. cooldown decreases by 5 sec after each doom
+        InevitableDoom_Cooldown = 40000;
+        //This is cooldown for Doom spell. 40000 means 30sec
+        //cooldown + 10sec spelltime, so next doom will be cast 30 sec
+		//after first ends. cooldown decreases by 5 sec after each doom
         Summon_Timer = 8000;
+        
+        if(pInstance) pInstance->SetData(TYPE_LOATHEB, NOT_STARTED);
 	}
 
 	void Aggro(Unit *who)
     {
+        if(pInstance) pInstance->SetData(TYPE_LOATHEB, IN_PROGRESS);
+    }
+    
+    void JustDied(Unit *killer)
+    {
+        if(pInstance) pInstance->SetData(TYPE_LOATHEB, DONE);
     }
 
     void UpdateAI(const uint32 diff)
     {
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         //NecroticAura_Timer
@@ -111,7 +121,6 @@ struct MANGOS_DLL_DECL boss_loathebAI : public ScriptedAI
         //Summon_Timer
         if (Summon_Timer < diff)
         {
-            Unit* target = NULL;
             Unit* SummonedSpores = NULL;
             switch (rand()%3)
             {
@@ -126,11 +135,7 @@ struct MANGOS_DLL_DECL boss_loathebAI : public ScriptedAI
 					break;
 			};
             if (SummonedSpores)
-            {
-				target = SelectUnit(SELECT_TARGET_RANDOM,0);
-                if (target)
-					SummonedSpores->AddThreat(target,1.0f);
-            }
+				SummonedSpores->AddThreat(m_creature->getVictim(), 1.0f);
             Summon_Timer = 24000;
         } else Summon_Timer -= diff;
 
@@ -158,7 +163,7 @@ struct MANGOS_DLL_DECL mob_loatheb_sporesAI : public ScriptedAI
     void UpdateAI(const uint32 diff)
     {
         //Return since we have no target
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         DoMeleeAttackIfReady();

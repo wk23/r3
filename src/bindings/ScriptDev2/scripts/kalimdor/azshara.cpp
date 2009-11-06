@@ -88,9 +88,9 @@ struct MANGOS_DLL_DECL npc_rizzle_sprysprocketAI : public npc_escortAI
 
     void MoveInLineOfSight(Unit* pUnit)
     {
-        if (IsBeingEscorted && pUnit->GetTypeId() == TYPEID_PLAYER)
+        if (HasEscortState(STATE_ESCORT_ESCORTING) && pUnit->GetTypeId() == TYPEID_PLAYER)
         {
-            if (!IsOnHold && m_creature->IsWithinDistInMap(pUnit, INTERACTION_DISTANCE) && m_creature->IsWithinLOSInMap(pUnit))
+            if (!HasEscortState(STATE_ESCORT_PAUSED) && m_creature->IsWithinDistInMap(pUnit, INTERACTION_DISTANCE) && m_creature->IsWithinLOSInMap(pUnit))
             {
                 if (((Player*)pUnit)->GetQuestStatus(QUEST_MOONSTONE) == QUEST_STATUS_INCOMPLETE)
                     m_creature->CastSpell(m_creature,SPELL_SURRENDER,true);
@@ -116,7 +116,7 @@ struct MANGOS_DLL_DECL npc_rizzle_sprysprocketAI : public npc_escortAI
     {
         if (pSpell->Id == SPELL_SURRENDER)
         {
-            IsOnHold = true;
+            SetEscortPaused(true);
             DoScriptText(SAY_END, m_creature);
             m_creature->SetUInt32Value(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
         }
@@ -135,7 +135,7 @@ struct MANGOS_DLL_DECL npc_rizzle_sprysprocketAI : public npc_escortAI
         //pSummoned->CastSpell(pSummoned,SPELL_PERIODIC_GRENADE,false,0,0,m_creature->GetGUID());
     }
 
-    void UpdateAI(const uint32 uiDiff)
+    void UpdateEscortAI(const uint32 uiDiff)
     {
         if (m_bIsIntro)
         {
@@ -160,7 +160,7 @@ struct MANGOS_DLL_DECL npc_rizzle_sprysprocketAI : public npc_escortAI
                 case 2:
                     m_creature->CastSpell(m_creature,SPELL_SWIM_SPEED,false);
                     m_bIsIntro = false;
-                    Start(false,true,false);
+                    Start(false,true);
                     break;
             }
 
@@ -170,13 +170,11 @@ struct MANGOS_DLL_DECL npc_rizzle_sprysprocketAI : public npc_escortAI
 
         if (m_uiDepthChargeTimer < uiDiff)
         {
-            if (!IsOnHold)
+            if (!HasEscortState(STATE_ESCORT_PAUSED))
                 m_creature->CastSpell(m_creature,SPELL_SUMMON_DEPTH_CHARGE,false);
 
-            m_uiDepthChargeTimer = 10000 + rand()%5000;
+            m_uiDepthChargeTimer = urand(10000, 15000);
         }else m_uiDepthChargeTimer -= uiDiff;
-
-        npc_escortAI::UpdateAI(uiDiff);
     }
 };
 
@@ -289,7 +287,7 @@ struct MANGOS_DLL_DECL mobs_spitelashesAI : public ScriptedAI
                 DoCast(m_creature,6924);                    //visual explosion
             }
         }
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         //TODO: add abilities for the different creatures

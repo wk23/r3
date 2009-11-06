@@ -88,7 +88,7 @@ struct MANGOS_DLL_DECL npc_draenei_survivorAI : public ScriptedAI
             m_creature->IsWithinDistInMap(pWho, 25.0f))
         {
             //Random switch between 4 texts
-            switch (rand()%4)
+            switch(urand(0, 3))
             {
                 case 0: DoScriptText(SAY_HELP1, m_creature, pWho); break;
                 case 1: DoScriptText(SAY_HELP2, m_creature, pWho); break;
@@ -129,7 +129,7 @@ struct MANGOS_DLL_DECL npc_draenei_survivorAI : public ScriptedAI
                     if (pPlayer->GetTypeId() != TYPEID_PLAYER)
                         return;
 
-                    switch (rand()%4)
+                    switch(urand(0, 3))
                     {
                         case 0: DoScriptText(SAY_HEAL1, m_creature, pPlayer); break;
                         case 1: DoScriptText(SAY_HEAL2, m_creature, pPlayer); break;
@@ -218,7 +218,7 @@ struct MANGOS_DLL_DECL npc_engineer_spark_overgrindAI : public ScriptedAI
         m_creature->SetUInt32Value(UNIT_NPC_FLAGS, m_uiNpcFlags);
 
         m_uiDynamiteTimer = 8000;
-        m_uiEmoteTimer = 120000 + rand()%30000;
+        m_uiEmoteTimer = urand(120000, 150000);
 
         m_bIsTreeEvent = false;
     }
@@ -236,7 +236,7 @@ struct MANGOS_DLL_DECL npc_engineer_spark_overgrindAI : public ScriptedAI
             {
                 DoScriptText(SAY_TEXT, m_creature);
                 DoScriptText(EMOTE_SHELL, m_creature);
-                m_uiEmoteTimer = 120000 + rand()%30000;
+                m_uiEmoteTimer = urand(120000, 150000);
             }
             else m_uiEmoteTimer -= diff;
         }
@@ -246,7 +246,7 @@ struct MANGOS_DLL_DECL npc_engineer_spark_overgrindAI : public ScriptedAI
             return;
         }
 
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         if (m_uiDynamiteTimer < diff)
@@ -297,7 +297,7 @@ struct MANGOS_DLL_DECL npc_injured_draeneiAI : public ScriptedAI
     {
         m_creature->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_IN_COMBAT);
         m_creature->SetHealth(int(m_creature->GetMaxHealth()*.15));
-        switch (rand()%2)
+        switch(urand(0, 1))
         {
             case 0: m_creature->SetStandState(UNIT_STAND_STATE_SIT); break;
             case 1: m_creature->SetStandState(UNIT_STAND_STATE_SLEEP); break;
@@ -425,7 +425,7 @@ struct MANGOS_DLL_DECL npc_nestlewood_owlkinAI : public ScriptedAI
                 m_uiDespawnTimer -= uiDiff;
         }
 
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         DoMeleeAttackIfReady();

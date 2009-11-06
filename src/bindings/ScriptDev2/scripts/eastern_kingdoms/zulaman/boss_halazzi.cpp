@@ -22,7 +22,7 @@ SDCategory: Zul'Aman
 EndScriptData */
 
 #include "precompiled.h"
-#include "def_zulaman.h"
+#include "zulaman.h"
 #include "ObjectMgr.h"
 
 enum
@@ -80,7 +80,7 @@ struct MANGOS_DLL_DECL boss_halazziAI : public ScriptedAI
 
     ScriptedInstance* m_pInstance;
 
-    uint32 m_uiPhase; 
+    uint32 m_uiPhase;
     uint32 m_uiPhaseCounter;
     uint32 m_uiFrenzyTimer;
     uint32 m_uiSaberLashTimer;
@@ -131,11 +131,7 @@ struct MANGOS_DLL_DECL boss_halazziAI : public ScriptedAI
         if (pVictim->GetTypeId() != TYPEID_PLAYER)
             return;
 
-        switch(rand()%2)
-        {
-            case 0: DoScriptText(SAY_KILL1, m_creature); break;
-            case 1: DoScriptText(SAY_KILL2, m_creature); break;
-        }
+        DoScriptText(urand(0, 1) ? SAY_KILL1 : SAY_KILL2, m_creature);
     }
 
     void JustDied(Unit* pKiller)
@@ -208,7 +204,7 @@ struct MANGOS_DLL_DECL boss_halazziAI : public ScriptedAI
                 (pSpiritLynx && pSpiritLynx->GetHealth()*10 < pSpiritLynx->GetMaxHealth()))
             {
                 m_uiPhase = PHASE_SINGLE;
- 
+
                 DoScriptText(SAY_MERGE, m_creature);
 
                 uint32 uiSpellId;
@@ -233,7 +229,7 @@ struct MANGOS_DLL_DECL boss_halazziAI : public ScriptedAI
 
     void UpdateAI(const uint32 uiDiff)
     {
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         if (!m_bIsBerserk)
@@ -275,11 +271,7 @@ struct MANGOS_DLL_DECL boss_halazziAI : public ScriptedAI
 
             if (m_uiSaberLashTimer < uiDiff)
             {
-                switch(rand()%2)
-                {
-                    case 0: DoScriptText(SAY_SABERLASH1, m_creature); break;
-                    case 1: DoScriptText(SAY_SABERLASH2, m_creature); break;
-                }
+                DoScriptText(urand(0, 1) ? SAY_SABERLASH1 : SAY_SABERLASH2, m_creature);
 
                 DoCast(m_creature->getVictim(), SPELL_SABER_LASH);
                 m_uiSaberLashTimer = 20*IN_MILISECONDS;
@@ -307,10 +299,10 @@ struct MANGOS_DLL_DECL boss_halazziAI : public ScriptedAI
                     else
                         DoCast(pTarget, SPELL_FLAMESHOCK);
 
-                    m_uiShockTimer = (10+rand()%5)*IN_MILISECONDS;
-                }   
+                    m_uiShockTimer = urand(10000, 14000);
+                }
             }
-            else 
+            else
                 m_uiShockTimer -= uiDiff;
         }
 
@@ -344,7 +336,7 @@ struct MANGOS_DLL_DECL boss_spirit_lynxAI : public ScriptedAI
 
     void Reset()
     {
-        m_uiFrenzyTimer = (10+rand()%10)*1000;              //first frenzy after 10-20 seconds
+        m_uiFrenzyTimer = urand(10000, 20000);              //first frenzy after 10-20 seconds
         m_uiShredArmorTimer = 4000;
     }
 
@@ -364,13 +356,13 @@ struct MANGOS_DLL_DECL boss_spirit_lynxAI : public ScriptedAI
 
     void UpdateAI(const uint32 uiDiff)
     {
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         if (m_uiFrenzyTimer < uiDiff)
         {
             DoCast(m_creature, SPELL_LYNX_FRENZY);
-            m_uiFrenzyTimer = (20+rand()%10)*1000;          //subsequent frenzys casted every 20-30 seconds
+            m_uiFrenzyTimer = urand(20000, 30000);          //subsequent frenzys casted every 20-30 seconds
         }
         else
             m_uiFrenzyTimer -= uiDiff;

@@ -22,7 +22,7 @@ SDCategory: Gruul's Lair
 EndScriptData */
 
 #include "precompiled.h"
-#include "def_gruuls_lair.h"
+#include "gruuls_lair.h"
 
 /* Gruuls Lair encounters:
 1 - High King Maulgar event
@@ -83,7 +83,7 @@ struct MANGOS_DLL_DECL instance_gruuls_lair : public ScriptedInstance
     {
         switch (pGo->GetEntry())
         {
-            case 184468: 
+            case 184468:
                 m_uiMaulgarDoorGUID = pGo->GetGUID();
                 if (m_auiEncounter[0] == DONE)
                     pGo->SetGoState(GO_STATE_ACTIVE);

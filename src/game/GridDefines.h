@@ -26,6 +26,7 @@
 // Forward class definitions
 class Corpse;
 class Creature;
+class Vehicle;
 class DynamicObject;
 class GameObject;
 class Pet;
@@ -41,7 +42,7 @@ class Player;
 #define MIN_GRID_DELAY          (MINUTE*IN_MILISECONDS)
 #define MIN_MAP_UPDATE_DELAY    50
 
-#define MAX_NUMBER_OF_CELLS     4
+#define MAX_NUMBER_OF_CELLS     8
 #define SIZE_OF_GRID_CELL       (SIZE_OF_GRIDS/MAX_NUMBER_OF_CELLS)
 
 #define CENTER_GRID_CELL_ID     (MAX_NUMBER_OF_CELLS*MAX_NUMBER_OF_GRIDS/2)
@@ -57,6 +58,7 @@ class Player;
 // Creature used instead pet to simplify *::Visit templates (not required duplicate code for Creature->Pet case)
 typedef TYPELIST_3(Player, Creature/*pets*/, Corpse/*resurrectable*/)                   AllWorldObjectTypes;
 typedef TYPELIST_4(GameObject, Creature/*except pets*/, DynamicObject, Corpse/*Bones*/) AllGridObjectTypes;
+typedef TYPELIST_5(Creature, Pet, Vehicle, GameObject, DynamicObject)                   AllMapStoredObjectTypes;
 
 typedef GridRefManager<Corpse>          CorpseMapType;
 typedef GridRefManager<Creature>        CreatureMapType;

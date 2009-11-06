@@ -22,7 +22,7 @@ SDCategory: Black Temple
 EndScriptData */
 
 #include "precompiled.h"
-#include "def_black_temple.h"
+#include "black_temple.h"
 
 //Speech'n'Sound
 #define SAY_AGGRO               -1564029
@@ -116,11 +116,7 @@ struct MANGOS_DLL_DECL boss_gurtogg_bloodboilAI : public ScriptedAI
 
     void KilledUnit(Unit *victim)
     {
-        switch(rand()%2)
-        {
-            case 0: DoScriptText(SAY_SLAY1, m_creature); break;
-            case 1: DoScriptText(SAY_SLAY2, m_creature); break;
-        }
+        DoScriptText(urand(0, 1) ? SAY_SLAY1 : SAY_SLAY2, m_creature);
     }
 
     void JustDied(Unit *victim)
@@ -135,14 +131,14 @@ struct MANGOS_DLL_DECL boss_gurtogg_bloodboilAI : public ScriptedAI
     void CastBloodboil()
     {
         // Get the Threat List
-        std::list<HostilReference *> m_threatlist = m_creature->getThreatManager().getThreatList();
+        std::list<HostileReference *> m_threatlist = m_creature->getThreatManager().getThreatList();
 
         // He doesn't have anyone in his threatlist, useless to continue
         if (!m_threatlist.size())
             return;
 
         std::list<Unit *> targets;
-        std::list<HostilReference *>::iterator itr = m_threatlist.begin();
+        std::list<HostileReference *>::iterator itr = m_threatlist.begin();
 
         //store the threat list in a different container
         for(; itr!= m_threatlist.end(); ++itr)
@@ -196,7 +192,7 @@ struct MANGOS_DLL_DECL boss_gurtogg_bloodboilAI : public ScriptedAI
 
     void UpdateAI(const uint32 diff)
     {
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         if (ArcingSmashTimer < diff)
@@ -216,12 +212,7 @@ struct MANGOS_DLL_DECL boss_gurtogg_bloodboilAI : public ScriptedAI
             if (EnrageTimer < diff)
             {
                 DoCast(m_creature, SPELL_BERSERK);
-
-                switch(rand()%2)
-                {
-                    case 0: DoScriptText(SAY_ENRAGE1, m_creature); break;
-                    case 1: DoScriptText(SAY_ENRAGE2, m_creature); break;
-                }
+                DoScriptText(urand(0, 1) ? SAY_ENRAGE1 : SAY_ENRAGE2, m_creature);
             }else EnrageTimer -= diff;
         }
 
@@ -308,11 +299,7 @@ struct MANGOS_DLL_DECL boss_gurtogg_bloodboilAI : public ScriptedAI
                     //Cast this without triggered so that it appears in combat logs and shows visual.
                     DoCast(m_creature, SPELL_FEL_RAGE_SELF);
 
-                    switch(rand()%2)
-                    {
-                        case 0: DoScriptText(SAY_SPECIAL1, m_creature); break;
-                        case 1: DoScriptText(SAY_SPECIAL2, m_creature); break;
-                    }
+                    DoScriptText(urand(0, 1) ? SAY_SPECIAL1 : SAY_SPECIAL2, m_creature);
 
                     AcidGeyserTimer = 1000;
                     PhaseChangeTimer = 30000;

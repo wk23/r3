@@ -22,7 +22,7 @@ SDCategory: Gruul's Lair
 EndScriptData */
 
 #include "precompiled.h"
-#include "def_gruuls_lair.h"
+#include "gruuls_lair.h"
 
 enum
 {
@@ -100,7 +100,7 @@ struct MANGOS_DLL_DECL boss_gruulAI : public ScriptedAI
 
     void KilledUnit(Unit* pVictim)
     {
-        switch(rand()%3)
+        switch(urand(0, 2))
         {
             case 0: DoScriptText(SAY_SLAY1, m_creature); break;
             case 1: DoScriptText(SAY_SLAY2, m_creature); break;
@@ -126,7 +126,7 @@ struct MANGOS_DLL_DECL boss_gruulAI : public ScriptedAI
         {
             if (pTarget->GetTypeId() == TYPEID_PLAYER)
             {
-                switch(rand()%2)
+                switch(urand(0, 1))
                 {
                     case 0: pTarget->CastSpell(pTarget, SPELL_MAGNETIC_PULL, true, NULL, NULL, m_creature->GetGUID()); break;
                     case 1: pTarget->CastSpell(pTarget, SPELL_KNOCK_BACK, true, NULL, NULL, m_creature->GetGUID()); break;
@@ -161,7 +161,7 @@ struct MANGOS_DLL_DECL boss_gruulAI : public ScriptedAI
     void UpdateAI(const uint32 uiDiff)
     {
         //Return since we have no target
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         // Growth
@@ -198,8 +198,8 @@ struct MANGOS_DLL_DECL boss_gruulAI : public ScriptedAI
             {
                 // Find 2nd-aggro target within melee range.
                 Unit *pTarget = NULL;
-                std::list<HostilReference *> t_list = m_creature->getThreatManager().getThreatList();
-                std::list<HostilReference *>::iterator itr = t_list.begin();
+                std::list<HostileReference *> t_list = m_creature->getThreatManager().getThreatList();
+                std::list<HostileReference *>::iterator itr = t_list.begin();
                 std::advance(itr, 1);
                 for(; itr!= t_list.end(); ++itr)
                 {
@@ -228,7 +228,7 @@ struct MANGOS_DLL_DECL boss_gruulAI : public ScriptedAI
             if (m_uiReverberation_Timer < uiDiff)
             {
                 DoCast(m_creature->getVictim(), SPELL_REVERBERATION, true);
-                m_uiReverberation_Timer = 15000 + rand()%10000;
+                m_uiReverberation_Timer = urand(15000, 25000);
             }
             else
                 m_uiReverberation_Timer -= uiDiff;

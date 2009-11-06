@@ -28,7 +28,6 @@
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
-				CommandLine=""
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
@@ -112,7 +111,6 @@
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
-				CommandLine=""
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
@@ -197,7 +195,6 @@
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
-				CommandLine=""
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
@@ -280,7 +277,6 @@
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
-				CommandLine=""
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
@@ -398,17 +394,133 @@
 			Name="scripts"
 			>
 			<Filter
+				Name="battlegrounds"
+				>
+				<File
+					RelativePath="..\scripts\battlegrounds\battleground.cpp"
+					>
+				</File>
+			</Filter>
+			<Filter
 				Name="custom"
 				>
+				<File
+					RelativePath="..\scripts\custom\npc_arena_honor.cpp"
+					>
+				</File>
+ 				<File
+					RelativePath="..\scripts\custom\teleguy.cpp"
+					>
+				</File>
 			</Filter>
 			<Filter
 				Name="eastern_kingdoms"
 				>
+				<File
+					RelativePath="..\scripts\eastern_kingdoms\alterac_mountains.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\scripts\eastern_kingdoms\arathi_highlands.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\scripts\eastern_kingdoms\blasted_lands.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\scripts\eastern_kingdoms\boss_kruul.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\scripts\eastern_kingdoms\burning_steppes.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\scripts\eastern_kingdoms\dun_morogh.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\scripts\eastern_kingdoms\eastern_plaguelands.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\scripts\eastern_kingdoms\elwynn_forest.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\scripts\eastern_kingdoms\eversong_woods.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\scripts\eastern_kingdoms\ghostlands.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\scripts\eastern_kingdoms\hinterlands.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\scripts\eastern_kingdoms\ironforge.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\scripts\eastern_kingdoms\isle_of_queldanas.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\scripts\eastern_kingdoms\loch_modan.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\scripts\eastern_kingdoms\searing_gorge.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\scripts\eastern_kingdoms\silvermoon_city.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\scripts\eastern_kingdoms\silverpine_forest.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\scripts\eastern_kingdoms\stormwind_city.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\scripts\eastern_kingdoms\stranglethorn_vale.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\scripts\eastern_kingdoms\tirisfal_glades.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\scripts\eastern_kingdoms\undercity.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\scripts\eastern_kingdoms\western_plaguelands.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\scripts\eastern_kingdoms\westfall.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\scripts\eastern_kingdoms\wetlands.cpp"
+					>
+				</File>
 				<Filter
 					Name="blackrock_depths"
 					>
 					<File
 						RelativePath="..\scripts\eastern_kingdoms\blackrock_depths\blackrock_depths.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\scripts\eastern_kingdoms\blackrock_depths\blackrock_depths.h"
 						>
 					</File>
 					<File
@@ -445,10 +557,6 @@
 					</File>
 					<File
 						RelativePath="..\scripts\eastern_kingdoms\blackrock_depths\boss_tomb_of_seven.cpp"
-						>
-					</File>
-					<File
-						RelativePath="..\scripts\eastern_kingdoms\blackrock_depths\def_blackrock_depths.h"
 						>
 					</File>
 					<File
@@ -560,7 +668,7 @@
 						>
 					</File>
 					<File
-						RelativePath="..\scripts\eastern_kingdoms\deadmines\def_deadmines.h"
+						RelativePath="..\scripts\eastern_kingdoms\deadmines\deadmines.h"
 						>
 					</File>
 					<File
@@ -616,15 +724,15 @@
 						>
 					</File>
 					<File
-						RelativePath="..\scripts\eastern_kingdoms\karazhan\def_karazhan.h"
-						>
-					</File>
-					<File
 						RelativePath="..\scripts\eastern_kingdoms\karazhan\instance_karazhan.cpp"
 						>
 					</File>
 					<File
 						RelativePath="..\scripts\eastern_kingdoms\karazhan\karazhan.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\scripts\eastern_kingdoms\karazhan\karazhan.h"
 						>
 					</File>
 				</Filter>
@@ -648,15 +756,15 @@
 						>
 					</File>
 					<File
-						RelativePath="..\scripts\eastern_kingdoms\magisters_terrace\def_magisters_terrace.h"
-						>
-					</File>
-					<File
 						RelativePath="..\scripts\eastern_kingdoms\magisters_terrace\instance_magisters_terrace.cpp"
 						>
 					</File>
 					<File
 						RelativePath="..\scripts\eastern_kingdoms\magisters_terrace\magisters_terrace.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\scripts\eastern_kingdoms\magisters_terrace\magisters_terrace.h"
 						>
 					</File>
 				</Filter>
@@ -704,15 +812,15 @@
 						>
 					</File>
 					<File
-						RelativePath="..\scripts\eastern_kingdoms\molten_core\def_molten_core.h"
-						>
-					</File>
-					<File
 						RelativePath="..\scripts\eastern_kingdoms\molten_core\instance_molten_core.cpp"
 						>
 					</File>
 					<File
 						RelativePath="..\scripts\eastern_kingdoms\molten_core\molten_core.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\scripts\eastern_kingdoms\molten_core\molten_core.h"
 						>
 					</File>
 				</Filter>
@@ -764,11 +872,15 @@
 						>
 					</File>
 					<File
-						RelativePath="..\scripts\eastern_kingdoms\scarlet_monastery\def_scarlet_monastery.h"
+						RelativePath="..\scripts\eastern_kingdoms\scarlet_monastery\boss_headless_horseman.cpp"
 						>
 					</File>
 					<File
 						RelativePath="..\scripts\eastern_kingdoms\scarlet_monastery\instance_scarlet_monastery.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\scripts\eastern_kingdoms\scarlet_monastery\scarlet_monastery.h"
 						>
 					</File>
 				</Filter>
@@ -824,11 +936,11 @@
 						>
 					</File>
 					<File
-						RelativePath="..\scripts\eastern_kingdoms\scholomance\def_scholomance.h"
+						RelativePath="..\scripts\eastern_kingdoms\scholomance\instance_scholomance.cpp"
 						>
 					</File>
 					<File
-						RelativePath="..\scripts\eastern_kingdoms\scholomance\instance_scholomance.cpp"
+						RelativePath="..\scripts\eastern_kingdoms\scholomance\scholomance.h"
 						>
 					</File>
 				</Filter>
@@ -836,15 +948,15 @@
 					Name="shadowfang_keep"
 					>
 					<File
-						RelativePath="..\scripts\eastern_kingdoms\shadowfang_keep\def_shadowfang_keep.h"
-						>
-					</File>
-					<File
 						RelativePath="..\scripts\eastern_kingdoms\shadowfang_keep\instance_shadowfang_keep.cpp"
 						>
 					</File>
 					<File
 						RelativePath="..\scripts\eastern_kingdoms\shadowfang_keep\shadowfang_keep.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\scripts\eastern_kingdoms\shadowfang_keep\shadowfang_keep.h"
 						>
 					</File>
 				</Filter>
@@ -900,15 +1012,15 @@
 						>
 					</File>
 					<File
-						RelativePath="..\scripts\eastern_kingdoms\stratholme\def_stratholme.h"
-						>
-					</File>
-					<File
 						RelativePath="..\scripts\eastern_kingdoms\stratholme\instance_stratholme.cpp"
 						>
 					</File>
 					<File
 						RelativePath="..\scripts\eastern_kingdoms\stratholme\stratholme.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\scripts\eastern_kingdoms\stratholme\stratholme.h"
 						>
 					</File>
 				</Filter>
@@ -928,11 +1040,11 @@
 						>
 					</File>
 					<File
-						RelativePath="..\scripts\eastern_kingdoms\sunwell_plateau\def_sunwell_plateau.h"
+						RelativePath="..\scripts\eastern_kingdoms\sunwell_plateau\instance_sunwell_plateau.cpp"
 						>
 					</File>
 					<File
-						RelativePath="..\scripts\eastern_kingdoms\sunwell_plateau\instance_sunwell_plateau.cpp"
+						RelativePath="..\scripts\eastern_kingdoms\sunwell_plateau\sunwell_plateau.h"
 						>
 					</File>
 				</Filter>
@@ -976,15 +1088,15 @@
 						>
 					</File>
 					<File
-						RelativePath="..\scripts\eastern_kingdoms\zulaman\def_zulaman.h"
-						>
-					</File>
-					<File
 						RelativePath="..\scripts\eastern_kingdoms\zulaman\instance_zulaman.cpp"
 						>
 					</File>
 					<File
 						RelativePath="..\scripts\eastern_kingdoms\zulaman\zulaman.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\scripts\eastern_kingdoms\zulaman\zulaman.h"
 						>
 					</File>
 				</Filter>
@@ -1044,110 +1156,14 @@
 						>
 					</File>
 					<File
-						RelativePath="..\scripts\eastern_kingdoms\zulgurub\def_zulgurub.h"
-						>
-					</File>
-					<File
 						RelativePath="..\scripts\eastern_kingdoms\zulgurub\instance_zulgurub.cpp"
 						>
 					</File>
+					<File
+						RelativePath="..\scripts\eastern_kingdoms\zulgurub\zulgurub.h"
+						>
+					</File>
 				</Filter>
-				<File
-					RelativePath="..\scripts\eastern_kingdoms\alterac_mountains.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\scripts\eastern_kingdoms\arathi_highlands.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\scripts\eastern_kingdoms\blasted_lands.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\scripts\eastern_kingdoms\boss_kruul.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\scripts\eastern_kingdoms\burning_steppes.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\scripts\eastern_kingdoms\dun_morogh.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\scripts\eastern_kingdoms\eastern_plaguelands.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\scripts\eastern_kingdoms\elwynn_forest.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\scripts\eastern_kingdoms\eversong_woods.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\scripts\eastern_kingdoms\ghostlands.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\scripts\eastern_kingdoms\hinterlands.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\scripts\eastern_kingdoms\ironforge.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\scripts\eastern_kingdoms\isle_of_queldanas.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\scripts\eastern_kingdoms\loch_modan.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\scripts\eastern_kingdoms\searing_gorge.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\scripts\eastern_kingdoms\silvermoon_city.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\scripts\eastern_kingdoms\silverpine_forest.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\scripts\eastern_kingdoms\stormwind_city.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\scripts\eastern_kingdoms\stranglethorn_vale.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\scripts\eastern_kingdoms\tirisfal_glades.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\scripts\eastern_kingdoms\undercity.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\scripts\eastern_kingdoms\western_plaguelands.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\scripts\eastern_kingdoms\westfall.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\scripts\eastern_kingdoms\wetlands.cpp"
-					>
-				</File>
 			</Filter>
 			<Filter
 				Name="examples"
@@ -1172,11 +1188,99 @@
 			<Filter
 				Name="kalimdor"
 				>
+				<File
+					RelativePath="..\scripts\kalimdor\ashenvale.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\scripts\kalimdor\azshara.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\scripts\kalimdor\azuremyst_isle.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\scripts\kalimdor\bloodmyst_isle.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\scripts\kalimdor\boss_azuregos.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\scripts\kalimdor\darkshore.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\scripts\kalimdor\desolace.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\scripts\kalimdor\dustwallow_marsh.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\scripts\kalimdor\felwood.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\scripts\kalimdor\feralas.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\scripts\kalimdor\moonglade.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\scripts\kalimdor\mulgore.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\scripts\kalimdor\orgrimmar.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\scripts\kalimdor\silithus.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\scripts\kalimdor\stonetalon_mountains.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\scripts\kalimdor\tanaris.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\scripts\kalimdor\teldrassil.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\scripts\kalimdor\the_barrens.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\scripts\kalimdor\thousand_needles.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\scripts\kalimdor\thunder_bluff.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\scripts\kalimdor\ungoro_crater.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\scripts\kalimdor\winterspring.cpp"
+					>
+				</File>
 				<Filter
 					Name="blackfathom_deeps"
 					>
 					<File
-						RelativePath="..\scripts\kalimdor\blackfathom_deeps\def_blackfathom_deeps.h"
+						RelativePath="..\scripts\kalimdor\blackfathom_deeps\blackfathom_deeps.h"
 						>
 					</File>
 					<File
@@ -1211,7 +1315,7 @@
 							>
 						</File>
 						<File
-							RelativePath="..\scripts\kalimdor\caverns_of_time\dark_portal\def_dark_portal.h"
+							RelativePath="..\scripts\kalimdor\caverns_of_time\dark_portal\dark_portal.h"
 							>
 						</File>
 						<File
@@ -1227,11 +1331,11 @@
 							>
 						</File>
 						<File
-							RelativePath="..\scripts\kalimdor\caverns_of_time\hyjal\def_hyjal.h"
+							RelativePath="..\scripts\kalimdor\caverns_of_time\hyjal\hyjal.cpp"
 							>
 						</File>
 						<File
-							RelativePath="..\scripts\kalimdor\caverns_of_time\hyjal\hyjal.cpp"
+							RelativePath="..\scripts\kalimdor\caverns_of_time\hyjal\hyjal.h"
 							>
 						</File>
 						<File
@@ -1263,15 +1367,15 @@
 							>
 						</File>
 						<File
-							RelativePath="..\scripts\kalimdor\caverns_of_time\old_hillsbrad\def_old_hillsbrad.h"
-							>
-						</File>
-						<File
 							RelativePath="..\scripts\kalimdor\caverns_of_time\old_hillsbrad\instance_old_hillsbrad.cpp"
 							>
 						</File>
 						<File
 							RelativePath="..\scripts\kalimdor\caverns_of_time\old_hillsbrad\old_hillsbrad.cpp"
+							>
+						</File>
+						<File
+							RelativePath="..\scripts\kalimdor\caverns_of_time\old_hillsbrad\old_hillsbrad.h"
 							>
 						</File>
 					</Filter>
@@ -1400,15 +1504,15 @@
 						>
 					</File>
 					<File
-						RelativePath="..\scripts\kalimdor\temple_of_ahnqiraj\def_temple_of_ahnqiraj.h"
-						>
-					</File>
-					<File
 						RelativePath="..\scripts\kalimdor\temple_of_ahnqiraj\instance_temple_of_ahnqiraj.cpp"
 						>
 					</File>
 					<File
 						RelativePath="..\scripts\kalimdor\temple_of_ahnqiraj\mob_anubisath_sentinel.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\scripts\kalimdor\temple_of_ahnqiraj\temple_of_ahnqiraj.h"
 						>
 					</File>
 				</Filter>
@@ -1428,106 +1532,90 @@
 						>
 					</File>
 				</Filter>
-				<File
-					RelativePath="..\scripts\kalimdor\ashenvale.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\scripts\kalimdor\azshara.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\scripts\kalimdor\azuremyst_isle.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\scripts\kalimdor\bloodmyst_isle.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\scripts\kalimdor\boss_azuregos.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\scripts\kalimdor\darkshore.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\scripts\kalimdor\desolace.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\scripts\kalimdor\dustwallow_marsh.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\scripts\kalimdor\felwood.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\scripts\kalimdor\feralas.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\scripts\kalimdor\moonglade.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\scripts\kalimdor\mulgore.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\scripts\kalimdor\orgrimmar.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\scripts\kalimdor\silithus.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\scripts\kalimdor\stonetalon_mountains.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\scripts\kalimdor\tanaris.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\scripts\kalimdor\teldrassil.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\scripts\kalimdor\the_barrens.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\scripts\kalimdor\thousand_needles.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\scripts\kalimdor\thunder_bluff.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\scripts\kalimdor\winterspring.cpp"
-					>
-				</File>
 			</Filter>
 			<Filter
 				Name="northrend"
 				>
+				<File
+					RelativePath="..\scripts\northrend\borean_tundra.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\scripts\northrend\dalaran.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\scripts\northrend\dragonblight.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\scripts\northrend\grizzly_hills.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\scripts\northrend\howling_fjord.cpp"
+                    >
+                </File>
+				<File
+					RelativePath="..\scripts\northrend\icecrown.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\scripts\northrend\sholazar_basin.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\scripts\northrend\storm_peaks.cpp"
+					>
+				</File>
 				<Filter
 					Name="azjol-nerub"
 					>
 					<Filter
 						Name="ahnkahet"
 						>
+						<File
+							RelativePath="..\scripts\northrend\azjol-nerub\ahnkahet\boss_jedoga.cpp"
+							>
+						</File>
+						<File
+							RelativePath="..\scripts\northrend\azjol-nerub\ahnkahet\boss_nadox.cpp"
+							>
+						</File>
+						<File
+							RelativePath="..\scripts\northrend\azjol-nerub\ahnkahet\boss_taldaram.cpp"
+							>
+						</File>
+						<File
+							RelativePath="..\scripts\northrend\azjol-nerub\ahnkahet\boss_volazj.cpp"
+							>
+						</File>
+						<File
+							RelativePath="..\scripts\northrend\azjol-nerub\ahnkahet\ahnkahet.h"
+							>
+						</File>
+						<File
+							RelativePath="..\scripts\northrend\azjol-nerub\ahnkahet\instance_ahnkahet.cpp"
+							>
+						</File>
 					</Filter>
 					<Filter
 						Name="azjol-nerub"
 						>
 						<File
-							RelativePath="..\scripts\northrend\azjol-nerub\azjol-nerub\def_azjol-nerub.h"
+							RelativePath="..\scripts\northrend\azjol-nerub\azjol-nerub\azjol-nerub.h"
+							>
+						</File>
+						<File
+							RelativePath="..\scripts\northrend\azjol-nerub\azjol-nerub\boss_anubarak.cpp"
+							>
+						</File>
+						<File
+							RelativePath="..\scripts\northrend\azjol-nerub\azjol-nerub\boss_hadronox.cpp"
+							>
+						</File>
+						<File
+							RelativePath="..\scripts\northrend\azjol-nerub\azjol-nerub\boss_krikthir.cpp"
 							>
 						</File>
 						<File
@@ -1537,12 +1625,60 @@
 					</Filter>
 				</Filter>
 				<Filter
+					Name="crusaders_coliseum"
+					>
+					<Filter
+						Name="trial_of_the_champion"
+						>
+					</Filter>
+					<Filter
+						Name="trial_of_the_crusader"
+						>
+					</Filter>
+				</Filter>
+				<Filter
 					Name="draktharon_keep"
 					>
+					<File
+						RelativePath="..\scripts\northrend\draktharon_keep\boss_novos.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\scripts\northrend\draktharon_keep\boss_tharonja.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\scripts\northrend\draktharon_keep\boss_trollgore.cpp"
+						>
+					</File>
 				</Filter>
 				<Filter
 					Name="gundrak"
 					>
+					<File
+						RelativePath="..\scripts\northrend\gundrak\boss_colossus.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\scripts\northrend\gundrak\boss_galdarah.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\scripts\northrend\gundrak\boss_moorabi.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\scripts\northrend\gundrak\boss_sladran.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\scripts\northrend\gundrak\gundrak.h"
+						>
+					</File>
+					<File
+						RelativePath="..\scripts\northrend\gundrak\instance_gundrak.cpp"
+						>
+					</File>
 				</Filter>
 				<Filter
 					Name="naxxramas"
@@ -1608,6 +1744,10 @@
 						>
 					</File>
 					<File
+						RelativePath="..\scripts\northrend\naxxramas\naxxramas.h"
+						>
+					</File>
+					<File
 						RelativePath="..\scripts\northrend\naxxramas\instance_naxxramas.cpp"
 						>
 					</File>
@@ -1638,6 +1778,14 @@
 							RelativePath="..\scripts\northrend\nexus\nexus\boss_telestra.cpp"
 							>
 						</File>
+						<File
+							RelativePath="..\scripts\northrend\nexus\nexus\instance_nexus.cpp"
+							>
+						</File>
+						<File
+							RelativePath="..\scripts\northrend\nexus\nexus\nexus.h"
+							>
+						</File>
 					</Filter>
 					<Filter
 						Name="oculus"
@@ -1652,11 +1800,11 @@
 						>
 					</File>
 					<File
-						RelativePath="..\scripts\northrend\obsidian_sanctum\def_obsidian_sanctum.h"
+						RelativePath="..\scripts\northrend\obsidian_sanctum\instance_obsidian_sanctum.cpp"
 						>
 					</File>
 					<File
-						RelativePath="..\scripts\northrend\obsidian_sanctum\instance_obsidian_sanctum.cpp"
+						RelativePath="..\scripts\northrend\obsidian_sanctum\obsidian_sanctum.h"
 						>
 					</File>
 				</Filter>
@@ -1683,7 +1831,7 @@
 							>
 						</File>
 						<File
-							RelativePath="..\scripts\northrend\ulduar\halls_of_lightning\def_halls_of_lightning.h"
+							RelativePath="..\scripts\northrend\ulduar\halls_of_lightning\halls_of_lightning.h"
 							>
 						</File>
 						<File
@@ -1694,10 +1842,90 @@
 					<Filter
 						Name="halls_of_stone"
 						>
+						<File
+							RelativePath="..\scripts\northrend\ulduar\halls_of_stone\boss_maiden_of_grief.cpp"
+							>
+						</File>
+						<File
+							RelativePath="..\scripts\northrend\ulduar\halls_of_stone\boss_sjonnir.cpp"
+							>
+						</File>
+						<File
+							RelativePath="..\scripts\northrend\ulduar\halls_of_stone\halls_of_stone.cpp"
+							>
+						</File>
 					</Filter>
 					<Filter
 						Name="ulduar"
 						>
+						<File
+							RelativePath="..\scripts\northrend\ulduar\ulduar\boss_algalon.cpp"
+							>
+						</File>
+						<File
+							RelativePath="..\scripts\northrend\ulduar\ulduar\boss_auriaya.cpp"
+							>
+						</File>
+						<File
+							RelativePath="..\scripts\northrend\ulduar\ulduar\boss_freya.cpp"
+							>
+						</File>
+						<File
+							RelativePath="..\scripts\northrend\ulduar\ulduar\boss_hodir.cpp"
+							>
+						</File>
+						<File
+							RelativePath="..\scripts\northrend\ulduar\ulduar\boss_ignis.cpp"
+							>
+						</File>
+						<File
+							RelativePath="..\scripts\northrend\ulduar\ulduar\boss_iron_council.cpp"
+							>
+						</File>
+						<File
+							RelativePath="..\scripts\northrend\ulduar\ulduar\boss_kologarn.cpp"
+							>
+						</File>
+						<File
+							RelativePath="..\scripts\northrend\ulduar\ulduar\boss_leviathan.cpp"
+							>
+						</File>
+						<File
+							RelativePath="..\scripts\northrend\ulduar\ulduar\boss_mimiron.cpp"
+							>
+						</File>
+						<File
+							RelativePath="..\scripts\northrend\ulduar\ulduar\boss_razorscale.cpp"
+							>
+						</File>
+						<File
+							RelativePath="..\scripts\northrend\ulduar\ulduar\boss_thorim.cpp"
+							>
+						</File>
+						<File
+							RelativePath="..\scripts\northrend\ulduar\ulduar\boss_vezax.cpp"
+							>
+						</File>
+						<File
+							RelativePath="..\scripts\northrend\ulduar\ulduar\boss_xt_002.cpp"
+							>
+						</File>
+						<File
+							RelativePath="..\scripts\northrend\ulduar\ulduar\boss_yogg_saron.cpp"
+							>
+						</File>
+						<File
+							RelativePath="..\scripts\northrend\ulduar\ulduar\ulduar_teleport.cpp"
+							>
+						</File>
+						<File
+							RelativePath="..\scripts\northrend\ulduar\ulduar\instance_ulduar.cpp"
+							>
+						</File>
+						<File
+							RelativePath="..\scripts\northrend\ulduar\ulduar\def_ulduar.h"
+							>
+						</File>
 					</Filter>
 				</Filter>
 				<Filter
@@ -1719,10 +1947,6 @@
 							>
 						</File>
 						<File
-							RelativePath="..\scripts\northrend\utgarde_keep\utgarde_keep\def_utgarde_keep.h"
-							>
-						</File>
-						<File
 							RelativePath="..\scripts\northrend\utgarde_keep\utgarde_keep\instance_utgarde_keep.cpp"
 							>
 						</File>
@@ -1730,451 +1954,72 @@
 							RelativePath="..\scripts\northrend\utgarde_keep\utgarde_keep\utgarde_keep.cpp"
 							>
 						</File>
+						<File
+							RelativePath="..\scripts\northrend\utgarde_keep\utgarde_keep\utgarde_keep.h"
+							>
+						</File>
 					</Filter>
 					<Filter
 						Name="utgarde_pinnacle"
 						>
+						<File
+							RelativePath="..\scripts\northrend\utgarde_keep\utgarde_pinnacle\boss_gortok.cpp"
+							>
+						</File>
+						<File
+							RelativePath="..\scripts\northrend\utgarde_keep\utgarde_pinnacle\boss_skadi.cpp"
+							>
+						</File>
+						<File
+							RelativePath="..\scripts\northrend\utgarde_keep\utgarde_pinnacle\boss_svala.cpp"
+							>
+						</File>
+						<File
+							RelativePath="..\scripts\northrend\utgarde_keep\utgarde_pinnacle\boss_ymiron.cpp"
+							>
+						</File>
+						<File
+							RelativePath="..\scripts\northrend\utgarde_keep\utgarde_pinnacle\instance_utgarde_pinnacle.cpp"
+							>
+						</File>
+						<File
+							RelativePath="..\scripts\northrend\utgarde_keep\utgarde_pinnacle\utgarde_pinnacle.h"
+							>
+						</File>
 					</Filter>
 				</Filter>
 				<Filter
 					Name="vault_of_archavon"
 					>
+					<File
+						RelativePath="..\scripts\northrend\vault_of_archavon\boss_archavon.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\scripts\northrend\vault_of_archavon\boss_emalon.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\scripts\northrend\vault_of_archavon\boss_koralon.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\scripts\northrend\vault_of_archavon\instance_vault_of_archavon.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\scripts\northrend\vault_of_archavon\vault_of_archavon.h"
+						>
+					</File>
 				</Filter>
 				<Filter
 					Name="violet_hold"
 					>
 				</Filter>
-				<Filter
-					Name="zuldrak"
-					>
-				</Filter>
-				<File
-					RelativePath="..\scripts\northrend\borean_tundra.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\scripts\northrend\dragonblight.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\scripts\northrend\grizzly_hills.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\scripts\northrend\icecrown.cpp"
-					>
-				</File>
 			</Filter>
 			<Filter
 				Name="outland"
 				>
-				<Filter
-					Name="aunchindoun"
-					>
-					<Filter
-						Name="auchenai_crypts"
-						>
-						<File
-							RelativePath="..\scripts\outland\aunchindoun\auchenai_crypts\boss_exarch_maladaar.cpp"
-							>
-						</File>
-					</Filter>
-					<Filter
-						Name="mana_tombs"
-						>
-						<File
-							RelativePath="..\scripts\outland\aunchindoun\mana_tombs\boss_nexusprince_shaffar.cpp"
-							>
-						</File>
-						<File
-							RelativePath="..\scripts\outland\aunchindoun\mana_tombs\boss_pandemonius.cpp"
-							>
-						</File>
-					</Filter>
-					<Filter
-						Name="sethekk_halls"
-						>
-						<File
-							RelativePath="..\scripts\outland\aunchindoun\sethekk_halls\boss_darkweaver_syth.cpp"
-							>
-						</File>
-						<File
-							RelativePath="..\scripts\outland\aunchindoun\sethekk_halls\boss_tailonking_ikiss.cpp"
-							>
-						</File>
-						<File
-							RelativePath="..\scripts\outland\aunchindoun\sethekk_halls\def_sethekk_halls.h"
-							>
-						</File>
-						<File
-							RelativePath="..\scripts\outland\aunchindoun\sethekk_halls\instance_sethekk_halls.cpp"
-							>
-						</File>
-					</Filter>
-					<Filter
-						Name="shadow_labyrinth"
-						>
-						<File
-							RelativePath="..\scripts\outland\aunchindoun\shadow_labyrinth\boss_ambassador_hellmaw.cpp"
-							>
-						</File>
-						<File
-							RelativePath="..\scripts\outland\aunchindoun\shadow_labyrinth\boss_blackheart_the_inciter.cpp"
-							>
-						</File>
-						<File
-							RelativePath="..\scripts\outland\aunchindoun\shadow_labyrinth\boss_grandmaster_vorpil.cpp"
-							>
-						</File>
-						<File
-							RelativePath="..\scripts\outland\aunchindoun\shadow_labyrinth\boss_murmur.cpp"
-							>
-						</File>
-						<File
-							RelativePath="..\scripts\outland\aunchindoun\shadow_labyrinth\def_shadow_labyrinth.h"
-							>
-						</File>
-						<File
-							RelativePath="..\scripts\outland\aunchindoun\shadow_labyrinth\instance_shadow_labyrinth.cpp"
-							>
-						</File>
-					</Filter>
-				</Filter>
-				<Filter
-					Name="black_temple"
-					>
-					<File
-						RelativePath="..\scripts\outland\black_temple\black_temple.cpp"
-						>
-					</File>
-					<File
-						RelativePath="..\scripts\outland\black_temple\boss_bloodboil.cpp"
-						>
-					</File>
-					<File
-						RelativePath="..\scripts\outland\black_temple\boss_illidan.cpp"
-						>
-					</File>
-					<File
-						RelativePath="..\scripts\outland\black_temple\boss_mother_shahraz.cpp"
-						>
-					</File>
-					<File
-						RelativePath="..\scripts\outland\black_temple\boss_reliquary_of_souls.cpp"
-						>
-					</File>
-					<File
-						RelativePath="..\scripts\outland\black_temple\boss_shade_of_akama.cpp"
-						>
-					</File>
-					<File
-						RelativePath="..\scripts\outland\black_temple\boss_supremus.cpp"
-						>
-					</File>
-					<File
-						RelativePath="..\scripts\outland\black_temple\boss_teron_gorefiend.cpp"
-						>
-					</File>
-					<File
-						RelativePath="..\scripts\outland\black_temple\boss_warlord_najentus.cpp"
-						>
-					</File>
-					<File
-						RelativePath="..\scripts\outland\black_temple\def_black_temple.h"
-						>
-					</File>
-					<File
-						RelativePath="..\scripts\outland\black_temple\illidari_council.cpp"
-						>
-					</File>
-					<File
-						RelativePath="..\scripts\outland\black_temple\instance_black_temple.cpp"
-						>
-					</File>
-				</Filter>
-				<Filter
-					Name="coilfang_reservoir"
-					>
-					<Filter
-						Name="serpent_shrine"
-						>
-						<File
-							RelativePath="..\scripts\outland\coilfang_reservoir\serpent_shrine\boss_fathomlord_karathress.cpp"
-							>
-						</File>
-						<File
-							RelativePath="..\scripts\outland\coilfang_reservoir\serpent_shrine\boss_hydross_the_unstable.cpp"
-							>
-						</File>
-						<File
-							RelativePath="..\scripts\outland\coilfang_reservoir\serpent_shrine\boss_lady_vashj.cpp"
-							>
-						</File>
-						<File
-							RelativePath="..\scripts\outland\coilfang_reservoir\serpent_shrine\boss_leotheras_the_blind.cpp"
-							>
-						</File>
-						<File
-							RelativePath="..\scripts\outland\coilfang_reservoir\serpent_shrine\boss_morogrim_tidewalker.cpp"
-							>
-						</File>
-						<File
-							RelativePath="..\scripts\outland\coilfang_reservoir\serpent_shrine\def_serpent_shrine.h"
-							>
-						</File>
-						<File
-							RelativePath="..\scripts\outland\coilfang_reservoir\serpent_shrine\instance_serpent_shrine.cpp"
-							>
-						</File>
-					</Filter>
-					<Filter
-						Name="slave_pens"
-						>
-						<File
-							RelativePath="..\scripts\outland\coilfang_reservoir\slave_pens\boss_rokmar.cpp"
-							>
-						</File>
-					</Filter>
-					<Filter
-						Name="steam_vault"
-						>
-						<File
-							RelativePath="..\scripts\outland\coilfang_reservoir\steam_vault\boss_hydromancer_thespia.cpp"
-							>
-						</File>
-						<File
-							RelativePath="..\scripts\outland\coilfang_reservoir\steam_vault\boss_mekgineer_steamrigger.cpp"
-							>
-						</File>
-						<File
-							RelativePath="..\scripts\outland\coilfang_reservoir\steam_vault\boss_warlord_kalithresh.cpp"
-							>
-						</File>
-						<File
-							RelativePath="..\scripts\outland\coilfang_reservoir\steam_vault\def_steam_vault.h"
-							>
-						</File>
-						<File
-							RelativePath="..\scripts\outland\coilfang_reservoir\steam_vault\instance_steam_vault.cpp"
-							>
-						</File>
-					</Filter>
-					<Filter
-						Name="underbog"
-						>
-						<File
-							RelativePath="..\scripts\outland\coilfang_reservoir\underbog\boss_hungarfen.cpp"
-							>
-						</File>
-					</Filter>
-				</Filter>
-				<Filter
-					Name="gruuls_lair"
-					>
-					<File
-						RelativePath="..\scripts\outland\gruuls_lair\boss_gruul.cpp"
-						>
-					</File>
-					<File
-						RelativePath="..\scripts\outland\gruuls_lair\boss_high_king_maulgar.cpp"
-						>
-					</File>
-					<File
-						RelativePath="..\scripts\outland\gruuls_lair\def_gruuls_lair.h"
-						>
-					</File>
-					<File
-						RelativePath="..\scripts\outland\gruuls_lair\instance_gruuls_lair.cpp"
-						>
-					</File>
-				</Filter>
-				<Filter
-					Name="hellfire_citadel"
-					>
-					<Filter
-						Name="blood_furnace"
-						>
-						<File
-							RelativePath="..\scripts\outland\hellfire_citadel\blood_furnace\boss_broggok.cpp"
-							>
-						</File>
-						<File
-							RelativePath="..\scripts\outland\hellfire_citadel\blood_furnace\boss_kelidan_the_breaker.cpp"
-							>
-						</File>
-						<File
-							RelativePath="..\scripts\outland\hellfire_citadel\blood_furnace\boss_the_maker.cpp"
-							>
-						</File>
-						<File
-							RelativePath="..\scripts\outland\hellfire_citadel\blood_furnace\def_blood_furnace.h"
-							>
-						</File>
-						<File
-							RelativePath="..\scripts\outland\hellfire_citadel\blood_furnace\instance_blood_furnace.cpp"
-							>
-						</File>
-					</Filter>
-					<Filter
-						Name="hellfire_ramparts"
-						>
-						<File
-							RelativePath="..\scripts\outland\hellfire_citadel\hellfire_ramparts\boss_nazan_and_vazruden.cpp"
-							>
-						</File>
-						<File
-							RelativePath="..\scripts\outland\hellfire_citadel\hellfire_ramparts\boss_omor_the_unscarred.cpp"
-							>
-						</File>
-						<File
-							RelativePath="..\scripts\outland\hellfire_citadel\hellfire_ramparts\boss_watchkeeper_gargolmar.cpp"
-							>
-						</File>
-						<File
-							RelativePath="..\scripts\outland\hellfire_citadel\hellfire_ramparts\def_hellfire_ramparts.h"
-							>
-						</File>
-						<File
-							RelativePath="..\scripts\outland\hellfire_citadel\hellfire_ramparts\instance_hellfire_ramparts.cpp"
-							>
-						</File>
-					</Filter>
-					<Filter
-						Name="magtheridons_lair"
-						>
-						<File
-							RelativePath="..\scripts\outland\hellfire_citadel\magtheridons_lair\boss_magtheridon.cpp"
-							>
-						</File>
-						<File
-							RelativePath="..\scripts\outland\hellfire_citadel\magtheridons_lair\def_magtheridons_lair.h"
-							>
-						</File>
-						<File
-							RelativePath="..\scripts\outland\hellfire_citadel\magtheridons_lair\instance_magtheridons_lair.cpp"
-							>
-						</File>
-					</Filter>
-					<Filter
-						Name="shattered_halls"
-						>
-						<File
-							RelativePath="..\scripts\outland\hellfire_citadel\shattered_halls\boss_nethekurse.cpp"
-							>
-						</File>
-						<File
-							RelativePath="..\scripts\outland\hellfire_citadel\shattered_halls\boss_warbringer_omrogg.cpp"
-							>
-						</File>
-						<File
-							RelativePath="..\scripts\outland\hellfire_citadel\shattered_halls\boss_warchief_kargath_bladefist.cpp">
-						</File>
-						<File
-							RelativePath="..\scripts\outland\hellfire_citadel\shattered_halls\def_shattered_halls.h"
-							>
-						</File>
-						<File
-							RelativePath="..\scripts\outland\hellfire_citadel\shattered_halls\instance_shattered_halls.cpp"
-							>
-						</File>
-					</Filter>
-				</Filter>
-				<Filter
-					Name="tempest_keep"
-					>
-					<Filter
-						Name="arcatraz"
-						>
-						<File
-							RelativePath="..\scripts\outland\tempest_keep\arcatraz\arcatraz.cpp"
-							>
-						</File>
-						<File
-							RelativePath="..\scripts\outland\tempest_keep\arcatraz\boss_harbinger_skyriss.cpp"
-							>
-						</File>
-						<File
-							RelativePath="..\scripts\outland\tempest_keep\arcatraz\def_arcatraz.h"
-							>
-						</File>
-						<File
-							RelativePath="..\scripts\outland\tempest_keep\arcatraz\instance_arcatraz.cpp"
-							>
-						</File>
-					</Filter>
-					<Filter
-						Name="botanica"
-						>
-						<File
-							RelativePath="..\scripts\outland\tempest_keep\botanica\boss_high_botanist_freywinn.cpp"
-							>
-						</File>
-						<File
-							RelativePath="..\scripts\outland\tempest_keep\botanica\boss_laj.cpp"
-							>
-						</File>
-						<File
-							RelativePath="..\scripts\outland\tempest_keep\botanica\boss_warp_splinter.cpp"
-							>
-						</File>
-					</Filter>
-					<Filter
-						Name="the_eye"
-						>
-						<File
-							RelativePath="..\scripts\outland\tempest_keep\the_eye\boss_astromancer.cpp"
-							>
-						</File>
-						<File
-							RelativePath="..\scripts\outland\tempest_keep\the_eye\boss_kaelthas.cpp"
-							>
-						</File>
-						<File
-							RelativePath="..\scripts\outland\tempest_keep\the_eye\boss_void_reaver.cpp"
-							>
-						</File>
-						<File
-							RelativePath="..\scripts\outland\tempest_keep\the_eye\def_the_eye.h"
-							>
-						</File>
-						<File
-							RelativePath="..\scripts\outland\tempest_keep\the_eye\instance_the_eye.cpp"
-							>
-						</File>
-						<File
-							RelativePath="..\scripts\outland\tempest_keep\the_eye\the_eye.cpp"
-							>
-						</File>
-					</Filter>
-					<Filter
-						Name="the_mechanar"
-						>
-						<File
-							RelativePath="..\scripts\outland\tempest_keep\the_mechanar\boss_gatewatcher_gyrokill.cpp"
-							>
-						</File>
-						<File
-							RelativePath="..\scripts\outland\tempest_keep\the_mechanar\boss_gatewatcher_ironhand.cpp"
-							>
-						</File>
-						<File
-							RelativePath="..\scripts\outland\tempest_keep\the_mechanar\boss_nethermancer_sepethrea.cpp"
-							>
-						</File>
-						<File
-							RelativePath="..\scripts\outland\tempest_keep\the_mechanar\boss_pathaleon_the_calculator.cpp"
-							>
-						</File>
-						<File
-							RelativePath="..\scripts\outland\tempest_keep\the_mechanar\def_mechanar.h"
-							>
-						</File>
-						<File
-							RelativePath="..\scripts\outland\tempest_keep\the_mechanar\instance_mechanar.cpp"
-							>
-						</File>
-					</Filter>
-				</Filter>
 				<File
 					RelativePath="..\scripts\outland\blades_edge_mountains.cpp"
 					>
@@ -2215,6 +2060,414 @@
 					RelativePath="..\scripts\outland\zangarmarsh.cpp"
 					>
 				</File>
+				<Filter
+					Name="auchindoun"
+					>
+					<Filter
+						Name="auchenai_crypts"
+						>
+						<File
+							RelativePath="..\scripts\outland\auchindoun\auchenai_crypts\boss_exarch_maladaar.cpp"
+							>
+						</File>
+					</Filter>
+					<Filter
+						Name="mana_tombs"
+						>
+						<File
+							RelativePath="..\scripts\outland\auchindoun\mana_tombs\boss_nexusprince_shaffar.cpp"
+							>
+						</File>
+						<File
+							RelativePath="..\scripts\outland\auchindoun\mana_tombs\boss_pandemonius.cpp"
+							>
+						</File>
+					</Filter>
+					<Filter
+						Name="sethekk_halls"
+						>
+						<File
+							RelativePath="..\scripts\outland\auchindoun\sethekk_halls\boss_darkweaver_syth.cpp"
+							>
+						</File>
+						<File
+							RelativePath="..\scripts\outland\auchindoun\sethekk_halls\boss_tailonking_ikiss.cpp"
+							>
+						</File>
+						<File
+							RelativePath="..\scripts\outland\auchindoun\sethekk_halls\instance_sethekk_halls.cpp"
+							>
+						</File>
+						<File
+							RelativePath="..\scripts\outland\auchindoun\sethekk_halls\sethekk_halls.h"
+							>
+						</File>
+					</Filter>
+					<Filter
+						Name="shadow_labyrinth"
+						>
+						<File
+							RelativePath="..\scripts\outland\auchindoun\shadow_labyrinth\boss_ambassador_hellmaw.cpp"
+							>
+						</File>
+						<File
+							RelativePath="..\scripts\outland\auchindoun\shadow_labyrinth\boss_blackheart_the_inciter.cpp"
+							>
+						</File>
+						<File
+							RelativePath="..\scripts\outland\auchindoun\shadow_labyrinth\boss_grandmaster_vorpil.cpp"
+							>
+						</File>
+						<File
+							RelativePath="..\scripts\outland\auchindoun\shadow_labyrinth\boss_murmur.cpp"
+							>
+						</File>
+						<File
+							RelativePath="..\scripts\outland\auchindoun\shadow_labyrinth\instance_shadow_labyrinth.cpp"
+							>
+						</File>
+						<File
+							RelativePath="..\scripts\outland\auchindoun\shadow_labyrinth\shadow_labyrinth.h"
+							>
+						</File>
+					</Filter>
+				</Filter>
+				<Filter
+					Name="black_temple"
+					>
+					<File
+						RelativePath="..\scripts\outland\black_temple\black_temple.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\scripts\outland\black_temple\black_temple.h"
+						>
+					</File>
+					<File
+						RelativePath="..\scripts\outland\black_temple\boss_bloodboil.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\scripts\outland\black_temple\boss_illidan.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\scripts\outland\black_temple\boss_mother_shahraz.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\scripts\outland\black_temple\boss_reliquary_of_souls.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\scripts\outland\black_temple\boss_shade_of_akama.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\scripts\outland\black_temple\boss_supremus.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\scripts\outland\black_temple\boss_teron_gorefiend.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\scripts\outland\black_temple\boss_warlord_najentus.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\scripts\outland\black_temple\illidari_council.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\scripts\outland\black_temple\instance_black_temple.cpp"
+						>
+					</File>
+				</Filter>
+				<Filter
+					Name="coilfang_reservoir"
+					>
+					<Filter
+						Name="serpent_shrine"
+						>
+						<File
+							RelativePath="..\scripts\outland\coilfang_reservoir\serpent_shrine\boss_fathomlord_karathress.cpp"
+							>
+						</File>
+						<File
+							RelativePath="..\scripts\outland\coilfang_reservoir\serpent_shrine\boss_hydross_the_unstable.cpp"
+							>
+						</File>
+						<File
+							RelativePath="..\scripts\outland\coilfang_reservoir\serpent_shrine\boss_lady_vashj.cpp"
+							>
+						</File>
+						<File
+							RelativePath="..\scripts\outland\coilfang_reservoir\serpent_shrine\boss_leotheras_the_blind.cpp"
+							>
+						</File>
+						<File
+							RelativePath="..\scripts\outland\coilfang_reservoir\serpent_shrine\boss_morogrim_tidewalker.cpp"
+							>
+						</File>
+						<File
+							RelativePath="..\scripts\outland\coilfang_reservoir\serpent_shrine\instance_serpent_shrine.cpp"
+							>
+						</File>
+						<File
+							RelativePath="..\scripts\outland\coilfang_reservoir\serpent_shrine\serpent_shrine.h"
+							>
+						</File>
+					</Filter>
+					<Filter
+						Name="slave_pens"
+						>
+						<File
+							RelativePath="..\scripts\outland\coilfang_reservoir\slave_pens\boss_rokmar.cpp"
+							>
+						</File>
+					</Filter>
+					<Filter
+						Name="steam_vault"
+						>
+						<File
+							RelativePath="..\scripts\outland\coilfang_reservoir\steam_vault\boss_hydromancer_thespia.cpp"
+							>
+						</File>
+						<File
+							RelativePath="..\scripts\outland\coilfang_reservoir\steam_vault\boss_mekgineer_steamrigger.cpp"
+							>
+						</File>
+						<File
+							RelativePath="..\scripts\outland\coilfang_reservoir\steam_vault\boss_warlord_kalithresh.cpp"
+							>
+						</File>
+						<File
+							RelativePath="..\scripts\outland\coilfang_reservoir\steam_vault\instance_steam_vault.cpp"
+							>
+						</File>
+						<File
+							RelativePath="..\scripts\outland\coilfang_reservoir\steam_vault\steam_vault.h"
+							>
+						</File>
+					</Filter>
+					<Filter
+						Name="underbog"
+						>
+						<File
+							RelativePath="..\scripts\outland\coilfang_reservoir\underbog\boss_hungarfen.cpp"
+							>
+						</File>
+					</Filter>
+				</Filter>
+				<Filter
+					Name="gruuls_lair"
+					>
+					<File
+						RelativePath="..\scripts\outland\gruuls_lair\boss_gruul.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\scripts\outland\gruuls_lair\boss_high_king_maulgar.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\scripts\outland\gruuls_lair\gruuls_lair.h"
+						>
+					</File>
+					<File
+						RelativePath="..\scripts\outland\gruuls_lair\instance_gruuls_lair.cpp"
+						>
+					</File>
+				</Filter>
+				<Filter
+					Name="hellfire_citadel"
+					>
+					<Filter
+						Name="blood_furnace"
+						>
+						<File
+							RelativePath="..\scripts\outland\hellfire_citadel\blood_furnace\blood_furnace.h"
+							>
+						</File>
+						<File
+							RelativePath="..\scripts\outland\hellfire_citadel\blood_furnace\boss_broggok.cpp"
+							>
+						</File>
+						<File
+							RelativePath="..\scripts\outland\hellfire_citadel\blood_furnace\boss_kelidan_the_breaker.cpp"
+							>
+						</File>
+						<File
+							RelativePath="..\scripts\outland\hellfire_citadel\blood_furnace\boss_the_maker.cpp"
+							>
+						</File>
+						<File
+							RelativePath="..\scripts\outland\hellfire_citadel\blood_furnace\instance_blood_furnace.cpp"
+							>
+						</File>
+					</Filter>
+					<Filter
+						Name="hellfire_ramparts"
+						>
+						<File
+							RelativePath="..\scripts\outland\hellfire_citadel\hellfire_ramparts\boss_nazan_and_vazruden.cpp"
+							>
+						</File>
+						<File
+							RelativePath="..\scripts\outland\hellfire_citadel\hellfire_ramparts\boss_omor_the_unscarred.cpp"
+							>
+						</File>
+						<File
+							RelativePath="..\scripts\outland\hellfire_citadel\hellfire_ramparts\boss_watchkeeper_gargolmar.cpp"
+							>
+						</File>
+						<File
+							RelativePath="..\scripts\outland\hellfire_citadel\hellfire_ramparts\hellfire_ramparts.h"
+							>
+						</File>
+						<File
+							RelativePath="..\scripts\outland\hellfire_citadel\hellfire_ramparts\instance_hellfire_ramparts.cpp"
+							>
+						</File>
+					</Filter>
+					<Filter
+						Name="magtheridons_lair"
+						>
+						<File
+							RelativePath="..\scripts\outland\hellfire_citadel\magtheridons_lair\boss_magtheridon.cpp"
+							>
+						</File>
+						<File
+							RelativePath="..\scripts\outland\hellfire_citadel\magtheridons_lair\instance_magtheridons_lair.cpp"
+							>
+						</File>
+						<File
+							RelativePath="..\scripts\outland\hellfire_citadel\magtheridons_lair\magtheridons_lair.h"
+							>
+						</File>
+					</Filter>
+					<Filter
+						Name="shattered_halls"
+						>
+						<File
+							RelativePath="..\scripts\outland\hellfire_citadel\shattered_halls\boss_nethekurse.cpp"
+							>
+						</File>
+						<File
+							RelativePath="..\scripts\outland\hellfire_citadel\shattered_halls\boss_warbringer_omrogg.cpp"
+							>
+						</File>
+						<File
+							RelativePath="..\scripts\outland\hellfire_citadel\shattered_halls\boss_warchief_kargath_bladefist.cpp"
+							>
+						</File>
+						<File
+							RelativePath="..\scripts\outland\hellfire_citadel\shattered_halls\instance_shattered_halls.cpp"
+							>
+						</File>
+						<File
+							RelativePath="..\scripts\outland\hellfire_citadel\shattered_halls\shattered_halls.h"
+							>
+						</File>
+					</Filter>
+				</Filter>
+				<Filter
+					Name="tempest_keep"
+					>
+					<Filter
+						Name="arcatraz"
+						>
+						<File
+							RelativePath="..\scripts\outland\tempest_keep\arcatraz\arcatraz.cpp"
+							>
+						</File>
+						<File
+							RelativePath="..\scripts\outland\tempest_keep\arcatraz\arcatraz.h"
+							>
+						</File>
+						<File
+							RelativePath="..\scripts\outland\tempest_keep\arcatraz\boss_harbinger_skyriss.cpp"
+							>
+						</File>
+						<File
+							RelativePath="..\scripts\outland\tempest_keep\arcatraz\instance_arcatraz.cpp"
+							>
+						</File>
+					</Filter>
+					<Filter
+						Name="botanica"
+						>
+						<File
+							RelativePath="..\scripts\outland\tempest_keep\botanica\boss_high_botanist_freywinn.cpp"
+							>
+						</File>
+						<File
+							RelativePath="..\scripts\outland\tempest_keep\botanica\boss_laj.cpp"
+							>
+						</File>
+						<File
+							RelativePath="..\scripts\outland\tempest_keep\botanica\boss_warp_splinter.cpp"
+							>
+						</File>
+					</Filter>
+					<Filter
+						Name="the_eye"
+						>
+						<File
+							RelativePath="..\scripts\outland\tempest_keep\the_eye\boss_astromancer.cpp"
+							>
+						</File>
+						<File
+							RelativePath="..\scripts\outland\tempest_keep\the_eye\boss_kaelthas.cpp"
+							>
+						</File>
+						<File
+							RelativePath="..\scripts\outland\tempest_keep\the_eye\boss_void_reaver.cpp"
+							>
+						</File>
+						<File
+							RelativePath="..\scripts\outland\tempest_keep\the_eye\instance_the_eye.cpp"
+							>
+						</File>
+						<File
+							RelativePath="..\scripts\outland\tempest_keep\the_eye\the_eye.cpp"
+							>
+						</File>
+						<File
+							RelativePath="..\scripts\outland\tempest_keep\the_eye\the_eye.h"
+							>
+						</File>
+					</Filter>
+					<Filter
+						Name="the_mechanar"
+						>
+						<File
+							RelativePath="..\scripts\outland\tempest_keep\the_mechanar\boss_gatewatcher_gyrokill.cpp"
+							>
+						</File>
+						<File
+							RelativePath="..\scripts\outland\tempest_keep\the_mechanar\boss_gatewatcher_ironhand.cpp"
+							>
+						</File>
+						<File
+							RelativePath="..\scripts\outland\tempest_keep\the_mechanar\boss_nethermancer_sepethrea.cpp"
+							>
+						</File>
+						<File
+							RelativePath="..\scripts\outland\tempest_keep\the_mechanar\boss_pathaleon_the_calculator.cpp"
+							>
+						</File>
+						<File
+							RelativePath="..\scripts\outland\tempest_keep\the_mechanar\instance_mechanar.cpp"
+							>
+						</File>
+						<File
+							RelativePath="..\scripts\outland\tempest_keep\the_mechanar\mechanar.h"
+							>
+						</File>
+					</Filter>
+				</Filter>
 			</Filter>
 			<Filter
 				Name="world"
@@ -2253,10 +2506,6 @@
 				</File>
 				<File
 					RelativePath="..\scripts\world\mob_generic_creature.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\scripts\world\npc_innkeeper.cpp"
 					>
 				</File>
 				<File
@@ -2373,8 +2622,8 @@
 				>
 				<Tool
 					Name="VCCustomBuildTool"
-					Description="Extracting Revision"
-					CommandLine="echo on&#x0D;&#x0A;cd &quot;$(SolutionDir)&quot;&#x0D;&#x0A;&quot;..\..\..\win\VC80\genrevision__Win32_$(ConfigurationName)\genrevision.exe&quot;"
+					Description="Extracting revision"
+					CommandLine="cd &quot;$(SolutionDir)&quot;&#x0D;&#x0A;&quot;$(SolutionDir)..\..\..\win\VC80\genrevision__Win32_$(ConfigurationName)\genrevision.exe&quot;&#x0D;&#x0A;"
 					AdditionalDependencies=".svn/entries"
 					Outputs="revision.h"
 				/>
@@ -2384,8 +2633,8 @@
 				>
 				<Tool
 					Name="VCCustomBuildTool"
-					Description="Extracting Revision"
-					CommandLine="echo on&#x0D;&#x0A;cd &quot;$(SolutionDir)&quot;&#x0D;&#x0A;&quot;..\..\..\win\VC80\genrevision__Win32_$(ConfigurationName)\genrevision.exe&quot;"
+					Description="Extracting revision"
+					CommandLine="cd &quot;$(SolutionDir)&quot;&#x0D;&#x0A;&quot;$(SolutionDir)..\..\..\win\VC80\genrevision__Win32_$(ConfigurationName)\genrevision.exe&quot;&#x0D;&#x0A;"
 					AdditionalDependencies=".svn/entries"
 					Outputs="revision.h"
 				/>
@@ -2395,8 +2644,8 @@
 				>
 				<Tool
 					Name="VCCustomBuildTool"
-					Description="Extracting Revision"
-					CommandLine="echo on&#x0D;&#x0A;cd &quot;$(SolutionDir)&quot;&#x0D;&#x0A;&quot;..\..\..\win\VC80\genrevision__Win32_$(ConfigurationName)\genrevision.exe&quot;"
+					Description="Extracting revision"
+					CommandLine="cd &quot;$(SolutionDir)&quot;&#x0D;&#x0A;&quot;$(SolutionDir)..\..\..\win\VC80\genrevision__Win32_$(ConfigurationName)\genrevision.exe&quot;&#x0D;&#x0A;"
 					AdditionalDependencies=".svn/entries"
 					Outputs="revision.h"
 				/>
@@ -2406,8 +2655,8 @@
 				>
 				<Tool
 					Name="VCCustomBuildTool"
-					Description="Extracting Revision"
-					CommandLine="echo on&#x0D;&#x0A;cd &quot;$(SolutionDir)&quot;&#x0D;&#x0A;&quot;..\..\..\win\VC80\genrevision__Win32_$(ConfigurationName)\genrevision.exe&quot;"
+					Description="Extracting revision"
+					CommandLine="cd &quot;$(SolutionDir)&quot;&#x0D;&#x0A;&quot;$(SolutionDir)..\..\..\win\VC80\genrevision__Win32_$(ConfigurationName)\genrevision.exe&quot;&#x0D;&#x0A;"
 					AdditionalDependencies=".svn/entries"
 					Outputs="revision.h"
 				/>

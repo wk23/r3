@@ -22,6 +22,7 @@ SDCategory: Naxxramas
 EndScriptData */
 
 #include "precompiled.h"
+#include "naxxramas.h"
 
 enum
 {
@@ -76,13 +77,15 @@ struct MANGOS_DLL_DECL boss_gluthAI : public ScriptedAI
 {
     boss_gluthAI(Creature* pCreature) : ScriptedAI(pCreature)
     {
-        m_pInstance = (ScriptedInstance*)pCreature->GetInstanceData();
-        m_bIsHeroic = pCreature->GetMap()->IsHeroic();
+        pInstance = (ScriptedInstance*)pCreature->GetInstanceData();
+        Heroic = m_creature->GetMap()->GetSpawnMode() > 0;
         Reset();
     }
 
-    ScriptedInstance* m_pInstance;
-    bool m_bIsHeroic;
+    std::vector<uint64> addsGuid;
+
+    ScriptedInstance* pInstance;
+    bool Heroic;
 
     uint32 MortalWound_Timer;
     uint32 Decimate_Timer;
@@ -99,11 +102,32 @@ struct MANGOS_DLL_DECL boss_gluthAI : public ScriptedAI
         Summon_Timer = 10000;
 
         m_uiBerserkTimer = MINUTE*8*IN_MILISECONDS;
+        addsGuid.clear();
+
+        if(pInstance) pInstance->SetData(TYPE_GLUTH, NOT_STARTED);
+    }
+
+    void JustDied(Unit *killer)
+    {
+        std::vector<uint64>::iterator itr;
+        for(itr=addsGuid.begin(); itr!=addsGuid.end(); itr++)
+        {
+            Unit* zombie = Unit::GetUnit((*m_creature), (*itr));
+            if(zombie && zombie->isAlive())
+                zombie->DealDamage(zombie, zombie->GetHealth(), NULL, DIRECT_DAMAGE, SPELL_SCHOOL_MASK_NORMAL, NULL, false);
+        }
+        addsGuid.clear();
+        if(pInstance) pInstance->SetData(TYPE_GLUTH, DONE);
+    }
+
+    void Aggro(Unit *who)
+    {
+        if(pInstance) pInstance->SetData(TYPE_GLUTH, IN_PROGRESS);
     }
 
     void UpdateAI(const uint32 diff)
     {
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         //MortalWound_Timer
@@ -123,29 +147,31 @@ struct MANGOS_DLL_DECL boss_gluthAI : public ScriptedAI
         //Enrage_Timer
         if (Enrage_Timer < diff)
         {
-            DoCast(m_creature, m_bIsHeroic ? SPELL_ENRAGE_H : SPELL_ENRAGE);
+            DoCast(m_creature, Heroic ? SPELL_ENRAGE_H : SPELL_ENRAGE);
             Enrage_Timer = 60000;
         }else Enrage_Timer -= diff;
 
         //Summon_Timer
         if (Summon_Timer < diff)
         {
-            if (Creature* pZombie = m_creature->SummonCreature(NPC_ZOMBIE_CHOW,ADD_1X,ADD_1Y,ADD_1Z,0,TEMPSUMMON_TIMED_OR_DEAD_DESPAWN,80000))
+            if (Creature* pZombie = m_creature->SummonCreature(NPC_ZOMBIE_CHOW,ADD_1X,ADD_1Y,ADD_1Z,0,TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 15000))
             {
                 if (Unit* pTarget = SelectUnit(SELECT_TARGET_RANDOM,0))
-                    pZombie->AddThreat(pTarget,0.0f);
+                    pZombie->AddThreat(pTarget);
+                addsGuid.push_back(pZombie->GetGUID());
             }
 
-            if (m_bIsHeroic)
+            if (Heroic)
             {
-                if (Creature* pZombie = m_creature->SummonCreature(NPC_ZOMBIE_CHOW,ADD_1X,ADD_1Y,ADD_1Z,0,TEMPSUMMON_TIMED_OR_DEAD_DESPAWN,80000))
+                if (Creature* pZombie = m_creature->SummonCreature(NPC_ZOMBIE_CHOW,ADD_1X,ADD_1Y,ADD_1Z,0,TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 15000))
                 {
                     if (Unit* pTarget = SelectUnit(SELECT_TARGET_RANDOM,0))
-                        pZombie->AddThreat(pTarget,0.0f);
+                        pZombie->AddThreat(pTarget);
+                    addsGuid.push_back(pZombie->GetGUID());
                 }
             }
 
-            Summon_Timer = 10000;
+            Summon_Timer = 20000;
         } else Summon_Timer -= diff;
 
         //m_uiBerserkTimer

@@ -22,7 +22,7 @@ SDCategory: Sunwell Plateau
 EndScriptData */
 
 #include "precompiled.h"
-#include "def_sunwell_plateau.h"
+#include "sunwell_plateau.h"
 
 enum Brutallus
 {
@@ -77,7 +77,7 @@ struct MANGOS_DLL_DECL boss_brutallusAI : public ScriptedAI
         m_uiStompTimer = 30000;
         m_uiBurnTimer = 60000;
         m_uiBerserkTimer = 360000;
-        m_uiLoveTimer = 10000 + rand()%7000;
+        m_uiLoveTimer = urand(10000, 17000);
 
         //TODO: correct me when pre-event implemented
         if (m_pInstance)
@@ -94,7 +94,7 @@ struct MANGOS_DLL_DECL boss_brutallusAI : public ScriptedAI
 
     void KilledUnit(Unit* pVictim)
     {
-        switch(rand()%3)
+        switch(urand(0, 2))
         {
             case 0: DoScriptText(YELL_KILL1, m_creature); break;
             case 1: DoScriptText(YELL_KILL2, m_creature); break;
@@ -118,18 +118,18 @@ struct MANGOS_DLL_DECL boss_brutallusAI : public ScriptedAI
 
     void UpdateAI(const uint32 uiDiff)
     {
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         if (m_uiLoveTimer < uiDiff)
         {
-            switch(rand()%3)
+            switch(urand(0, 2))
             {
                 case 0: DoScriptText(YELL_LOVE1, m_creature); break;
                 case 1: DoScriptText(YELL_LOVE2, m_creature); break;
                 case 2: DoScriptText(YELL_LOVE3, m_creature); break;
             }
-            m_uiLoveTimer = 15000 + rand()%8000;
+            m_uiLoveTimer = urand(15000, 23000);
         }
         else
             m_uiLoveTimer -= uiDiff;

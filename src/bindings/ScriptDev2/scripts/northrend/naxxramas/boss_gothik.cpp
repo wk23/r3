@@ -14,14 +14,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-/* ScriptData
-SDName: Boss_Gothik
-SD%Complete: 0
-SDComment: Placeholder
-SDCategory: Naxxramas
-EndScriptData */
-
 #include "precompiled.h"
+#include "naxxramas.h"
 
 //GO: the door
 #define GO_GOTHIK_GATE      181170
@@ -92,12 +86,16 @@ struct MANGOS_DLL_DECL boss_gothikAI : public ScriptedAI
 {
     boss_gothikAI(Creature* pCreature) : ScriptedAI(pCreature)
     {
-        Reset();
-        Heroic = m_creature->GetMap()->IsHeroic();
+        pInstance = (ScriptedInstance*)pCreature->GetInstanceData();
+        Heroic = pCreature->GetMap()->GetSpawnMode() > 0;
+        
+        trainees = Heroic ? 3 : 2;
 
         LiveX[0]=2669.430176; LiveY[0]=-3430.828613; LiveZ[0]=268.563049;
         LiveX[1]=2692.187988; LiveY[1]=-3431.384277; LiveZ[1]=268.563538;
         LiveX[2]=2714.282959; LiveY[2]=-3431.556152; LiveZ[2]=268.563538;
+        
+        Reset();
     }
 
     //summon coordinates
@@ -114,6 +112,8 @@ struct MANGOS_DLL_DECL boss_gothikAI : public ScriptedAI
     uint32 Trainee_Timer;
     uint32 DeathKnight_Timer;
     uint32 Rider_Timer;
+    
+    int trainees;
 
     ScriptedInstance* pInstance;
 
@@ -123,11 +123,13 @@ struct MANGOS_DLL_DECL boss_gothikAI : public ScriptedAI
         Phase_Timer = 210000;
         Shadowbolt_Timer = 1200;
 
-        Trainee_Timer = 12000;     //every 15-21 sec, 3 trainees at a time
-        DeathKnight_Timer = 20000; //every 12-15 sec after that
-        Rider_Timer = 60000;       //every 45 sec after that
+        Trainee_Timer = 12000;
+        DeathKnight_Timer = 20000;
+        Rider_Timer = 60000;
 
         SetCombatMovement(false);
+        
+        if(pInstance) pInstance->SetData(TYPE_GOTHIK, NOT_STARTED);
     }
 
     void DamageTaken(Unit *done_by, uint32 &damage)
@@ -137,15 +139,17 @@ struct MANGOS_DLL_DECL boss_gothikAI : public ScriptedAI
 
     void Aggro(Unit *who)
     {
+        if(pInstance) pInstance->SetData(TYPE_GOTHIK, IN_PROGRESS);
     }
 
     void JustDied(Unit *killer)
     {
+        if(pInstance) pInstance->SetData(TYPE_GOTHIK, DONE);
     }
 
     void UpdateAI(const uint32 diff)
     {
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         int i;
@@ -163,14 +167,13 @@ struct MANGOS_DLL_DECL boss_gothikAI : public ScriptedAI
             //summon trainees
             if(Trainee_Timer < diff)
             {
-                int r = irand(1,3);
-                for(i=0; i<r; i++)
+                for(i=0; i<trainees; i++)
                 {
                     Unit *mob = m_creature->SummonCreature(CR_UN_TRAINEE, LiveX[i], LiveY[i], LiveZ[i], 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 10000);
                     Unit *target = SelectUnit(SELECT_TARGET_RANDOM, 0);
                     if(mob && target) mob->AddThreat(target, 1.0f);
                 }
-                Trainee_Timer = 15000+rand()%10000;
+                Trainee_Timer = 15000;
             }
             else Trainee_Timer -= diff;
 
@@ -181,7 +184,7 @@ struct MANGOS_DLL_DECL boss_gothikAI : public ScriptedAI
                 Unit *mob = m_creature->SummonCreature(CR_UN_DEATHKNIGHT, LiveX[i], LiveY[i], LiveZ[i], 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 10000);
                 Unit *target = SelectUnit(SELECT_TARGET_RANDOM, 0);
                 if(mob && target) mob->AddThreat(target, 1.0f);
-                DeathKnight_Timer = 12000+rand()%6000;
+                DeathKnight_Timer = 30000;
             }
             else DeathKnight_Timer -= diff;
 
@@ -220,12 +223,12 @@ struct MANGOS_DLL_DECL boss_gothikAI : public ScriptedAI
             {
                 //cast Harvest Soul (-10% stats to the raid)
                 Unit* target = NULL;
-                std::list<HostilReference*>::iterator i = m_creature->getThreatManager().getThreatList().begin();
+                std::list<HostileReference*>::iterator i = m_creature->getThreatManager().getThreatList().begin();
                 for (i = m_creature->getThreatManager().getThreatList().begin(); i!=m_creature->getThreatManager().getThreatList().end(); ++i)
                 {
                     target = Unit::GetUnit((*m_creature),(*i)->getUnitGuid());
                     if(target && target->isAlive())
-                        DoCast(target, SP_HARVEST_SOUL);
+                        DoCast(target, SP_HARVEST_SOUL, true);
                 }
                 //teleport gothik to the other side
                 if(phase==3)
@@ -250,6 +253,7 @@ struct MANGOS_DLL_DECL boss_gothikAI : public ScriptedAI
             if ((m_creature->GetHealth()*100) / m_creature->GetMaxHealth() <= 30)
             {
                 phase=5;
+                if(pInstance) pInstance->SetData(TYPE_GOTHIK, SPECIAL);
             }
         }
 
@@ -267,9 +271,6 @@ struct MANGOS_DLL_DECL boss_gothikAI : public ScriptedAI
 };
 
 
-
-
-
 /*******************************************************************/
 //         UNRELENTING / SPECTRAL  TRAINEE  AI                     //
 /*******************************************************************/
@@ -278,7 +279,7 @@ struct MANGOS_DLL_DECL mob_gothik_trainee_addAI : public ScriptedAI
 {
     mob_gothik_trainee_addAI(Creature* pCreature) : ScriptedAI(pCreature)
     {
-        Heroic = m_creature->GetMap()->IsHeroic();
+        Heroic = pCreature->GetMap()->GetSpawnMode() > 0;
         Reset();
     }
 
@@ -315,7 +316,7 @@ struct MANGOS_DLL_DECL mob_gothik_trainee_addAI : public ScriptedAI
 
     void UpdateAI(const uint32 diff)
     {
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         if(m_creature->GetEntry()==CR_UN_TRAINEE)
@@ -349,7 +350,6 @@ struct MANGOS_DLL_DECL mob_gothik_dk_addAI : public ScriptedAI
 {
     mob_gothik_dk_addAI(Creature* pCreature) : ScriptedAI(pCreature)
     {
-        //Heroic = m_creature->GetMap()->IsHeroic();
         Reset();      
     }
 
@@ -373,7 +373,7 @@ struct MANGOS_DLL_DECL mob_gothik_dk_addAI : public ScriptedAI
     void JustDied(Unit *killer)
     {
         //if unrelenting DK then spawn spectral DK
-        if(m_creature->GetEntry()==CR_UN_DEATHKNIGHT) //maybe need check heroic entry too
+        if(m_creature->GetEntry()==CR_UN_DEATHKNIGHT)
         {
             int i = irand(0,5);
             Unit *mob = m_creature->SummonCreature(CR_SP_DEATHKNIGHT, UndeadX[i], UndeadY[i], UndeadZ[i], 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 10000);
@@ -383,7 +383,7 @@ struct MANGOS_DLL_DECL mob_gothik_dk_addAI : public ScriptedAI
 
     void UpdateAI(const uint32 diff)
     {
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         if(SpellTimer < diff)
@@ -410,7 +410,7 @@ struct MANGOS_DLL_DECL mob_gothik_rider_addAI : public ScriptedAI
 {
     mob_gothik_rider_addAI(Creature* pCreature) : ScriptedAI(pCreature)
     {
-        Heroic = m_creature->GetMap()->IsHeroic();
+        Heroic = pCreature->GetMap()->GetSpawnMode() > 0;
         Reset();
     }
 
@@ -452,7 +452,7 @@ struct MANGOS_DLL_DECL mob_gothik_rider_addAI : public ScriptedAI
 
     void UpdateAI(const uint32 diff)
     {
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         if(m_creature->GetEntry()==CR_UN_RIDER)
@@ -461,7 +461,7 @@ struct MANGOS_DLL_DECL mob_gothik_rider_addAI : public ScriptedAI
             {
                 //hit only targets with shadow mark
                 /*Unit* target = NULL;
-                std::list<HostilReference*>::iterator i = m_creature->getThreatManager().getThreatList().begin();
+                std::list<HostileReference*>::iterator i = m_creature->getThreatManager().getThreatList().begin();
                 for (i = m_creature->getThreatManager().getThreatList().begin(); i!=m_creature->getThreatManager().getThreatList().end(); ++i)
                 {
                     target = Unit::GetUnit((*m_creature),(*i)->getUnitGuid());

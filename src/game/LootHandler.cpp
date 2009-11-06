@@ -46,7 +46,7 @@ void WorldSession::HandleAutostoreLootItemOpcode( WorldPacket & recv_data )
         GameObject *go = player->GetMap()->GetGameObject(lguid);
 
         // not check distance for GO in case owned GO (fishing bobber case, for example) or Fishing hole GO
-        if (!go || (go->GetOwnerGUID() != _player->GetGUID() && go->GetGoType() != GAMEOBJECT_TYPE_FISHINGHOLE) && !go->IsWithinDistInMap(_player,INTERACTION_DISTANCE))
+        if (!go || ((go->GetOwnerGUID() != _player->GetGUID() && go->GetGoType() != GAMEOBJECT_TYPE_FISHINGHOLE) && !go->IsWithinDistInMap(_player,INTERACTION_DISTANCE)))
         {
             player->SendLootRelease(lguid);
             return;
@@ -68,7 +68,7 @@ void WorldSession::HandleAutostoreLootItemOpcode( WorldPacket & recv_data )
     }
     else if (IS_CORPSE_GUID(lguid))
     {
-        Corpse *bones = ObjectAccessor::GetCorpse(*player, lguid);
+        Corpse *bones = player->GetMap()->GetCorpse(lguid);
         if (!bones)
         {
             player->SendLootRelease(lguid);
@@ -181,7 +181,7 @@ void WorldSession::HandleLootMoneyOpcode( WorldPacket & /*recv_data*/ )
         }
         case HIGHGUID_CORPSE:                               // remove insignia ONLY in BG
         {
-            Corpse *bones = ObjectAccessor::GetCorpse(*GetPlayer(), guid);
+            Corpse *bones = _player->GetMap()->GetCorpse(guid);
 
             if (bones && bones->IsWithinDistInMap(_player,INTERACTION_DISTANCE) )
                 pLoot = &bones->loot;
@@ -267,8 +267,7 @@ void WorldSession::HandleLootReleaseOpcode( WorldPacket & recv_data )
 
     // cheaters can modify lguid to prevent correct apply loot release code and re-loot
     // use internal stored guid
-    //uint64   lguid;
-    //recv_data >> lguid;
+    recv_data.read_skip<uint64>();                          // guid;
 
     if(uint64 lguid = GetPlayer()->GetLootGUID())
         DoLootRelease(lguid);
@@ -292,7 +291,7 @@ void WorldSession::DoLootRelease( uint64 lguid )
         GameObject *go = GetPlayer()->GetMap()->GetGameObject(lguid);
 
         // not check distance for GO in case owned GO (fishing bobber case, for example) or Fishing hole GO
-        if (!go || (go->GetOwnerGUID() != _player->GetGUID() && go->GetGoType() != GAMEOBJECT_TYPE_FISHINGHOLE) && !go->IsWithinDistInMap(_player,INTERACTION_DISTANCE))
+        if (!go || ((go->GetOwnerGUID() != _player->GetGUID() && go->GetGoType() != GAMEOBJECT_TYPE_FISHINGHOLE) && !go->IsWithinDistInMap(_player,INTERACTION_DISTANCE)))
             return;
 
         loot = &go->loot;
@@ -388,7 +387,7 @@ void WorldSession::DoLootRelease( uint64 lguid )
     }
     else if (IS_CORPSE_GUID(lguid))        // ONLY remove insignia at BG
     {
-        Corpse *corpse = ObjectAccessor::GetCorpse(*player, lguid);
+        Corpse *corpse = _player->GetMap()->GetCorpse(lguid);
         if (!corpse || !corpse->IsWithinDistInMap(_player,INTERACTION_DISTANCE) )
             return;
 
@@ -520,7 +519,7 @@ void WorldSession::HandleLootMasterGiveOpcode( WorldPacket & recv_data )
         return;
     }
 
-    // not move item from loot to target inventory
+    // now move item from loot to target inventory
     Item * newitem = target->StoreNewItem( dest, item.itemid, true, item.randomPropertyId );
     target->SendNewItem(newitem, uint32(item.count), false, false, true );
     target->GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_LOOT_ITEM, item.itemid, item.count);
@@ -529,7 +528,6 @@ void WorldSession::HandleLootMasterGiveOpcode( WorldPacket & recv_data )
     // mark as looted
     item.count=0;
     item.is_looted=true;
-
 
     pLoot->NotifyItemRemoved(slotid);
     --pLoot->unlootedCount;

@@ -63,7 +63,8 @@ uint32 OutdoorPvPObjectiveNA::GetAliveGuardsCount()
             case NA_NPC_GUARD_14:
             case NA_NPC_GUARD_15:
                 {
-                    if(Creature * cr = HashMapHolder<Creature>::Find(itr->second))
+                    Map* map = m_PvP->GetMap();
+                    if(Creature * cr = map->GetCreature(itr->second))
                     {
                         if(cr->isAlive())
                             ++cnt;
@@ -636,12 +637,10 @@ bool OutdoorPvPObjectiveNA::Update(uint32 diff)
                     break;
             }
 
-            GameObject* flag = HashMapHolder<GameObject>::Find(m_CapturePoint);
+            Map* map = m_PvP->GetMap();
+            GameObject* flag = map->GetGameObject(m_CapturePoint);
             if(flag)
-            {
                 flag->SetGoArtKit(artkit);
-                flag->SendUpdateObjectToAllExcept(NULL);
-            }
 
             UpdateHalaaWorldState();
         }

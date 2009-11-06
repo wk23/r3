@@ -22,7 +22,7 @@ SDCategory: Caverns of Time, Old Hillsbrad Foothills
 EndScriptData */
 
 #include "precompiled.h"
-#include "def_old_hillsbrad.h"
+#include "old_hillsbrad.h"
 
 #define SAY_ENTER1                  -1560013
 #define SAY_ENTER2                  -1560014
@@ -57,28 +57,20 @@ struct MANGOS_DLL_DECL boss_epoch_hunterAI : public ScriptedAI
 
     void Reset()
     {
-        SandBreath_Timer = 8000 + rand()%8000;
-        ImpendingDeath_Timer = 25000 + rand()%5000;
+        SandBreath_Timer = urand(8000, 16000);
+        ImpendingDeath_Timer = urand(25000, 30000);
         WingBuffet_Timer = 35000;
         Mda_Timer = 40000;
     }
 
     void Aggro(Unit *who)
     {
-        switch(rand()%2)
-        {
-            case 0: DoScriptText(SAY_AGGRO1, m_creature); break;
-            case 1: DoScriptText(SAY_AGGRO2, m_creature); break;
-        }
+        DoScriptText(urand(0, 1) ? SAY_AGGRO1 : SAY_AGGRO2, m_creature);
     }
 
     void KilledUnit(Unit *victim)
     {
-        switch(rand()%2)
-        {
-            case 0: DoScriptText(SAY_SLAY1, m_creature); break;
-            case 1: DoScriptText(SAY_SLAY2, m_creature); break;
-        }
+        DoScriptText(urand(0, 1) ? SAY_SLAY1 : SAY_SLAY2, m_creature);
     }
 
     void JustDied(Unit *victim)
@@ -92,7 +84,7 @@ struct MANGOS_DLL_DECL boss_epoch_hunterAI : public ScriptedAI
     void UpdateAI(const uint32 diff)
     {
         //Return since we have no target
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         //Sand Breath
@@ -103,26 +95,22 @@ struct MANGOS_DLL_DECL boss_epoch_hunterAI : public ScriptedAI
 
             DoCast(m_creature->getVictim(),SPELL_SAND_BREATH);
 
-            switch(rand()%2)
-            {
-                case 0: DoScriptText(SAY_BREATH1, m_creature); break;
-                case 1: DoScriptText(SAY_BREATH2, m_creature); break;
-            }
+            DoScriptText(urand(0, 1) ? SAY_BREATH1 : SAY_BREATH2, m_creature);
 
-            SandBreath_Timer = 10000 + rand()%10000;
+            SandBreath_Timer = urand(10000, 20000);
         }else SandBreath_Timer -= diff;
 
         if (ImpendingDeath_Timer < diff)
         {
             DoCast(m_creature->getVictim(),SPELL_IMPENDING_DEATH);
-            ImpendingDeath_Timer = 25000+rand()%5000;
+            ImpendingDeath_Timer = urand(25000, 30000);
         }else ImpendingDeath_Timer -= diff;
 
         if (WingBuffet_Timer < diff)
         {
             if (Unit *target = SelectUnit(SELECT_TARGET_RANDOM,0))
                 DoCast(target,SPELL_WING_BUFFET);
-            WingBuffet_Timer = 25000+rand()%10000;
+            WingBuffet_Timer = urand(25000, 35000);
         }else WingBuffet_Timer -= diff;
 
         if (Mda_Timer < diff)

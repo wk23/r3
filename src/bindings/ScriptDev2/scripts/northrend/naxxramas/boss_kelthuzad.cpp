@@ -15,6 +15,7 @@
  */
 
 #include "precompiled.h"
+#include "naxxramas.h"
 
 
 //emotes
@@ -44,21 +45,20 @@
 #define SP_DETONATE_MANA    27819
 #define SP_SHADOW_FISSURE   27810
 
-#define MAX_MOBS_PHASE1     64
-
 
 struct MANGOS_DLL_DECL boss_kelthuzadAI : public ScriptedAI
 {
     boss_kelthuzadAI(Creature* c) : ScriptedAI(c)
     {
-        Heroic = m_creature->GetMap()->IsHeroic();
+        pInstance = (ScriptedInstance*)c->GetInstanceData();
+        Heroic = m_creature->GetMap()->GetSpawnMode() > 0;
         MaxGuardians = Heroic ? 4 : 2;
         Reset();
     }
 
     //Variables
+    ScriptedInstance* pInstance;
     bool Heroic;
-    bool stopped;
     uint32 phase;
     uint32 Phase1_Timer;
     //
@@ -69,13 +69,11 @@ struct MANGOS_DLL_DECL boss_kelthuzadAI : public ScriptedAI
     uint32 Frostbolt_Timer;
     uint32 FrostboltV_Timer;
     uint32 FrostBlast_Timer;
-    //uint32 DetonateMana_Timer;
-    //uint32 ShadowFissure_Timer;
+    uint32 DetonateMana_Timer;
+    uint32 ShadowFissure_Timer;
     //
     uint64 Guardians[4];
     uint32 Guardian_Count;
-    uint64 Phase1Mobs[MAX_MOBS_PHASE1];
-    uint32 Phase1Mobs_Count;
     uint32 MaxGuardians;
     uint32 Guardian_Timer;
     //adds coords
@@ -86,7 +84,6 @@ struct MANGOS_DLL_DECL boss_kelthuzadAI : public ScriptedAI
     void Reset()
     {
         phase = 1;
-        stopped = false;
         Phase1_Timer = 220000; // 3m 40s
 
         AddX[0] = 3783.272705; AddY[0] = -5062.697266; AddZ[0] = 143.711203; //left far
@@ -96,15 +93,15 @@ struct MANGOS_DLL_DECL boss_kelthuzadAI : public ScriptedAI
         AddX[4] = 3683.868652; AddY[4] = -5057.281250; AddZ[4] = 143.183884; //left near
         AddX[5] = 3665.121094; AddY[5] = -5138.679199; AddZ[5] = 143.183212; //right near
 
-        Skeleton_Timer = 3000;
+        Skeleton_Timer = 5000;
         Abomination_Timer = 30000;
         Banshee_Timer = 15000;
 
         Frostbolt_Timer = 5000 + rand()%10000;
         FrostboltV_Timer = 15000 + rand()%5000;
         FrostBlast_Timer = 30000 + rand()%30000;
-        //DetonateMana_Timer = 30000 + rand()%30000;
-        //ShadowFissure_Timer = 15000 + rand()%25000;
+        DetonateMana_Timer = 30000 + rand()%30000;
+        ShadowFissure_Timer = 15000 + rand()%25000;
 
         Guardian_Timer = 8000;
         Guardian_Count = 0;
@@ -112,19 +109,28 @@ struct MANGOS_DLL_DECL boss_kelthuzadAI : public ScriptedAI
         Guardians[1] = 0;
         Guardians[2] = 0;
         Guardians[3] = 0;
-        Phase1Mobs_Count = 0;
-        for(int i=0; i<64; i++) Phase1Mobs[i]=0;
+        
+        SetCombatMovement(false);
+        m_creature->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
+        m_creature->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
+        
+        if(pInstance) pInstance->SetData(TYPE_KELTHUZAD, NOT_STARTED);
     }
 
     void Aggro(Unit *unit)
     {
         DoScriptText(SAY_SUMMON_MINIONS, m_creature);
-
+        
+        m_creature->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
+        m_creature->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
+        
+        if(pInstance) pInstance->SetData(TYPE_KELTHUZAD, IN_PROGRESS);
     }
 
     void JustDied(Unit* Killer) //despawn guardians here
     {
         DoScriptText(SAY_DEATH, m_creature);
+        if(pInstance) pInstance->SetData(TYPE_KELTHUZAD, DONE);
         for(int i=0; i<4; i++)
         {
             if(Guardians[i])
@@ -138,20 +144,11 @@ struct MANGOS_DLL_DECL boss_kelthuzadAI : public ScriptedAI
 
     void UpdateAI(const uint32 diff)
     {
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         if(phase==1)
         {
-            if(!stopped)
-            {
-                m_creature->GetMotionMaster()->Clear(false);
-                m_creature->GetMotionMaster()->MoveIdle();
-                m_creature->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
-                m_creature->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
-                stopped = true;
-            }
-
             if(Phase1_Timer < diff)
             {
                 switch(rand()%3)
@@ -162,19 +159,7 @@ struct MANGOS_DLL_DECL boss_kelthuzadAI : public ScriptedAI
                 }
                 m_creature->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
                 m_creature->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
-                m_creature->GetMotionMaster()->Clear(false);
-                m_creature->GetMotionMaster()->MoveChase(m_creature->getVictim());
-
-                //despawn mobs
-                for(int i=0; i<Phase1Mobs_Count; i++)
-                {
-                    if(Phase1Mobs[i])
-                    {
-                        Unit *mob = Unit::GetUnit((*m_creature), Phase1Mobs[i]);
-                        if(mob) mob->RemoveFromWorld();
-                    }
-                }
-
+                SetCombatMovement(true);
                 phase = 2;
             }
             else Phase1_Timer -= diff;
@@ -182,45 +167,33 @@ struct MANGOS_DLL_DECL boss_kelthuzadAI : public ScriptedAI
             if(Skeleton_Timer < diff)
             {
                 int i = irand(0,5);
-                Unit *mob = NULL;
-                //mob = DoSpawnCreature(CR_SKELETON, 0, 0, 0, 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 10000);
-                mob = m_creature->SummonCreature(CR_SKELETON, AddX[i], AddY[i], AddZ[i], 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 10000);
+                Unit *mob = m_creature->SummonCreature(CR_SKELETON, AddX[i], AddY[i], AddZ[i], 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 10000);
                 Unit *target = SelectUnit(SELECT_TARGET_RANDOM,0);
                 mob->AddThreat(target, 1.0f);
                 mob->GetMotionMaster()->MoveChase(target);
-                Skeleton_Timer = 3000;
+                Skeleton_Timer = 5000;
             }
             else Skeleton_Timer -= diff;
 
-            if(Abomination_Timer < diff && Phase1Mobs_Count <= MAX_MOBS_PHASE1)
+            if(Abomination_Timer < diff)
             {
                 int i = irand(0,5);
-                Unit *mob = NULL;
-                //mob = DoSpawnCreature(CR_ABOMINATION, 0, 0, 0, 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 10000);
-                mob = m_creature->SummonCreature(CR_ABOMINATION, AddX[i], AddY[i], AddZ[i], 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 10000);
+                Unit *mob = m_creature->SummonCreature(CR_ABOMINATION, AddX[i], AddY[i], AddZ[i], 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 10000);
                 Unit *target = SelectUnit(SELECT_TARGET_RANDOM,0);
                 mob->AddThreat(target, 1.0f);
                 mob->GetMotionMaster()->MoveChase(target);
-                Abomination_Timer = Heroic ? (20000+rand()%15000) : (30000+rand()%15000);
-
-                Phase1Mobs[Phase1Mobs_Count] = mob->GetGUID();
-                Phase1Mobs_Count++;
+                Abomination_Timer = Heroic ? (30000+rand()%15000) : (40000+rand()%15000);
             }
             else Abomination_Timer -= diff;
 
-            if(Banshee_Timer < diff && Phase1Mobs_Count <= MAX_MOBS_PHASE1)
+            if(Banshee_Timer < diff)
             {
                 int i = irand(0,5);
-                Unit *mob = NULL;
-                //mob = DoSpawnCreature(CR_BANSHEE, 0, 0, 0, 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 10000);
-                mob = m_creature->SummonCreature(CR_BANSHEE, AddX[i], AddY[i], AddZ[i], 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 10000);
+                Unit *mob = m_creature->SummonCreature(CR_BANSHEE, AddX[i], AddY[i], AddZ[i], 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 10000);
                 Unit *target = SelectUnit(SELECT_TARGET_RANDOM,0);
                 mob->AddThreat(target, 1.0f);
                 mob->GetMotionMaster()->MoveChase(target);
-                Banshee_Timer = Heroic ? (12000+rand()%10000) : (15000+rand()%15000);
-
-                Phase1Mobs[Phase1Mobs_Count] = mob->GetGUID();
-                Phase1Mobs_Count++;
+                Banshee_Timer = Heroic ? (17000+rand()%10000) : (20000+rand()%15000);
             }
             else Banshee_Timer -= diff;
         }
@@ -240,26 +213,26 @@ struct MANGOS_DLL_DECL boss_kelthuzadAI : public ScriptedAI
             {
                 if (Unit* target = SelectUnit(SELECT_TARGET_RANDOM,0))
                     DoCast(target, SP_FROST_BLAST);
-                FrostBlast_Timer = 20000 + rand()%30000;
+                FrostBlast_Timer = 40000 + rand()%20000;
             }
             else FrostBlast_Timer -= diff;
 
-            /*if(ShadowFissure_Timer < diff)
+            if(ShadowFissure_Timer < diff)
             {
                 if (Unit* target = SelectUnit(SELECT_TARGET_RANDOM,0))
                     DoCast(target, SP_SHADOW_FISSURE);
                 ShadowFissure_Timer = 15000 + rand()%25000;
             }
-            else ShadowFissure_Timer -= diff;*/
+            else ShadowFissure_Timer -= diff;
 
             //Detonate Mana
-            /*if(DetonateMana_Timer < diff)
+            if(DetonateMana_Timer < diff)
             {
                 if (Unit* target = SelectUnit(SELECT_TARGET_RANDOM,0))
                     DoCast(target, SP_DETONATE_MANA);
                 DetonateMana_Timer = 30000 + rand()%30000;
             }
-            else DetonateMana_Timer -= diff;*/
+            else DetonateMana_Timer -= diff;
 
             //Frostbolt
             if(Frostbolt_Timer < diff)
@@ -291,15 +264,13 @@ struct MANGOS_DLL_DECL boss_kelthuzadAI : public ScriptedAI
                         guard->AddThreat(target, 1.0f);
                         guard->GetMotionMaster()->MoveChase(m_creature);
                         Guardians[Guardian_Count] = guard->GetGUID();
+                        Guardian_Count++;
                     }
-                    Guardian_Count++;
                     Guardian_Timer = 8000;
                 }
                 else Guardian_Timer -= diff;
             }
         }
-
-        
 
         if(phase!=1) DoMeleeAttackIfReady();
     }

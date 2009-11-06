@@ -22,7 +22,7 @@ SDCategory: Black Temple
 EndScriptData */
 
 #include "precompiled.h"
-#include "def_black_temple.h"
+#include "black_temple.h"
 
 //Speech'n'Sounds
 #define SAY_GATH_SLAY           -1564085
@@ -332,7 +332,7 @@ struct MANGOS_DLL_DECL mob_illidari_councilAI : public ScriptedAI
                         if (Creature* Member = ((Creature*)Unit::GetUnit((*m_creature), Council[i])))
                         {
                             // This is the evade/death check.
-                            if (Member->isAlive() && !Member->SelectHostilTarget())
+                            if (Member->isAlive() && !Member->SelectHostileTarget())
                                 ++EvadeCheck;               //If all members evade, we reset so that players can properly reset the event
                             else if (!Member->isAlive())    //If even one member dies, kill the rest, set instance data, and kill self.
                             {
@@ -460,7 +460,7 @@ struct MANGOS_DLL_DECL boss_gathios_the_shattererAI : public boss_illidari_counc
         Unit* pUnit = m_creature;
         uint32 member = 0;                                  // He chooses Lady Malande most often
 
-        if (rand()%10 == 0)                                 // But there is a chance he picks someone else.
+        if (!urand(0, 9))                                   // But there is a chance he picks someone else.
             member = urand(1, 3);
 
         if (member != 2)                                    // No need to create another pointer to us using Unit::GetUnit
@@ -472,7 +472,7 @@ struct MANGOS_DLL_DECL boss_gathios_the_shattererAI : public boss_illidari_counc
     void CastAuraOnCouncil()
     {
         uint32 spellid = 0;
-        switch(rand()%2)
+        switch(urand(0, 1))
         {
             case 0: spellid = SPELL_DEVOTION_AURA;   break;
             case 1: spellid = SPELL_CHROMATIC_AURA;  break;
@@ -487,19 +487,14 @@ struct MANGOS_DLL_DECL boss_gathios_the_shattererAI : public boss_illidari_counc
 
     void UpdateAI(const uint32 diff)
     {
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         if (BlessingTimer < diff)
         {
             if (Unit* pUnit = SelectCouncilMember())
-            {
-                switch(rand()%2)
-                {
-                    case 0: DoCast(pUnit, SPELL_BLESS_SPELLWARD);  break;
-                    case 1: DoCast(pUnit, SPELL_BLESS_PROTECTION); break;
-                }
-            }
+                DoCast(pUnit, urand(0, 1) ? SPELL_BLESS_SPELLWARD : SPELL_BLESS_PROTECTION);
+
             BlessingTimer = 60000;
         }else BlessingTimer -= diff;
 
@@ -524,11 +519,7 @@ struct MANGOS_DLL_DECL boss_gathios_the_shattererAI : public boss_illidari_counc
 
         if (SealTimer < diff)
         {
-            switch(rand()%2)
-            {
-                case 0: DoCast(m_creature, SPELL_SEAL_OF_COMMAND);  break;
-                case 1: DoCast(m_creature, SPELL_SEAL_OF_BLOOD);    break;
-            }
+            DoCast(m_creature, urand(0, 1) ? SPELL_SEAL_OF_COMMAND : SPELL_SEAL_OF_BLOOD);
             SealTimer = 40000;
         }else SealTimer -= diff;
 
@@ -555,8 +546,8 @@ struct MANGOS_DLL_DECL boss_high_nethermancer_zerevorAI : public boss_illidari_c
 
     void Reset()
     {
-        BlizzardTimer = 30000 + rand()%61 * 1000;
-        FlamestrikeTimer = 30000 + rand()%61 * 1000;
+        BlizzardTimer = urand(30000, 90000);
+        FlamestrikeTimer = urand(30000, 90000);
         ArcaneBoltTimer = 10000;
         DampenMagicTimer = 2000;
         ArcaneExplosionTimer = 14000;
@@ -575,7 +566,7 @@ struct MANGOS_DLL_DECL boss_high_nethermancer_zerevorAI : public boss_illidari_c
 
     void UpdateAI(const uint32 diff)
     {
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         if (Cooldown)
@@ -616,7 +607,7 @@ struct MANGOS_DLL_DECL boss_high_nethermancer_zerevorAI : public boss_illidari_c
             if (Unit* target = SelectUnit(SELECT_TARGET_RANDOM, 0))
             {
                 DoCast(target, SPELL_BLIZZARD);
-                BlizzardTimer = 45000 + rand()%46 * 1000;
+                BlizzardTimer = urand(45000, 90000);
                 FlamestrikeTimer += 10000;
                 Cooldown = 1000;
             }
@@ -627,7 +618,7 @@ struct MANGOS_DLL_DECL boss_high_nethermancer_zerevorAI : public boss_illidari_c
             if (Unit* target = SelectUnit(SELECT_TARGET_RANDOM, 0))
             {
                 DoCast(target, SPELL_FLAMESTRIKE);
-                FlamestrikeTimer = 55000 + rand()%46 * 1000;
+                FlamestrikeTimer = urand(55000, 100000);
                 BlizzardTimer += 10000;
                 Cooldown = 2000;
             }
@@ -664,7 +655,7 @@ struct MANGOS_DLL_DECL boss_lady_malandeAI : public boss_illidari_councilAI
 
     void UpdateAI(const uint32 diff)
     {
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         if (EmpoweredSmiteTimer < diff)
@@ -688,7 +679,7 @@ struct MANGOS_DLL_DECL boss_lady_malandeAI : public boss_illidari_councilAI
             if (Unit* target = SelectUnit(SELECT_TARGET_RANDOM, 0))
             {
                 DoCast(target, SPELL_DIVINE_WRATH);
-                DivineWrathTimer = 40000 + rand()%41 * 1000;
+                DivineWrathTimer = urand(40000, 80000);
             }
         }else DivineWrathTimer -= diff;
 
@@ -719,7 +710,7 @@ struct MANGOS_DLL_DECL boss_veras_darkshadowAI : public boss_illidari_councilAI
         EnvenomTargetGUID = 0;
 
         DeadlyPoisonTimer = 20000;
-        VanishTimer = 60000 + rand()%61 * 1000;
+        VanishTimer = urand(60000, 120000);
         AppearEnvenomTimer = 150000;
 
         HasVanished = false;
@@ -739,7 +730,7 @@ struct MANGOS_DLL_DECL boss_veras_darkshadowAI : public boss_illidari_councilAI
 
     void UpdateAI(const uint32 diff)
     {
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         if (!HasVanished)
@@ -747,7 +738,7 @@ struct MANGOS_DLL_DECL boss_veras_darkshadowAI : public boss_illidari_councilAI
             if (DeadlyPoisonTimer < diff)
             {
                 DoCast(m_creature->getVictim(), SPELL_DEADLY_POISON);
-                DeadlyPoisonTimer = 15000 + rand()%31 * 1000;
+                DeadlyPoisonTimer = urand(15000, 45000);
             }else DeadlyPoisonTimer -= diff;
 
             if (AppearEnvenomTimer < diff)                  // Cast Envenom. This is cast 4 seconds after Vanish is over

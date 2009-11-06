@@ -22,7 +22,7 @@ SDCategory: Stratholme
 EndScriptData */
 
 #include "precompiled.h"
-#include "def_stratholme.h"
+#include "stratholme.h"
 
 #define SAY_0    "Intruders! More pawns of the Argent Dawn, no doubt. I already count one of their number among my prisoners. Withdraw from my domain before she is executed!"
 #define SAY_1    "You're still here? Your foolishness is amusing! The Argent Dawn wench needn't suffer in vain. Leave at once and she shall be spared!"
@@ -121,7 +121,7 @@ struct MANGOS_DLL_DECL boss_baron_rivendareAI : public ScriptedAI
 
     void UpdateAI(const uint32 diff)
     {
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         //ShadowBolt
@@ -136,14 +136,14 @@ struct MANGOS_DLL_DECL boss_baron_rivendareAI : public ScriptedAI
         if (Cleave_Timer < diff)
         {
             DoCast(m_creature->getVictim(),SPELL_CLEAVE);
-            Cleave_Timer = 7000 + (rand()%10000);
+            Cleave_Timer = urand(7000, 17000);
         }else Cleave_Timer -= diff;
 
         //MortalStrike
         if (MortalStrike_Timer < diff)
         {
             DoCast(m_creature->getVictim(),SPELL_MORTALSTRIKE);
-            MortalStrike_Timer = 10000 + (rand()%15000);
+            MortalStrike_Timer = urand(10000, 25000);
         }else MortalStrike_Timer -= diff;
 
         //RaiseDead

@@ -8,7 +8,7 @@
 #include "ObjectMgr.h"
 #include "Database/DatabaseEnv.h"
 
-Database SD2Database;
+DatabaseType SD2Database;
 std::string  strSD2Version;
 
 SystemMgr::SystemMgr()

@@ -22,7 +22,7 @@ SDCategory: Scholomance
 EndScriptData */
 
 #include "precompiled.h"
-#include "def_scholomance.h"
+#include "scholomance.h"
 
 #define SPELL_CURSEOFAGONY      18671
 #define SPELL_SHADOWSHOCK       20603
@@ -59,7 +59,7 @@ struct MANGOS_DLL_DECL boss_illuciabarovAI : public ScriptedAI
 
     void UpdateAI(const uint32 diff)
     {
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         //CurseOfAgony_Timer

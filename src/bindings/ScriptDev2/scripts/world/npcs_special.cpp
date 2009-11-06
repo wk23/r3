@@ -25,6 +25,7 @@ EndScriptData
 #include "precompiled.h"
 #include "escort_ai.h"
 #include "ObjectMgr.h"
+#include "GameEventMgr.h"
 
 /* ContentData
 npc_air_force_bots       80%    support for misc (invisible) guard bots in areas where player allowed to fly. Summon guards after a preset time if tagged by spell
@@ -34,7 +35,9 @@ npc_guardian            100%    guardianAI used to prevent players from accessin
 npc_garments_of_quests  80%     NPC's related to all Garments of-quests 5621, 5624, 5625, 5648, 5650
 npc_injured_patient     100%    patients for triage-quests (6622 and 6624)
 npc_doctor              100%    Gustaf Vanhowzen and Gregory Victor, quest 6622 and 6624 (Triage)
+npc_innkeeper           25%     Innkeepers in general. A lot do be done here (misc options for events)
 npc_kingdom_of_dalaran_quests   Misc NPC's gossip option related to quests 12791, 12794 and 12796
+npc_lunaclaw_spirit     100%    Appears at two different locations, quest 6001/6002
 npc_mount_vendor        100%    Regular mount vendors all over the world. Display gossip if player doesn't meet the requirements to buy
 npc_rogue_trainer       80%     Scripted trainers, so they are able to offer item 17126 for class quest 6681
 npc_sayge               100%    Darkmoon event fortune teller, buff player based on answers given
@@ -124,8 +127,8 @@ struct MANGOS_DLL_DECL npc_air_force_botsAI : public ScriptedAI
 
             if (!spawnedTemplate)
             {
-                m_pSpawnAssoc = NULL;
                 error_db_log("SD2: Creature template entry %u does not exist in DB, which is required by npc_air_force_bots", m_pSpawnAssoc->m_uiSpawnedCreatureEntry);
+                m_pSpawnAssoc = NULL;
                 return;
             }
         }
@@ -150,7 +153,7 @@ struct MANGOS_DLL_DECL npc_air_force_botsAI : public ScriptedAI
 
         return pSummoned;
     }
-    
+
     Creature* GetSummonedGuard()
     {
         Creature* pCreature = (Creature*)Unit::GetUnit(*m_creature, m_uiSpawnedGUID);
@@ -250,62 +253,55 @@ CreatureAI* GetAI_npc_air_force_bots(Creature* pCreature)
 # npc_chicken_cluck
 #########*/
 
-#define EMOTE_A_HELLO       -1000204
-#define EMOTE_H_HELLO       -1000205
-#define EMOTE_CLUCK_TEXT2   -1000206
+enum
+{
+    EMOTE_A_HELLO           = -1000204,
+    EMOTE_H_HELLO           = -1000205,
+    EMOTE_CLUCK_TEXT2       = -1000206,
 
-#define QUEST_CLUCK         3861
-#define FACTION_FRIENDLY    84
-#define FACTION_CHICKEN     31
+    QUEST_CLUCK             = 3861,
+    FACTION_FRIENDLY        = 35,
+    FACTION_CHICKEN         = 31
+};
 
 struct MANGOS_DLL_DECL npc_chicken_cluckAI : public ScriptedAI
 {
     npc_chicken_cluckAI(Creature* pCreature) : ScriptedAI(pCreature) {Reset();}
 
-    uint32 ResetFlagTimer;
+    uint32 m_uiResetFlagTimer;
 
     void Reset()
     {
-        ResetFlagTimer = 120000;
+        m_uiResetFlagTimer = 120000;
 
         m_creature->setFaction(FACTION_CHICKEN);
         m_creature->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_QUESTGIVER);
     }
 
-    void UpdateAI(const uint32 diff)
+    void ReceiveEmote(Player* pPlayer, uint32 uiEmote)
     {
-        // Reset flags after a certain time has passed so that the next player has to start the 'event' again
-        if (m_creature->HasFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_QUESTGIVER))
+        if (uiEmote == TEXTEMOTE_CHICKEN)
         {
-            if (ResetFlagTimer < diff)
-                EnterEvadeMode();
-            else ResetFlagTimer -= diff;
-        }
-
-        if (m_creature->SelectHostilTarget() && m_creature->getVictim())
-            DoMeleeAttackIfReady();
-    }
-
-    void ReceiveEmote (Player* pPlayer, uint32 emote)
-    {
-        if (emote == TEXTEMOTE_CHICKEN)
-        {
-            if (pPlayer->GetTeam() == ALLIANCE)
+            if (!urand(0, 29))
             {
-                if (rand()%30 == 1)
+                if (pPlayer->GetQuestStatus(QUEST_CLUCK) == QUEST_STATUS_NONE)
                 {
-                    if (pPlayer->GetQuestStatus(QUEST_CLUCK) == QUEST_STATUS_NONE)
-                    {
-                        m_creature->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_QUESTGIVER);
-                        m_creature->setFaction(FACTION_FRIENDLY);
+                    m_creature->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_QUESTGIVER);
+                    m_creature->setFaction(FACTION_FRIENDLY);
+
+                    DoScriptText(EMOTE_A_HELLO, m_creature);
+
+                    /* are there any difference in texts, after 3.x ?
+                    if (pPlayer->GetTeam() == HORDE)
+                        DoScriptText(EMOTE_H_HELLO, m_creature);
+                    else
                         DoScriptText(EMOTE_A_HELLO, m_creature);
-                    }
+                    */
                 }
             }
-            else
-                DoScriptText(EMOTE_H_HELLO,m_creature);
         }
-        if (emote == TEXTEMOTE_CHEER && pPlayer->GetTeam() == ALLIANCE)
+
+        if (uiEmote == TEXTEMOTE_CHEER)
         {
             if (pPlayer->GetQuestStatus(QUEST_CLUCK) == QUEST_STATUS_COMPLETE)
             {
@@ -314,6 +310,21 @@ struct MANGOS_DLL_DECL npc_chicken_cluckAI : public ScriptedAI
                 DoScriptText(EMOTE_CLUCK_TEXT2, m_creature);
             }
         }
+    }
+
+    void UpdateAI(const uint32 uiDiff)
+    {
+        // Reset flags after a certain time has passed so that the next player has to start the 'event' again
+        if (m_creature->HasFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_QUESTGIVER))
+        {
+            if (m_uiResetFlagTimer < uiDiff)
+                EnterEvadeMode();
+            else
+                m_uiResetFlagTimer -= uiDiff;
+        }
+
+        if (m_creature->SelectHostileTarget() && m_creature->getVictim())
+            DoMeleeAttackIfReady();
     }
 };
 
@@ -325,7 +336,10 @@ CreatureAI* GetAI_npc_chicken_cluck(Creature* pCreature)
 bool QuestAccept_npc_chicken_cluck(Player* pPlayer, Creature* pCreature, const Quest* pQuest)
 {
     if (pQuest->GetQuestId() == QUEST_CLUCK)
-        ((npc_chicken_cluckAI*)pCreature->AI())->Reset();
+    {
+        if (npc_chicken_cluckAI* pChickenAI = dynamic_cast<npc_chicken_cluckAI*>(pCreature->AI()))
+            pChickenAI->Reset();
+    }
 
     return true;
 }
@@ -333,7 +347,10 @@ bool QuestAccept_npc_chicken_cluck(Player* pPlayer, Creature* pCreature, const Q
 bool QuestComplete_npc_chicken_cluck(Player* pPlayer, Creature* pCreature, const Quest* pQuest)
 {
     if (pQuest->GetQuestId() == QUEST_CLUCK)
-        ((npc_chicken_cluckAI*)pCreature->AI())->Reset();
+    {
+        if (npc_chicken_cluckAI* pChickenAI = dynamic_cast<npc_chicken_cluckAI*>(pCreature->AI()))
+            pChickenAI->Reset();
+    }
 
     return true;
 }
@@ -364,14 +381,20 @@ CreatureAI* GetAI_npc_dancing_flames(Creature* pCreature)
 ## Triage quest
 ######*/
 
-#define SAY_DOC1    -1000201
-#define SAY_DOC2    -1000202
-#define SAY_DOC3    -1000203
+enum
+{
+    SAY_DOC1                    = -1000201,
+    SAY_DOC2                    = -1000202,
+    SAY_DOC3                    = -1000203,
 
-#define DOCTOR_ALLIANCE     12939
-#define DOCTOR_HORDE        12920
-#define ALLIANCE_COORDS     7
-#define HORDE_COORDS        6
+    QUEST_TRIAGE_H              = 6622,
+    QUEST_TRIAGE_A              = 6624,
+
+    DOCTOR_ALLIANCE             = 12939,
+    DOCTOR_HORDE                = 12920,
+    ALLIANCE_COORDS             = 7,
+    HORDE_COORDS                = 6
+};
 
 struct Location
 {
@@ -527,7 +550,7 @@ struct MANGOS_DLL_DECL npc_injured_patientAI : public ScriptedAI
             //stand up
             m_creature->SetStandState(UNIT_STAND_STATE_STAND);
 
-            switch(rand()%3)
+            switch(urand(0, 2))
             {
                 case 0: DoScriptText(SAY_DOC1,m_creature); break;
                 case 1: DoScriptText(SAY_DOC2,m_creature); break;
@@ -622,10 +645,10 @@ void npc_doctorAI::PatientDied(Location* Point)
 
         if (PatientDiedCount > 5 && Event)
         {
-            if (pPlayer->GetQuestStatus(6624) == QUEST_STATUS_INCOMPLETE)
-                pPlayer->FailQuest(6624);
-            else if (pPlayer->GetQuestStatus(6622) == QUEST_STATUS_INCOMPLETE)
-                pPlayer->FailQuest(6622);
+            if (pPlayer->GetQuestStatus(QUEST_TRIAGE_A) == QUEST_STATUS_INCOMPLETE)
+                pPlayer->FailQuest(QUEST_TRIAGE_A);
+            else if (pPlayer->GetQuestStatus(QUEST_TRIAGE_H) == QUEST_STATUS_INCOMPLETE)
+                pPlayer->FailQuest(QUEST_TRIAGE_H);
 
             Reset();
             return;
@@ -642,7 +665,7 @@ void npc_doctorAI::PatientSaved(Creature* soldier, Player* pPlayer, Location* Po
 {
     if (pPlayer && Playerguid == pPlayer->GetGUID())
     {
-        if ((pPlayer->GetQuestStatus(6624) == QUEST_STATUS_INCOMPLETE) || (pPlayer->GetQuestStatus(6622) == QUEST_STATUS_INCOMPLETE))
+        if ((pPlayer->GetQuestStatus(QUEST_TRIAGE_A) == QUEST_STATUS_INCOMPLETE) || (pPlayer->GetQuestStatus(QUEST_TRIAGE_H) == QUEST_STATUS_INCOMPLETE))
         {
             ++PatientSavedCount;
 
@@ -658,10 +681,10 @@ void npc_doctorAI::PatientSaved(Creature* soldier, Player* pPlayer, Location* Po
                     }
                 }
 
-                if (pPlayer->GetQuestStatus(6624) == QUEST_STATUS_INCOMPLETE)
-                    pPlayer->AreaExploredOrEventHappens(6624);
-                else if (pPlayer->GetQuestStatus(6622) == QUEST_STATUS_INCOMPLETE)
-                    pPlayer->AreaExploredOrEventHappens(6622);
+                if (pPlayer->GetQuestStatus(QUEST_TRIAGE_A) == QUEST_STATUS_INCOMPLETE)
+                    pPlayer->GroupEventHappens(QUEST_TRIAGE_A, m_creature);
+                else if (pPlayer->GetQuestStatus(QUEST_TRIAGE_H) == QUEST_STATUS_INCOMPLETE)
+                    pPlayer->GroupEventHappens(QUEST_TRIAGE_H, m_creature);
 
                 Reset();
                 return;
@@ -695,8 +718,8 @@ void npc_doctorAI::UpdateAI(const uint32 diff)
 
             switch(m_creature->GetEntry())
             {
-                case DOCTOR_ALLIANCE: patientEntry = AllianceSoldierId[rand()%3]; break;
-                case DOCTOR_HORDE:    patientEntry = HordeSoldierId[rand()%3]; break;
+                case DOCTOR_ALLIANCE: patientEntry = AllianceSoldierId[urand(0, 2)]; break;
+                case DOCTOR_HORDE:    patientEntry = HordeSoldierId[urand(0, 2)]; break;
                 default:
                     error_log("SD2: Invalid entry for Triage doctor. Please check your database");
                     return;
@@ -727,8 +750,11 @@ void npc_doctorAI::UpdateAI(const uint32 diff)
 
 bool QuestAccept_npc_doctor(Player* pPlayer, Creature* pCreature, const Quest* pQuest)
 {
-    if ((pQuest->GetQuestId() == 6624) || (pQuest->GetQuestId() == 6622))
-        ((npc_doctorAI*)pCreature->AI())->BeginEvent(pPlayer);
+    if ((pQuest->GetQuestId() == QUEST_TRIAGE_A) || (pQuest->GetQuestId() == QUEST_TRIAGE_H))
+    {
+        if (npc_doctorAI* pDocAI = dynamic_cast<npc_doctorAI*>(pCreature->AI()))
+            pDocAI->BeginEvent(pPlayer);
+    }
 
     return true;
 }
@@ -913,7 +939,7 @@ struct MANGOS_DLL_DECL npc_garments_of_questsAI : public npc_escortAI
     {
     }
 
-    void UpdateAI(const uint32 diff)
+    void UpdateEscortAI(const uint32 diff)
     {
         if (bCanRun && !m_creature->isInCombat())
         {
@@ -930,7 +956,7 @@ struct MANGOS_DLL_DECL npc_garments_of_questsAI : public npc_escortAI
                         case ENTRY_DG_KEL: DoScriptText(SAY_DG_KEL_GOODBYE,m_creature,pUnit); break;
                     }
 
-                    Start(false,true,true);
+                    Start(false,true);
                 }
                 else
                     EnterEvadeMode();                       //something went wrong
@@ -939,7 +965,10 @@ struct MANGOS_DLL_DECL npc_garments_of_questsAI : public npc_escortAI
             }else RunAwayTimer -= diff;
         }
 
-        npc_escortAI::UpdateAI(diff);
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
+        DoMeleeAttackIfReady();
     }
 };
 
@@ -965,7 +994,7 @@ struct MANGOS_DLL_DECL npc_guardianAI : public ScriptedAI
 
     void UpdateAI(const uint32 diff)
     {
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         if (m_creature->isAttackReady())
@@ -979,6 +1008,109 @@ struct MANGOS_DLL_DECL npc_guardianAI : public ScriptedAI
 CreatureAI* GetAI_npc_guardian(Creature* pCreature)
 {
     return new npc_guardianAI(pCreature);
+}
+
+/*########
+# npc_innkeeper
+#########*/
+
+// Script applied to all innkeepers by npcflag.
+// Are there any known innkeepers that does not hape the options in the below?
+// (remember gossipHello is not called unless npcflag|1 is present)
+
+enum
+{
+    TEXT_ID_WHAT_TO_DO              = 1853,
+
+    SPELL_TRICK_OR_TREAT            = 24751,                 // create item or random buff
+    SPELL_TRICK_OR_TREATED          = 24755,                 // buff player get when tricked or treated
+    SPELL_TREAT                     = 24715,
+    SPELL_TRICK_NO_ATTACK           = 24753,
+    SPELL_TRICK_GNOME               = 24713,
+    SPELL_TRICK_GHOST_MALE          = 24735,
+    SPELL_TRICK_GHOST_FEMALE        = 24736,
+    SPELL_TRICK_NINJA_MALE          = 24710,
+    SPELL_TRICK_NINJA_FEMALE        = 24711,
+    SPELL_TRICK_PIRATE_MALE         = 24708,
+    SPELL_TRICK_PIRATE_FEMALE       = 24709,
+    SPELL_TRICK_SKELETON            = 24723,
+    SPELL_TRICK_BAT                 = 24732
+};
+
+#define GOSSIP_ITEM_TRICK_OR_TREAT  "Trick or Treat!"
+#define GOSSIP_ITEM_WHAT_TO_DO      "What can I do at an Inn?"
+
+bool GossipHello_npc_innkeeper(Player* pPlayer, Creature* pCreature)
+{
+    pCreature->prepareGossipMenu(pPlayer);
+
+    if (IsHolidayActive(HOLIDAY_HALLOWS_END) && !pPlayer->HasAura(SPELL_TRICK_OR_TREATED,0))
+        pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_ITEM_TRICK_OR_TREAT, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+2);
+
+    // Should only apply to innkeeper close to start areas.
+    if (AreaTableEntry const* pAreaEntry = GetAreaEntryByAreaID(pCreature->GetAreaId()))
+    {
+        if (pAreaEntry->flags & AREA_FLAG_LOWLEVEL)
+            pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_ITEM_WHAT_TO_DO, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+1);
+    }
+
+    pPlayer->TalkedToCreature(pCreature->GetEntry(), pCreature->GetGUID());
+    pCreature->sendPreparedGossip(pPlayer);
+    return true;
+}
+
+bool GossipSelect_npc_innkeeper(Player* pPlayer, Creature* pCreature, uint32 uiSender, uint32 uiAction)
+{
+    switch(uiAction)
+    {
+        case GOSSIP_ACTION_INFO_DEF+1:
+            pPlayer->SEND_GOSSIP_MENU(TEXT_ID_WHAT_TO_DO, pCreature->GetGUID());
+            break;
+
+        case GOSSIP_ACTION_INFO_DEF+2:
+        {
+            pPlayer->CLOSE_GOSSIP_MENU();
+
+            // either trick or treat, 50% chance
+            if (urand(0, 1))
+            {
+                pPlayer->CastSpell(pPlayer, SPELL_TREAT, true);
+            }
+            else
+            {
+                uint32 uiTrickSpell = 0;
+
+                switch(urand(0, 9))                             // note that female characters can get male costumes and vice versa
+                {
+                    case 0: uiTrickSpell = SPELL_TRICK_NO_ATTACK; break;
+                    case 1: uiTrickSpell = SPELL_TRICK_GNOME; break;
+                    case 2: uiTrickSpell = SPELL_TRICK_GHOST_MALE; break;
+                    case 3: uiTrickSpell = SPELL_TRICK_GHOST_FEMALE; break;
+                    case 4: uiTrickSpell = SPELL_TRICK_NINJA_MALE; break;
+                    case 5: uiTrickSpell = SPELL_TRICK_NINJA_FEMALE; break;
+                    case 6: uiTrickSpell = SPELL_TRICK_PIRATE_MALE; break;
+                    case 7: uiTrickSpell = SPELL_TRICK_PIRATE_FEMALE; break;
+                    case 8: uiTrickSpell = SPELL_TRICK_SKELETON; break;
+                    case 9: uiTrickSpell = SPELL_TRICK_BAT; break;
+                }
+
+                pPlayer->CastSpell(pPlayer, uiTrickSpell, true);
+            }
+
+            pPlayer->CastSpell(pPlayer, SPELL_TRICK_OR_TREATED, true);
+            break;
+        }
+
+        case GOSSIP_OPTION_VENDOR:
+            pPlayer->SEND_VENDORLIST(pCreature->GetGUID());
+            break;
+        case GOSSIP_OPTION_INNKEEPER:
+            pPlayer->CLOSE_GOSSIP_MENU();
+            pPlayer->SetBindPoint(pCreature->GetGUID());
+            break;
+    }
+
+    return true;
 }
 
 /*######
@@ -1015,6 +1147,40 @@ bool GossipSelect_npc_kingdom_of_dalaran_quests(Player* pPlayer, Creature* pCrea
     {
         pPlayer->CLOSE_GOSSIP_MENU();
         pPlayer->CastSpell(pPlayer,SPELL_TELEPORT_DALARAN,false);
+    }
+    return true;
+}
+
+/*######
+## npc_lunaclaw_spirit
+######*/
+
+enum
+{
+    QUEST_BODY_HEART_A      = 6001,
+    QUEST_BODY_HEART_H      = 6002,
+
+    TEXT_ID_DEFAULT         = 4714,
+    TEXT_ID_PROGRESS        = 4715
+};
+
+#define GOSSIP_ITEM_GRANT   "You have thought well, spirit. I ask you to grant me the strength of your body and the strength of your heart."
+
+bool GossipHello_npc_lunaclaw_spirit(Player* pPlayer, Creature* pCreature)
+{
+    if (pPlayer->GetQuestStatus(QUEST_BODY_HEART_A) == QUEST_STATUS_INCOMPLETE || pPlayer->GetQuestStatus(QUEST_BODY_HEART_H) == QUEST_STATUS_INCOMPLETE)
+        pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_ITEM_GRANT, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+1);
+
+    pPlayer->SEND_GOSSIP_MENU(TEXT_ID_DEFAULT, pCreature->GetGUID());
+    return true;
+}
+
+bool GossipSelect_npc_lunaclaw_spirit(Player* pPlayer, Creature* pCreature, uint32 uiSender, uint32 uiAction)
+{
+    if (uiAction == GOSSIP_ACTION_INFO_DEF+1)
+    {
+        pPlayer->SEND_GOSSIP_MENU(TEXT_ID_PROGRESS, pCreature->GetGUID());
+        pPlayer->AreaExploredOrEventHappens((pPlayer->getRace() == ALLIANCE) ? QUEST_BODY_HEART_A : QUEST_BODY_HEART_H);
     }
     return true;
 }
@@ -1328,9 +1494,21 @@ void AddSC_npcs_special()
     newscript->RegisterSelf();
 
     newscript = new Script;
+    newscript->Name = "npc_innkeeper";
+    newscript->pGossipHello = &GossipHello_npc_innkeeper;
+    newscript->pGossipSelect = &GossipSelect_npc_innkeeper;
+    newscript->RegisterSelf();
+
+    newscript = new Script;
     newscript->Name = "npc_kingdom_of_dalaran_quests";
     newscript->pGossipHello =  &GossipHello_npc_kingdom_of_dalaran_quests;
     newscript->pGossipSelect = &GossipSelect_npc_kingdom_of_dalaran_quests;
+    newscript->RegisterSelf();
+
+    newscript = new Script;
+    newscript->Name = "npc_lunaclaw_spirit";
+    newscript->pGossipHello =  &GossipHello_npc_lunaclaw_spirit;
+    newscript->pGossipSelect = &GossipSelect_npc_lunaclaw_spirit;
     newscript->RegisterSelf();
 
     newscript = new Script;

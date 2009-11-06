@@ -228,9 +228,8 @@ void ReputationMgr::Initilize()
 
 bool ReputationMgr::SetReputation(FactionEntry const* factionEntry, int32 standing, bool incremental)
 {
-    uint32 faction_id = factionEntry->ID;
-    SimpleFactionsList const* flist = GetFactionTeamList(faction_id);
-    if (flist && (faction_id != 1037) && (faction_id != 1052))
+    SimpleFactionsList const* flist = GetFactionTeamList(factionEntry->ID);
+    if (flist)
     {
         bool res = false;
         for (SimpleFactionsList::const_iterator itr = flist->begin();itr != flist->end();++itr)

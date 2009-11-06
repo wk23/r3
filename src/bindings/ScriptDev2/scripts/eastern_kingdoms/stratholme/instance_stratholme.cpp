@@ -22,7 +22,7 @@ SDCategory: Stratholme
 EndScriptData */
 
 #include "precompiled.h"
-#include "def_stratholme.h"
+#include "stratholme.h"
 
 enum
 {
@@ -102,6 +102,14 @@ struct MANGOS_DLL_DECL instance_stratholme : public ScriptedInstance
 
         crystalsGUID.clear();
         abomnationGUID.clear();
+    }
+
+    bool IsEncounterInProgress() const
+    {
+        for(uint8 i = 0; i < MAX_ENCOUNTER; i++)
+            if (m_auiEncounter[i] == IN_PROGRESS)
+                return true;
+        return false;
     }
 
     bool StartSlaugtherSquare()

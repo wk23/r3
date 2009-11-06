@@ -22,7 +22,7 @@ SDCategory: Stratholme
 EndScriptData */
 
 #include "precompiled.h"
-#include "def_stratholme.h"
+#include "stratholme.h"
 
 #define SPELL_BANSHEEWAIL   16565
 #define SPELL_BANSHEECURSE  16867
@@ -60,22 +60,20 @@ struct MANGOS_DLL_DECL boss_baroness_anastariAI : public ScriptedAI
 
     void UpdateAI(const uint32 diff)
     {
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         //BansheeWail
         if (BansheeWail_Timer < diff)
         {
-            if (rand()%100 < 95)
-                DoCast(m_creature->getVictim(),SPELL_BANSHEEWAIL);
-
+            DoCast(m_creature->getVictim(),SPELL_BANSHEEWAIL);
             BansheeWail_Timer = 4000;
         }else BansheeWail_Timer -= diff;
 
         //BansheeCurse
         if (BansheeCurse_Timer < diff)
         {
-            if (rand()%100 < 75)
+            if (!urand(0, 3))
                 DoCast(m_creature->getVictim(),SPELL_BANSHEECURSE);
 
             BansheeCurse_Timer = 18000;
@@ -84,9 +82,7 @@ struct MANGOS_DLL_DECL boss_baroness_anastariAI : public ScriptedAI
         //Silence
         if (Silence_Timer < diff)
         {
-            if (rand()%100 < 80)
-                DoCast(m_creature->getVictim(),SPELL_SILENCE);
-
+            DoCast(m_creature->getVictim(),SPELL_SILENCE);
             Silence_Timer = 13000;
         }else Silence_Timer -= diff;
 

@@ -22,7 +22,7 @@ SDCategory: Caverns of Time, The Dark Portal
 EndScriptData */
 
 #include "precompiled.h"
-#include "def_dark_portal.h"
+#include "dark_portal.h"
 
 #define SAY_ENTER               -1269000
 #define SAY_AGGRO               -1269001
@@ -56,10 +56,10 @@ struct MANGOS_DLL_DECL boss_temporusAI : public ScriptedAI
 
     void Reset()
     {
-        Haste_Timer = 15000+rand()%8000;
+        Haste_Timer = urand(15000, 23000);
         SpellReflection_Timer = 30000;
         MortalWound_Timer = 8000;
-        WingBuffet_Timer = 25000+rand()%10000;
+        WingBuffet_Timer = urand(25000, 35000);
     }
 
     void Aggro(Unit *who)
@@ -69,11 +69,7 @@ struct MANGOS_DLL_DECL boss_temporusAI : public ScriptedAI
 
     void KilledUnit(Unit *victim)
     {
-        switch(rand()%2)
-        {
-            case 0: DoScriptText(SAY_SLAY1, m_creature); break;
-            case 1: DoScriptText(SAY_SLAY2, m_creature); break;
-        }
+        DoScriptText(urand(0, 1) ? SAY_SLAY1 : SAY_SLAY2, m_creature);
     }
 
     void JustDied(Unit *victim)
@@ -102,38 +98,39 @@ struct MANGOS_DLL_DECL boss_temporusAI : public ScriptedAI
     void UpdateAI(const uint32 diff)
     {
         //Return since we have no target
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         //Attack Haste
         if (Haste_Timer < diff)
         {
             DoCast(m_creature, SPELL_HASTE);
-            Haste_Timer = 20000+rand()%5000;
+            Haste_Timer = urand(20000, 25000);
         }else Haste_Timer -= diff;
 
         //MortalWound_Timer
         if (MortalWound_Timer < diff)
         {
-            DoCast(m_creature, SPELL_MORTAL_WOUND);
-            MortalWound_Timer = 10000+rand()%10000;
+            DoCast(m_creature->getVictim(), SPELL_MORTAL_WOUND);
+            MortalWound_Timer = urand(10000, 20000);
         }else MortalWound_Timer -= diff;
 
         //Wing ruffet
         if (WingBuffet_Timer < diff)
         {
             DoCast(m_creature, m_bIsHeroicMode ? H_SPELL_WING_BUFFET : SPELL_WING_BUFFET);
-            WingBuffet_Timer = 20000+rand()%10000;
+            WingBuffet_Timer = urand(20000, 30000);
         }else WingBuffet_Timer -= diff;
 
         if (m_bIsHeroicMode)
         {
             if (SpellReflection_Timer < diff)
             {
-                DoCast(m_creature,SPELL_REFLECT);
-                SpellReflection_Timer = 25000+rand()%10000;
+                DoCast(m_creature, SPELL_REFLECT);
+                SpellReflection_Timer = urand(25000, 35000);
             }else SpellReflection_Timer -= diff;
         }
+
         DoMeleeAttackIfReady();
     }
 };

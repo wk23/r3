@@ -22,7 +22,7 @@ SDCategory: Blackrock Depths
 EndScriptData */
 
 #include "precompiled.h"
-#include "def_blackrock_depths.h"
+#include "blackrock_depths.h"
 
 enum
 {
@@ -70,7 +70,7 @@ struct MANGOS_DLL_DECL boss_magmusAI : public ScriptedAI
     void UpdateAI(const uint32 uiDiff)
     {
         //Return since we have no target
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         //FieryBurst_Timer

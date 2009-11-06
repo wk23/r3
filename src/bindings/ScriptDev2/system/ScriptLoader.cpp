@@ -4,7 +4,12 @@
 
 #include "precompiled.h"
 
+//battlegrounds
+extern void AddSC_battleground();
+
 //custom
+extern void AddSC_npc_arena_honor();
+extern void AddSC_teleguy();
 
 //examples
 extern void AddSC_example_creature();
@@ -98,6 +103,7 @@ extern void AddSC_boss_houndmaster_loksey();
 extern void AddSC_boss_interrogator_vishas();
 extern void AddSC_boss_mograine_and_whitemane();
 extern void AddSC_boss_scorn();
+extern void AddSC_boss_headless_horseman();
 extern void AddSC_instance_scarlet_monastery();
 extern void AddSC_boss_darkmaster_gandling();               //scholomance
 extern void AddSC_boss_death_knight_darkreaver();
@@ -237,10 +243,27 @@ extern void AddSC_teldrassil();
 extern void AddSC_the_barrens();
 extern void AddSC_thousand_needles();
 extern void AddSC_thunder_bluff();
+extern void AddSC_ungoro_crater();
 extern void AddSC_winterspring();
 
 //northrend
-extern void AddSC_instance_azjol_nerub();                   //azjol-nerub
+extern void AddSC_boss_jedoga();                            //ahnkahet
+extern void AddSC_boss_nadox();
+extern void AddSC_boss_taldaram();
+extern void AddSC_boss_volazj();
+extern void AddSC_instance_ahnkahet();
+extern void AddSC_boss_anubarak();                          //azjol-nerub
+extern void AddSC_boss_hadronox();
+extern void AddSC_boss_krikthir();
+extern void AddSC_instance_azjol_nerub();
+extern void AddSC_boss_novos();                             //draktharon_keep
+extern void AddSC_boss_tharonja();
+extern void AddSC_boss_trollgore();
+extern void AddSC_boss_colossus();                          //gundrak
+extern void AddSC_boss_galdarah();
+extern void AddSC_boss_moorabi();
+extern void AddSC_boss_sladran();
+extern void AddSC_instance_gundrak();
 extern void AddSC_boss_anubrekhan();                        //naxxramas
 extern void AddSC_boss_four_horsemen();
 extern void AddSC_boss_faerlina();
@@ -261,24 +284,53 @@ extern void AddSC_boss_telestra();
 extern void AddSC_instance_nexus();
 extern void AddSC_boss_sartharion();                        //obsidian_sanctum
 extern void AddSC_instance_obsidian_sanctum();
-extern void AddSC_boss_bjarngrim();                         //halls_of_lightning
+extern void AddSC_instance_vault_of_archavon();             //vault_of_archavon
+extern void AddSC_boss_koralon();
+extern void AddSC_boss_emalon();
+extern void AddSC_boss_archavon();
+extern void AddSC_boss_bjarngrim();                         //Ulduar, halls_of_lightning
 extern void AddSC_boss_ionar();
 extern void AddSC_boss_loken();
 extern void AddSC_boss_volkhan();
 extern void AddSC_instance_halls_of_lightning();
-extern void AddSC_npc_ulduar_teleporter();                  //Ulduar
+extern void AddSC_boss_maiden_of_grief();                   //Ulduar, halls_of_stone
+extern void AddSC_boss_sjonnir();
+extern void AddSC_halls_of_stone();
+extern void AddSC_boss_leviathan();                         //ulduar
+extern void AddSC_boss_ignis();
+extern void AddSC_boss_razorscale();
+extern void AddSC_boss_xt002();
+extern void AddSC_boss_iron_council();
+extern void AddSC_boss_kologarn();
+extern void AddSC_boss_auriaya();
+extern void AddSC_boss_thorim();
+extern void AddSC_boss_mimiron();
+extern void AddSC_boss_hodir();
+extern void AddSC_boss_freya();
+extern void AddSC_boss_vezax();
+extern void AddSC_boss_yogg_saron();
+extern void AddSC_boss_algalon();
+extern void AddSC_ulduar_teleport();
+extern void AddSC_instance_ulduar();
 extern void AddSC_boss_ingvar();                            //utgarde_keep
 extern void AddSC_boss_keleseth();
 extern void AddSC_boss_skarvald_and_dalronn();
 extern void AddSC_instance_utgarde_keep();
 extern void AddSC_utgarde_keep();
-extern void AddSC_instance_vault_of_archavon();
-extern void AddSC_boss_emalon();
+extern void AddSC_boss_gortok();                           //utgarde_pinnacle
+extern void AddSC_boss_skadi();
+extern void AddSC_boss_svala();
+extern void AddSC_boss_ymiron();
+extern void AddSC_instance_pinnacle();
 
 extern void AddSC_borean_tundra();
+extern void AddSC_dalaran();
 extern void AddSC_dragonblight();
 extern void AddSC_grizzly_hills();
+extern void AddSC_howling_fjord();
 extern void AddSC_icecrown();
+extern void AddSC_sholazar_basin();
+extern void AddSC_storm_peaks();
 
 //outland
 extern void AddSC_boss_exarch_maladaar();                   //auchindoun, auchenai_crypts
@@ -337,7 +389,6 @@ extern void AddSC_instance_arcatraz();
 extern void AddSC_boss_high_botanist_freywinn();            //TK, botanica
 extern void AddSC_boss_laj();
 extern void AddSC_boss_warp_splinter();
-extern void AddSC_boss_alar();
 extern void AddSC_boss_kaelthas();                          //TK, the_eye
 extern void AddSC_boss_void_reaver();
 extern void AddSC_boss_high_astromancer_solarian();
@@ -361,7 +412,12 @@ extern void AddSC_zangarmarsh();
 
 void AddScripts()
 {
+    //battlegrounds
+    AddSC_battleground();
+
     //custom
+    AddSC_npc_arena_honor();
+	AddSC_teleguy();
 
     //examples
     AddSC_example_creature();
@@ -455,6 +511,7 @@ void AddScripts()
     AddSC_boss_interrogator_vishas();
     AddSC_boss_mograine_and_whitemane();
     AddSC_boss_scorn();
+    AddSC_boss_headless_horseman();
     AddSC_instance_scarlet_monastery();
     AddSC_boss_darkmaster_gandling();                       //scholomance
     AddSC_boss_death_knight_darkreaver();
@@ -594,10 +651,27 @@ void AddScripts()
     AddSC_the_barrens();
     AddSC_thousand_needles();
     AddSC_thunder_bluff();
+    AddSC_ungoro_crater();
     AddSC_winterspring();
 
     //northrend
-    AddSC_instance_azjol_nerub();                           //azjol-nerub
+    AddSC_boss_jedoga();                                    //ahnkahet
+    AddSC_boss_nadox();
+    AddSC_boss_taldaram();
+    AddSC_boss_volazj();
+    AddSC_instance_ahnkahet();
+    AddSC_boss_anubarak();                                  //azjol-nerub
+    AddSC_boss_hadronox();
+    AddSC_boss_krikthir();
+    AddSC_instance_azjol_nerub();
+    AddSC_boss_novos();                                     //draktharon_keep
+    AddSC_boss_tharonja();
+    AddSC_boss_trollgore();
+    AddSC_boss_colossus();                                  //gundrak
+    AddSC_boss_galdarah();
+    AddSC_boss_moorabi();
+    AddSC_boss_sladran();
+    AddSC_instance_gundrak();
     AddSC_boss_anubrekhan();                                //naxxramas
     AddSC_boss_four_horsemen();
     AddSC_boss_faerlina();
@@ -618,24 +692,53 @@ void AddScripts()
     AddSC_instance_nexus();
     AddSC_boss_sartharion();                                //obsidian_sanctum
     AddSC_instance_obsidian_sanctum();
-    AddSC_boss_bjarngrim();                                 //halls_of_lightning
+    AddSC_instance_vault_of_archavon();                     //vault_of_archavon
+    AddSC_boss_koralon();
+    AddSC_boss_emalon();
+    AddSC_boss_archavon();
+    AddSC_boss_bjarngrim();                                 //Ulduar, halls_of_lightning
     AddSC_boss_ionar();
     AddSC_boss_loken();
     AddSC_boss_volkhan();
     AddSC_instance_halls_of_lightning();
-    AddSC_npc_ulduar_teleporter();                          //Ulduar
+    AddSC_boss_maiden_of_grief();                           //Ulduar, halls_of_stone
+    AddSC_boss_sjonnir();
+    AddSC_halls_of_stone();
+    AddSC_boss_leviathan();                                 //ulduar
+    AddSC_boss_ignis();
+    AddSC_boss_razorscale();
+    AddSC_boss_xt002();
+    AddSC_boss_iron_council();
+    AddSC_boss_kologarn();
+    AddSC_boss_auriaya();
+    AddSC_boss_thorim();
+    AddSC_boss_mimiron();
+    AddSC_boss_hodir();
+    AddSC_boss_freya();
+    AddSC_boss_vezax();
+    AddSC_boss_yogg_saron();
+    AddSC_boss_algalon();
+    AddSC_ulduar_teleport();
+    AddSC_instance_ulduar();
     AddSC_boss_ingvar();                                    //utgarde_keep
     AddSC_boss_keleseth();
     AddSC_boss_skarvald_and_dalronn();
     AddSC_instance_utgarde_keep();
     AddSC_utgarde_keep();
-    AddSC_instance_vault_of_archavon();
-    AddSC_boss_emalon();
+    AddSC_boss_gortok();                                    //utgarde_pinnacle
+    AddSC_boss_skadi();
+    AddSC_boss_svala();
+    AddSC_boss_ymiron();
+    AddSC_instance_pinnacle();
 
     AddSC_borean_tundra();
+    AddSC_dalaran();
     AddSC_dragonblight();
     AddSC_grizzly_hills();
+    AddSC_howling_fjord();
     AddSC_icecrown();
+    AddSC_sholazar_basin();
+    AddSC_storm_peaks();
 
     //outland
     AddSC_boss_exarch_maladaar();                           //auchindoun, auchenai_crypts
@@ -694,7 +797,6 @@ void AddScripts()
     AddSC_boss_high_botanist_freywinn();                    //TK, botanica
     AddSC_boss_laj();
     AddSC_boss_warp_splinter();
-    AddSC_boss_alar();
     AddSC_boss_kaelthas();                                  //TK, the_eye
     AddSC_boss_void_reaver();
     AddSC_boss_high_astromancer_solarian();

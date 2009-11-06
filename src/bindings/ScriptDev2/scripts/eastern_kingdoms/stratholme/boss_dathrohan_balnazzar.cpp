@@ -106,7 +106,7 @@ struct MANGOS_DLL_DECL boss_dathrohan_balnazzarAI : public ScriptedAI
 
     void UpdateAI(const uint32 uiDiff)
     {
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         //START NOT TRANSFORMED
@@ -116,9 +116,9 @@ struct MANGOS_DLL_DECL boss_dathrohan_balnazzarAI : public ScriptedAI
             if (m_uiMindBlast_Timer < uiDiff)
             {
                 DoCast(m_creature->getVictim(),SPELL_MINDBLAST);
-                m_uiMindBlast_Timer = 15000 + rand()%5000;
+                m_uiMindBlast_Timer = urand(15000, 20000);
             }else m_uiMindBlast_Timer -= uiDiff;
-            
+
             //CrusadersHammer
             if (m_uiCrusadersHammer_Timer < uiDiff)
             {
@@ -158,7 +158,7 @@ struct MANGOS_DLL_DECL boss_dathrohan_balnazzarAI : public ScriptedAI
             if (m_uiMindBlast_Timer < uiDiff)
             {
                 DoCast(m_creature->getVictim(),SPELL_MINDBLAST);
-                m_uiMindBlast_Timer = 15000 + rand()%5000;
+                m_uiMindBlast_Timer = urand(15000, 20000);
             }else m_uiMindBlast_Timer -= uiDiff;
 
             //ShadowShock

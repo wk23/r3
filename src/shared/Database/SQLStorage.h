@@ -1,4 +1,6 @@
 /*
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -20,7 +22,6 @@
 #include "Common.h"
 #include "Database/DatabaseEnv.h"
 
-/// <summary>Class used to load a database table and its contents into a container.</summary>
 class SQLStorage
 {
     template<class T>
@@ -28,7 +29,6 @@ class SQLStorage
 
     public:
 
-        /// <summary>Constructor of the storage.</summary>
         SQLStorage(const char* fmt, const char * _entry_field, const char * sqlname)
         {
             src_format = fmt;
@@ -36,7 +36,6 @@ class SQLStorage
             init(_entry_field, sqlname);
         }
 
-        /// <summary>Constructor of the storage.</summary>
         SQLStorage(const char* src_fmt, const char* dst_fmt, const char * _entry_field, const char * sqlname)
         {
             src_format = src_fmt;
@@ -44,16 +43,12 @@ class SQLStorage
             init(_entry_field, sqlname);
         }
 
-        /// <summary>Destructor of the storage.</summary>
+
         ~SQLStorage()
         {
             Free();
         }
 
-        /// <summary>Looks for an entry in the container and returns it.</summary>
-        /// <typeparam name="T">The class/struct to load data for the found entry into.</typeparam>
-        /// <param name="id">ID of the entry to find.</param>
-        /// <returns>the searched-for entry, or NULL if not found.</returns>
         template<class T>
             T const* LookupEntry(uint32 id) const
         {
@@ -68,10 +63,9 @@ class SQLStorage
         uint32 MaxEntry;
         uint32 iNumFields;
 
-        /// <summary>Loads data from the database into the container.</summary>
-        /// <remarks>When reloading data, call <see cref="Free" /> first.</remarks>
+        char const* GetTableName() const { return table; }
+
         void Load();
-        /// <summary>Clears (removes) all loaded data.</summary>
         void Free();
 
     private:
@@ -95,7 +89,6 @@ class SQLStorage
         //bool HasString;
 };
 
-/// <summary>The low-level class used to load data into an SQLStorage.</summary>
 template <class T>
 struct SQLStorageLoaderBase
 {

@@ -245,18 +245,13 @@ bool OutdoorPvPObjectiveHP::Update(uint32 diff)
                     break;
             }
 
-            GameObject* flag = HashMapHolder<GameObject>::Find(m_CapturePoint);
-            GameObject* flag2 = HashMapHolder<GameObject>::Find(m_Objects[m_TowerType]);
+            Map* map = m_PvP->GetMap();
+            GameObject* flag = map->GetGameObject(m_CapturePoint);
+            GameObject* flag2 = map->GetGameObject(m_Objects[m_TowerType]);
             if(flag)
-            {
                 flag->SetGoArtKit(artkit);
-                flag->SendUpdateObjectToAllExcept(NULL);
-            }
             if(flag2)
-            {
                 flag2->SetGoArtKit(artkit2);
-                flag2->SendUpdateObjectToAllExcept(NULL);
-            }
 
             // send world state update
             if(field)

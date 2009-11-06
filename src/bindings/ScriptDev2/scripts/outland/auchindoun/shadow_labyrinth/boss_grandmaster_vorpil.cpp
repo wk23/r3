@@ -22,7 +22,7 @@ SDCategory: Auchindoun, Shadow Labyrinth
 EndScriptData */
 
 #include "precompiled.h"
-#include "def_shadow_labyrinth.h"
+#include "shadow_labyrinth.h"
 
 #define SAY_INTRO                       -1555028
 #define SAY_AGGRO1                      -1555029
@@ -76,7 +76,7 @@ struct MANGOS_DLL_DECL boss_grandmaster_vorpilAI : public ScriptedAI
 
     void Reset()
     {
-        ShadowBoltVolley_Timer = 7000 + rand()%7000;
+        ShadowBoltVolley_Timer = urand(7000, 14000);
         DrawShadows_Timer = 40000;
         Teleport_Timer = 1000;
         VoidTraveler_Timer = 20000;
@@ -101,7 +101,7 @@ struct MANGOS_DLL_DECL boss_grandmaster_vorpilAI : public ScriptedAI
 
     void Aggro(Unit *who)
     {
-        switch(rand()%3)
+        switch(urand(0, 2))
         {
             case 0: DoScriptText(SAY_AGGRO1, m_creature); break;
             case 1: DoScriptText(SAY_AGGRO2, m_creature); break;
@@ -120,11 +120,7 @@ struct MANGOS_DLL_DECL boss_grandmaster_vorpilAI : public ScriptedAI
 
     void KilledUnit(Unit *victim)
     {
-        switch(rand()%2)
-        {
-            case 0: DoScriptText(SAY_SLAY1, m_creature); break;
-            case 1: DoScriptText(SAY_SLAY2, m_creature); break;
-        }
+        DoScriptText(urand(0, 1) ? SAY_SLAY1 : SAY_SLAY2, m_creature);
     }
 
     void JustSummoned(Creature *summoned)
@@ -150,7 +146,7 @@ struct MANGOS_DLL_DECL boss_grandmaster_vorpilAI : public ScriptedAI
     void UpdateAI(const uint32 diff)
     {
         //Return since we have no target
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         if (Teleport)
@@ -164,8 +160,8 @@ struct MANGOS_DLL_DECL boss_grandmaster_vorpilAI : public ScriptedAI
                 float ranY = LOCY;
                 float ranZ = LOCZ;
 
-                std::list<HostilReference *> t_list = m_creature->getThreatManager().getThreatList();
-                for(std::list<HostilReference *>::iterator itr = t_list.begin(); itr!= t_list.end(); ++itr)
+                std::list<HostileReference *> t_list = m_creature->getThreatManager().getThreatList();
+                for(std::list<HostileReference *>::iterator itr = t_list.begin(); itr!= t_list.end(); ++itr)
                 {
                     Unit* target = Unit::GetUnit(*m_creature, (*itr)->getUnitGuid());
                     if (target && target->GetTypeId() == TYPEID_PLAYER)
@@ -185,7 +181,7 @@ struct MANGOS_DLL_DECL boss_grandmaster_vorpilAI : public ScriptedAI
         if (ShadowBoltVolley_Timer < diff)
         {
             DoCast(m_creature->getVictim(), SPELL_SHADOW_BOLT_VOLLEY);
-            ShadowBoltVolley_Timer = 15000 + rand()%15000;
+            ShadowBoltVolley_Timer = urand(15000, 30000);
         }else ShadowBoltVolley_Timer -= diff;
 
         if (DrawShadows_Timer < diff)
@@ -199,7 +195,7 @@ struct MANGOS_DLL_DECL boss_grandmaster_vorpilAI : public ScriptedAI
         {
             DoScriptText(SAY_HELP, m_creature);
 
-            switch(rand()%5)
+            switch(urand(0, 4))
             {
                 case 0: DoCast(m_creature,SPELL_SUMMON_VOIDWALKER_A,true); break;
                 case 1: DoCast(m_creature,SPELL_SUMMON_VOIDWALKER_B,true); break;

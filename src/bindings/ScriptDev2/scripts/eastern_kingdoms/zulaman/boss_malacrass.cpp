@@ -22,7 +22,7 @@ SDCategory: Zul'Aman
 EndScriptData */
 
 #include "precompiled.h"
-#include "def_zulaman.h"
+#include "zulaman.h"
 
 enum
 {
@@ -231,11 +231,7 @@ struct MANGOS_DLL_DECL boss_malacrassAI : public ScriptedAI
         if (pVictim->GetTypeId() != TYPEID_PLAYER)
             return;
 
-        switch(rand()%2)
-        {
-            case 0: DoScriptText(SAY_KILL1, m_creature); break;
-            case 1: DoScriptText(SAY_KILL2, m_creature); break;
-        }
+        DoScriptText(urand(0, 1) ? SAY_KILL1 : SAY_KILL2, m_creature);
     }
 
     void JustDied(Unit* pKiller)
@@ -266,7 +262,7 @@ struct MANGOS_DLL_DECL boss_malacrassAI : public ScriptedAI
 
     void UpdateAI(const uint32 uiDiff)
     {
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         DoMeleeAttackIfReady();
@@ -316,7 +312,7 @@ struct MANGOS_DLL_DECL boss_malacrass_addAI : public ScriptedAI
 
         if (Unit* pMalacrass = Unit::GetUnit(*m_creature, m_pInstance->GetData64(DATA_MALACRASS)))
         {
-            switch(rand()%3)
+            switch(urand(0, 2))
             {
                 case 0: DoScriptText(SAY_ADD_DIED1, pMalacrass); break;
                 case 1: DoScriptText(SAY_ADD_DIED2, pMalacrass); break;
@@ -332,7 +328,7 @@ struct MANGOS_DLL_DECL boss_malacrass_addAI : public ScriptedAI
         //if spell not valid
         if (!pSpell)
             return false;
-        
+
         //spell known, so lookup using rangeIndex
         SpellRangeEntry const* pSpellRange = GetSpellRangeStore()->LookupEntry(pSpell->rangeIndex);
 
@@ -340,9 +336,9 @@ struct MANGOS_DLL_DECL boss_malacrass_addAI : public ScriptedAI
         if (!pSpellRange)
             return false;
 
-        std::list<HostilReference*>& lThreatList = m_creature->getThreatManager().getThreatList();
+        std::list<HostileReference*>& lThreatList = m_creature->getThreatManager().getThreatList();
 
-        for(std::list<HostilReference*>::iterator iter = lThreatList.begin(); iter != lThreatList.end(); ++iter)
+        for(std::list<HostileReference*>::iterator iter = lThreatList.begin(); iter != lThreatList.end(); ++iter)
         {
             Unit* pTarget = Unit::GetUnit((*m_creature), (*iter)->getUnitGuid());
 
@@ -379,7 +375,7 @@ struct MANGOS_DLL_DECL mob_thurgAI : public boss_malacrass_addAI
 
     void UpdateAI(const uint32 uiDiff)
     {
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         if (m_uiBloodlustTimer < uiDiff)
@@ -445,7 +441,7 @@ struct MANGOS_DLL_DECL mob_alyson_antilleAI : public boss_malacrass_addAI
 
         if (m_creature->Attack(pWho, false))
         {
-            m_creature->AddThreat(pWho, 0.0f);
+            m_creature->AddThreat(pWho);
             m_creature->SetInCombatWith(pWho);
             pWho->SetInCombatWith(m_creature);
 
@@ -455,7 +451,7 @@ struct MANGOS_DLL_DECL mob_alyson_antilleAI : public boss_malacrass_addAI
 
     void UpdateAI(const uint32 uiDiff)
     {
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         if (m_uiArcaneTorrentTimer < uiDiff)
@@ -550,7 +546,7 @@ struct MANGOS_DLL_DECL mob_gazakrothAI : public boss_malacrass_addAI
 
         if (m_creature->Attack(pWho, false))
         {
-            m_creature->AddThreat(pWho, 0.0f);
+            m_creature->AddThreat(pWho);
             m_creature->SetInCombatWith(pWho);
             pWho->SetInCombatWith(m_creature);
 
@@ -560,7 +556,7 @@ struct MANGOS_DLL_DECL mob_gazakrothAI : public boss_malacrass_addAI
 
     void UpdateAI(const uint32 uiDiff)
     {
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         if (m_uiFireboltTimer < uiDiff)
@@ -601,7 +597,7 @@ struct MANGOS_DLL_DECL mob_lord_raadanAI : public boss_malacrass_addAI
 
     void UpdateAI(const uint32 uiDiff)
     {
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         if (m_uiThunderclapTimer < uiDiff)
@@ -652,7 +648,7 @@ struct MANGOS_DLL_DECL mob_darkheartAI : public boss_malacrass_addAI
 
     void UpdateAI(const uint32 uiDiff)
     {
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         if (m_uiPsychicWailTimer < uiDiff)
@@ -700,7 +696,7 @@ struct MANGOS_DLL_DECL mob_slitherAI : public boss_malacrass_addAI
 
         if (m_creature->Attack(pWho, false))
         {
-            m_creature->AddThreat(pWho, 0.0f);
+            m_creature->AddThreat(pWho);
             m_creature->SetInCombatWith(pWho);
             pWho->SetInCombatWith(m_creature);
 
@@ -710,7 +706,7 @@ struct MANGOS_DLL_DECL mob_slitherAI : public boss_malacrass_addAI
 
     void UpdateAI(const uint32 uiDiff)
     {
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         if (m_uiVenomSpitTimer < uiDiff)
@@ -750,15 +746,15 @@ struct MANGOS_DLL_DECL mob_fenstalkerAI : public boss_malacrass_addAI
 
     void UpdateAI(const uint32 uiDiff)
     {
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         if (m_uiVolatileInfectionTimer < uiDiff)
-        { 
+        {
             DoCast(m_creature->getVictim(), SPELL_VOLATILE_INFECTION);
             m_uiVolatileInfectionTimer = 12000;
         }
-        else 
+        else
             m_uiVolatileInfectionTimer -= uiDiff;
 
         DoMeleeAttackIfReady();
@@ -791,7 +787,7 @@ struct MANGOS_DLL_DECL mob_koraggAI : public boss_malacrass_addAI
 
     void UpdateAI(const uint32 uiDiff)
     {
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         if (m_uiMightyBlowTimer < uiDiff)

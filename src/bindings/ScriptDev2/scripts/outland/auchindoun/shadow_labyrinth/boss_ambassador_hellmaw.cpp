@@ -22,7 +22,7 @@ SDCategory: Auchindoun, Shadow Labyrinth
 EndScriptData */
 
 #include "precompiled.h"
-#include "def_shadow_labyrinth.h"
+#include "shadow_labyrinth.h"
 #include "escort_ai.h"
 
 #define SAY_INTRO       -1555000
@@ -41,7 +41,7 @@ EndScriptData */
 #define SPELL_BANISH            30231
 #define SPELL_CORROSIVE_ACID    33551
 #define SPELL_FEAR              33547
-#define SPELL_ENRAGE            34970                         
+#define SPELL_ENRAGE            34970
 
 struct MANGOS_DLL_DECL boss_ambassador_hellmawAI : public npc_escortAI
 {
@@ -66,8 +66,8 @@ struct MANGOS_DLL_DECL boss_ambassador_hellmawAI : public npc_escortAI
     void Reset()
     {
         EventCheck_Timer = 5000;
-        CorrosiveAcid_Timer = 5000 + rand()%5000;
-        Fear_Timer = 25000 + rand()%5000;
+        CorrosiveAcid_Timer = urand(5000, 10000);
+        Fear_Timer = urand(25000, 30000);
         Enrage_Timer = 180000;
         Intro = false;
         IsBanished = true;
@@ -120,7 +120,7 @@ struct MANGOS_DLL_DECL boss_ambassador_hellmawAI : public npc_escortAI
 
     void Aggro(Unit *who)
     {
-        switch(rand()%3)
+        switch(urand(0, 2))
         {
             case 0: DoScriptText(SAY_AGGRO1, m_creature); break;
             case 1: DoScriptText(SAY_AGGRO2, m_creature); break;
@@ -130,11 +130,7 @@ struct MANGOS_DLL_DECL boss_ambassador_hellmawAI : public npc_escortAI
 
     void KilledUnit(Unit *victim)
     {
-        switch(rand()%2)
-        {
-            case 0: DoScriptText(SAY_SLAY1, m_creature); break;
-            case 1: DoScriptText(SAY_SLAY2, m_creature); break;
-        }
+        DoScriptText(urand(0, 1) ? SAY_SLAY1 : SAY_SLAY2, m_creature);
     }
 
     void JustDied(Unit *victim)
@@ -145,9 +141,9 @@ struct MANGOS_DLL_DECL boss_ambassador_hellmawAI : public npc_escortAI
             m_pInstance->SetData(TYPE_HELLMAW, DONE);
     }
 
-    void UpdateAI(const uint32 diff)
+    void UpdateEscortAI(const uint32 diff)
     {
-        if (!Intro && !IsBeingEscorted)
+        if (!Intro && !HasEscortState(STATE_ESCORT_ESCORTING))
         {
             if (EventCheck_Timer < diff)
             {
@@ -169,21 +165,19 @@ struct MANGOS_DLL_DECL boss_ambassador_hellmawAI : public npc_escortAI
             }
         }
 
-        npc_escortAI::UpdateAI(diff);
-
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         if (CorrosiveAcid_Timer < diff)
         {
             DoCast(m_creature->getVictim(),SPELL_CORROSIVE_ACID);
-            CorrosiveAcid_Timer = 15000 + rand()%10000;
+            CorrosiveAcid_Timer = urand(15000, 25000);
         }else CorrosiveAcid_Timer -= diff;
 
         if (Fear_Timer < diff)
         {
             DoCast(m_creature,SPELL_FEAR);
-            Fear_Timer = 20000 + rand()%15000;
+            Fear_Timer = urand(20000, 35000);
         }else Fear_Timer -= diff;
 
         if (m_bIsHeroicMode)
@@ -194,6 +188,8 @@ struct MANGOS_DLL_DECL boss_ambassador_hellmawAI : public npc_escortAI
                 Enraged = true;
             }else Enrage_Timer -= diff;
         }
+
+        DoMeleeAttackIfReady();
     }
 };
 

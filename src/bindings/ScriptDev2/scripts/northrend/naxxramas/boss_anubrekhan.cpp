@@ -22,7 +22,7 @@ SDCategory: Naxxramas
 EndScriptData */
 
 #include "precompiled.h"
-#include "def_naxxramas.h"
+#include "naxxramas.h"
 
 //Anub'Rekhan speech
 enum Speech
@@ -42,7 +42,9 @@ enum
 {
 //Anub'Rekhan spels
     SPELL_IMPALE       = 28783,                           //May be wrong spell id. Causes more dmg than I expect
-    SPELL_LOCUSTSWARM  = 54021,                           //This is a self buff that triggers the dmg debuff
+    H_SPELL_IMPALE     = 56090,
+    SPELL_LOCUSTSWARM  = 28785,                           //This is a self buff that triggers the dmg debuff
+    H_SPELL_LOCUSTSWARM = 54021,
     SPELL_BERSERK      = 46587,                           
     SPELL_SELF_SPAWN_5 = 29105,                           //This spawns 5 corpse scarabs ontop of us (most likely the player casts this on death)
 
@@ -65,6 +67,7 @@ struct MANGOS_DLL_DECL boss_anubrekhanAI : public ScriptedAI
     boss_anubrekhanAI(Creature *c) : ScriptedAI(c) 
     {
         pInstance = ((ScriptedInstance*)c->GetInstanceData());
+        Heroic = c->GetMap()->GetSpawnMode() > 0;
         
         for (int i = 0; i < MAX_CRYPT_GUARDS; i++)
             guidCryptGuards[i] = 0;
@@ -73,6 +76,7 @@ struct MANGOS_DLL_DECL boss_anubrekhanAI : public ScriptedAI
     }
 
     ScriptedInstance *pInstance;
+    bool Heroic;
 
     uint32 Impale_Timer;
     uint32 LocustSwarm_Timer;
@@ -89,7 +93,7 @@ struct MANGOS_DLL_DECL boss_anubrekhanAI : public ScriptedAI
     void Reset()
     {
         Impale_Timer = 15000;                               //15 seconds
-        LocustSwarm_Timer = 80000 + (rand()%40000);         //Random time between 80 seconds and 2 minutes for initial cast
+        LocustSwarm_Timer = urand(80000, 120000);           //Random time between 80 seconds and 2 minutes for initial cast
         SummonFirst_Timer = 20000;                            //45 seconds after initial locust swarm
         Berserk_Timer = 600000;
         RiseFromCorpse_Timer = 20000 + (rand()%20000);
@@ -105,23 +109,23 @@ struct MANGOS_DLL_DECL boss_anubrekhanAI : public ScriptedAI
                 pUnit->AddObjectToRemoveList();
             guidCryptGuards[i] = 0;
         }
+        
         //Remove all corpse scarabs
-
         std::list<Creature*> CorpseScarabs = GetCreaturesByEntry(MOB_CORPSE_SCARAB);
         if (!CorpseScarabs.empty())
             for(std::list<Creature*>::iterator itr = CorpseScarabs.begin(); itr != CorpseScarabs.end(); ++itr)
                 (*itr)->AddObjectToRemoveList();
 
-        //if anubrekhan is alive -> this must be first time we entered Archanid Wing -> close all other doors
+        //if anubrekhan is alive -> this must be first time we entered Arachnid Quarter -> close all other doors
         if(pInstance && m_creature->isAlive())
-            pInstance->SetData(ENCOUNT_ANUBREKHAN, NOT_STARTED);
+            pInstance->SetData(TYPE_ANUBREKHAN, NOT_STARTED);
     }
 
     void JustDied(Unit*)
     {
         //Anubrekhan is slayed -> open all doors to Faerlina
         if(pInstance)
-            pInstance->SetData(ENCOUNT_ANUBREKHAN, DONE);
+            pInstance->SetData(TYPE_ANUBREKHAN, DONE);
     }
 
     void KilledUnit(Unit* Victim)
@@ -131,9 +135,7 @@ struct MANGOS_DLL_DECL boss_anubrekhanAI : public ScriptedAI
 
     void Aggro(Unit *who)
     {
-        //Close the room for boss fight
-        if(pInstance)
-            pInstance->SetData(ENCOUNT_ANUBREKHAN, IN_PROGRESS);
+        if(pInstance) pInstance->SetData(TYPE_ANUBREKHAN, IN_PROGRESS);
 
         switch(rand()%3)
         {
@@ -189,7 +191,7 @@ struct MANGOS_DLL_DECL boss_anubrekhanAI : public ScriptedAI
         guidCryptGuards[CryptGuard_count++] = temp->GetGUID();
         if (Unit* target = SelectUnit(SELECT_TARGET_RANDOM,0))
         {
-            temp->AddThreat(target,0.0f);
+            temp->AddThreat(target);
             m_creature->SetInCombatWithZone();
         }
 
@@ -204,7 +206,7 @@ struct MANGOS_DLL_DECL boss_anubrekhanAI : public ScriptedAI
 
     void UpdateAI(const uint32 diff)
     {
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         //Berserk_Timer
@@ -258,9 +260,9 @@ struct MANGOS_DLL_DECL boss_anubrekhanAI : public ScriptedAI
             {
                 //Cast Impale on a random target
                 //Do NOT cast it when we are afflicted by locust swarm
-                if (!m_creature->HasAura(SPELL_LOCUSTSWARM,1))
+                if (!m_creature->HasAura(Heroic ? H_SPELL_LOCUSTSWARM : SPELL_LOCUSTSWARM, 1))
                     if (Unit* target = SelectUnit(SELECT_TARGET_RANDOM,1))
-                        DoCast(target,SPELL_IMPALE);
+                        DoCast(target,Heroic ? H_SPELL_IMPALE : SPELL_IMPALE);
                 Impale_Timer = 15000;
             }else Impale_Timer -= diff;
 
@@ -268,7 +270,7 @@ struct MANGOS_DLL_DECL boss_anubrekhanAI : public ScriptedAI
             if (LocustSwarm_Timer < diff)
             {
                 //Cast Locust Swarm buff on ourselves
-                DoCast(m_creature, SPELL_LOCUSTSWARM);
+                DoCast(m_creature, Heroic ? H_SPELL_LOCUSTSWARM : SPELL_LOCUSTSWARM);
                 swarm = true;
                 //Summon Crypt Guard immidietly after Locust Swarm
                 if (CryptGuard_count < MAX_CRYPT_GUARDS)

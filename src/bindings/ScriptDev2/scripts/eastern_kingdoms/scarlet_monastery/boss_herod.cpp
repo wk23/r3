@@ -72,7 +72,7 @@ struct MANGOS_DLL_DECL boss_herodAI : public ScriptedAI
 
     void UpdateAI(const uint32 diff)
     {
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         //If we are <30% hp goes Enraged
@@ -120,18 +120,21 @@ struct MANGOS_DLL_DECL mob_scarlet_traineeAI : public npc_escortAI
     void Reset() { }
     void WaypointReached(uint32 uiPoint) { }
 
-    void UpdateAI(const uint32 diff)
+    void UpdateEscortAI(const uint32 diff)
     {
         if (Start_Timer)
         {
-            if (Start_Timer < diff)
+            if (Start_Timer <= diff)
             {
                 Start(true,true);
                 Start_Timer = 0;
             }else Start_Timer -= diff;
         }
 
-        npc_escortAI::UpdateAI(diff);
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
+        DoMeleeAttackIfReady();
     }
 };
 

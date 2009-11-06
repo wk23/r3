@@ -22,9 +22,9 @@ SDCategory: Caverns of Time, The Dark Portal
 EndScriptData */
 
 #include "precompiled.h"
-#include "def_dark_portal.h"
+#include "dark_portal.h"
 
-inline uint32 RandRiftBoss() { return ((rand()%2) ? NPC_RKEEP : NPC_RLORD); }
+inline uint32 RandRiftBoss() { return (urand(0, 1) ? NPC_RKEEP : NPC_RLORD); }
 
 float PortalLocation[4][4]=
 {
@@ -287,11 +287,11 @@ struct MANGOS_DLL_DECL instance_dark_portal : public ScriptedInstance
                 {
                     if (pBoss->GetEntry() == NPC_AEONUS)
                     {
-                        pBoss->AddThreat(pMedivh,0.0f);
+                        pBoss->AddThreat(pMedivh);
                     }
                     else
                     {
-                        pBoss->AddThreat(pTemp,0.0f);
+                        pBoss->AddThreat(pTemp);
                         pTemp->CastSpell(pBoss,SPELL_RIFT_CHANNEL,false);
                     }
                 }

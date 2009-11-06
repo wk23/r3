@@ -46,7 +46,7 @@ struct MANGOS_DLL_DECL mob_treantAI  : public ScriptedAI
 
     void UpdateAI(const uint32 diff)
     {
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         if (m_creature->getVictim()->GetGUID() != WarpGuid)
@@ -104,9 +104,9 @@ struct MANGOS_DLL_DECL boss_warp_splinterAI : public ScriptedAI
 
     void Reset()
     {
-        War_Stomp_Timer = 25000 + rand()%15000;
+        War_Stomp_Timer = urand(25000, 40000);
         Summon_Treants_Timer = 45000;
-        Arcane_Volley_Timer = 8000 + rand()%12000;
+        Arcane_Volley_Timer = urand(8000, 20000);
         CheckTreantLOS_Timer = 1000;
         TreantLife_Timer = 999999;
 
@@ -123,11 +123,7 @@ struct MANGOS_DLL_DECL boss_warp_splinterAI : public ScriptedAI
 
     void KilledUnit(Unit* victim)
     {
-        switch(rand()%2)
-        {
-            case 0: DoScriptText(SAY_SLAY_1, m_creature); break;
-            case 1: DoScriptText(SAY_SLAY_2, m_creature); break;
-        }
+        DoScriptText(urand(0, 1) ? SAY_SLAY_1 : SAY_SLAY_2, m_creature);
     }
 
     void JustDied(Unit* Killer)
@@ -151,17 +147,13 @@ struct MANGOS_DLL_DECL boss_warp_splinterAI : public ScriptedAI
             if (pTreant)
             {
                 //pTreant->GetMotionMaster()->Mutate(new TargetedMovementGenerator<Creature>(*m_creature));
-                pTreant->AddThreat(m_creature, 0.1f);
+                pTreant->AddThreat(m_creature);
                 Treant_GUIDs[i] = pTreant->GetGUID();
                 ((mob_treantAI*)pTreant->AI())->WarpGuid = m_creature->GetGUID();
             }
         }
 
-        switch(rand()%2)
-        {
-            case 0: DoScriptText(SAY_SUMMON_1, m_creature); break;
-            case 1: DoScriptText(SAY_SUMMON_2, m_creature); break;
-        }
+        DoScriptText(urand(0, 1) ? SAY_SUMMON_1 : SAY_SUMMON_2, m_creature);
     }
 
     // Warp Splinter eat treants if they are near him
@@ -188,21 +180,21 @@ struct MANGOS_DLL_DECL boss_warp_splinterAI : public ScriptedAI
 
     void UpdateAI(const uint32 diff)
     {
-        if (!m_creature->SelectHostilTarget() || !m_creature->getVictim())
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
         //Check for War Stomp
         if (War_Stomp_Timer < diff)
         {
             DoCast(m_creature->getVictim(),WAR_STOMP);
-            War_Stomp_Timer = 25000 + rand()%15000;
+            War_Stomp_Timer = urand(25000, 40000);
         } else War_Stomp_Timer -= diff;
 
         //Check for Arcane Volley
         if (Arcane_Volley_Timer < diff)
         {
             DoCast(m_creature->getVictim(),ARCANE_VOLLEY);
-            Arcane_Volley_Timer = 20000 + rand()%15000;
+            Arcane_Volley_Timer = urand(20000, 35000);
         } else Arcane_Volley_Timer -= diff;
 
         //Check for Summon Treants
