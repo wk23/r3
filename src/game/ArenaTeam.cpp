@@ -559,7 +559,7 @@ int32 ArenaTeam::LostAgainst(uint32 againstRating)
     // called when the team has lost
     //'chance' calculation - to loose to the opponent
     float chance = GetChanceAgainst(m_stats.rating, againstRating);
-    float K = (itr->personal_rating < 1000) ? 48.0f : 32.0f;
+    float K = (m_stats.rating < 1000) ? 48.0f : 32.0f;
     // calculate the rating modification (ELO system with k=32 or k=48 if rating<1000)
     int32 mod = (int32)ceil(K * (0.0f - chance));
     // modify the team stats accordingly
