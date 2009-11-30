@@ -11088,12 +11088,12 @@ bool Unit::SelectHostileTarget()
         }
     }
 
-	if (CanHaveThreatList())
-	{
+	/*if (CanHaveThreatList())
+	{*/
 		if (!target && !m_ThreatManager.isThreatListEmpty())
 			// No taunt aura or taunt aura caster is dead standard target selection
 			target = m_ThreatManager.getHostileTarget();
-	}
+	/*}
 	else if (!(((Creature*)this)->GetCharmInfo()->HasReactState(REACT_PASSIVE)))
 	{
 		// We have player pet probably
@@ -11106,7 +11106,7 @@ bool Unit::SelectHostileTarget()
 					target = owner->getAttackerForHelper();
 			}
 		}
-	}
+	}*/
 	else
 		return false;
 

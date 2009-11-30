@@ -3486,7 +3486,6 @@ void Spell::EffectSummonType(uint32 i)
 {
     switch(m_spellInfo->EffectMiscValueB[i])
     {
-		case SUMMON_TYPE_ILLUSION:
         case SUMMON_TYPE_GUARDIAN:
         case SUMMON_TYPE_POSESSED:
         case SUMMON_TYPE_POSESSED2:
@@ -3494,6 +3493,7 @@ void Spell::EffectSummonType(uint32 i)
         case SUMMON_TYPE_GUARDIAN2:
         case SUMMON_TYPE_RUNE_BLADE:
         case SUMMON_TYPE_GUARDIAN3:
+        case SUMMON_TYPE_ILLUSION:
             // Jewelery statue case (totem like)
             if(m_spellInfo->SpellIconID == 2056)
                 EffectSummonTotem(i);
@@ -3699,9 +3699,6 @@ void Spell::EffectSummon(uint32 i)
 
     std::string name = m_caster->GetName();
     name.append(petTypeSuffix[spawnCreature->getPetType()]);
-    if (pet_entry == 31216)
-    spawnCreature->SetName( m_caster->GetName() );
-    else
     spawnCreature->SetName( name );
 
     map->Add((Creature*)spawnCreature);
@@ -4054,7 +4051,12 @@ void Spell::EffectSummonGuardian(uint32 i)
 
     for(int32 count = 0; count < amount; ++count)
     {
-        Pet* spawnCreature = new Pet(GUARDIAN_PET);
+        PetType SType;
+        if (pet_entry == 31216)
+        SType = MINI_PET;
+        else
+        SType = GUARDIAN_PET;
+        Pet* spawnCreature = new Pet(SType);
 
         Map *map = m_caster->GetMap();
         uint32 pet_number = sObjectMgr.GeneratePetNumber();
@@ -4110,10 +4112,14 @@ void Spell::EffectSummonGuardian(uint32 i)
 
         spawnCreature->InitStatsForLevel(level, m_caster);
         spawnCreature->GetCharmInfo()->SetPetNumber(pet_number, false);
-
+        spawnCreature->GetCharmInfo()->SetReactState( REACT_DEFENSIVE );
         spawnCreature->AIM_Initialize();
-
         m_caster->AddGuardian(spawnCreature);
+        if (pet_entry == 31216)
+        {
+            spawnCreature->GetCharmInfo()->SetReactState( REACT_PASSIVE );
+            //spawnCreature->SetName( m_caster->GetName() );
+        }
 
         map->Add((Creature*)spawnCreature);
     }

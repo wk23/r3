@@ -1797,7 +1797,7 @@ struct MANGOS_DLL_DECL npc_mirror_imageAI : public ScriptedAI
 		{
 			m_creature->GetMotionMaster()->Clear(false);
                                                 srand( (unsigned)time( NULL ) );
-			m_creature->GetMotionMaster()->MoveFollow(owner, PET_FOLLOW_DIST - (rand()%8), PET_FOLLOW_ANGLE);
+			m_creature->GetMotionMaster()->MoveFollow(owner, PET_FOLLOW_DIST + (rand()%4), PET_FOLLOW_ANGLE);
 		}
 		// Inherit Master's Threat List (not yet implemented)
 		//owner->CastSpell((Unit*)NULL, 58838, true);
@@ -1806,7 +1806,7 @@ struct MANGOS_DLL_DECL npc_mirror_imageAI : public ScriptedAI
 		// Clone Me!
 		m_uiFrostboltTimer = 0;
 		m_uiFireblastTimer = 6100;
-		inCombat = false;m_creature->setFaction(owner->getFaction());
+		inCombat = false;
 	}
 
 	void AttackStart(Unit* pWho)
@@ -1824,7 +1824,7 @@ struct MANGOS_DLL_DECL npc_mirror_imageAI : public ScriptedAI
 				m_creature->GetMotionMaster()->MoveChase(pWho);
 		}
 
-		inCombat = true;		
+	                inCombat = true;	
 	}
 
 	void EnterEvadeMode()
@@ -1840,7 +1840,7 @@ struct MANGOS_DLL_DECL npc_mirror_imageAI : public ScriptedAI
 		if (owner && !m_creature->hasUnitState(UNIT_STAT_FOLLOW))
 		{
 			m_creature->GetMotionMaster()->Clear(false);
-			m_creature->GetMotionMaster()->MoveFollow(owner, PET_FOLLOW_DIST - (rand()%8),PET_FOLLOW_ANGLE);
+			m_creature->GetMotionMaster()->MoveFollow(owner, PET_FOLLOW_DIST - (rand()%4),PET_FOLLOW_ANGLE);
 		}
 	}
 
@@ -1860,40 +1860,67 @@ struct MANGOS_DLL_DECL npc_mirror_imageAI : public ScriptedAI
 		{
 			Unit *owner = m_creature->GetCharmerOrOwner();
 			if (!owner)
-				//return;
+				return;
 			m_creature->CastSpell(m_creature, 58836, true, NULL, NULL, owner->GetGUID());
 		}
 		
-		if (!m_creature->getVictim())
+		if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
 		{
 			Unit *owner = m_creature->GetCharmerOrOwner();
 			if (owner && owner->getVictim())
 				m_creature->AI()->AttackStart(owner->getVictim());
 		}
 
+		if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+			return;
+
 		if (inCombat && !m_creature->getVictim())
 		{
-			EnterEvadeMode();
+
+		inCombat = false;
+		Unit *owner = m_creature->GetCharmerOrOwner();
+
+		m_creature->AttackStop();
+		m_creature->CombatStop(true);
+		if (owner && !m_creature->hasUnitState(UNIT_STAT_FOLLOW))
+		{
+			m_creature->GetMotionMaster()->Clear(false);
+			m_creature->GetMotionMaster()->MoveFollow(owner, PET_FOLLOW_DIST - (rand()%4),PET_FOLLOW_ANGLE);
+		}
 			return;
 		}
 
-		if (!m_creature->getVictim())
+		if (!m_creature->getVictim()) {
+		Unit *owner = m_creature->GetCharmerOrOwner();
+
+		m_creature->AttackStop();
+		m_creature->CombatStop(true);
+		if (owner && !m_creature->hasUnitState(UNIT_STAT_FOLLOW))
+		{
+			m_creature->GetMotionMaster()->Clear(false);
+			m_creature->GetMotionMaster()->MoveFollow(owner, PET_FOLLOW_DIST - (rand()%4),PET_FOLLOW_ANGLE);
+		}
+
 			return;
+                                }
 
 		if (m_uiFrostboltTimer <= diff)
 		{
-			DoCast(m_creature->getVictim(),59638);
+			//DoCast(m_creature->getVictim(),59638);
+			DoCast(m_creature->getVictim(),8407);
 			m_uiFrostboltTimer = 3100;
 		}else m_uiFrostboltTimer -= diff;
 
 		if (m_uiFireblastTimer <= diff)
 		{
-			DoCast(m_creature->getVictim(),59637,true);
+			//DoCast(m_creature->getVictim(),59637,true);
+			DoCast(m_creature->getVictim(),10197,true);
 			m_uiFireblastTimer = 6000;
 		}else m_uiFireblastTimer -= diff;
 
-		DoMeleeAttackIfReady();
+		//DoMeleeAttackIfReady();
 	}
+
 };
 
 CreatureAI* GetAI_npc_mirror_image(Creature* pCreature)
