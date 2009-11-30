@@ -597,7 +597,7 @@ struct CharTitlesEntry
 {
     uint32  ID;                                             // 0, title ids, for example in Quest::GetCharTitleId()
     //uint32      unk1;                                     // 1 flags?
-    //char*       name[16];                                 // 2-17, unused
+    char*   name[16];                                       // 2-17
                                                             // 18 string flag, unused
     //char*       name2[16];                                // 19-34, unused
                                                             // 35 string flag, unused
@@ -1522,9 +1522,9 @@ struct SpellItemEnchantmentEntry
     uint32      slot;                                       // 32       m_flags
     uint32      GemID;                                      // 33       m_src_itemID
     uint32      EnchantmentCondition;                       // 34       m_condition_id
-    //uint32      requiredSkill;                            // 35       m_requiredSkillID
-    //uint32      requiredSkillValue;                       // 36       m_requiredSkillRank
-                                                            // 37       new in 3.1
+    uint32      requiredSkill;                              // 35       m_requiredSkillID
+    uint32      requiredSkillValue;                         // 36       m_requiredSkillRank
+    uint32      requiredLevel;                              // 37       m_requiredLevel
 };
 
 struct SpellItemEnchantmentConditionEntry
@@ -1771,7 +1771,7 @@ struct MapDifficulty
     MapDifficulty(uint32 _resetTime, uint32 _maxPlayers) : resetTime(_resetTime), maxPlayers(_maxPlayers) {}
 
     uint32 resetTime;
-    uint32 maxPlayers;
+    uint32 maxPlayers;                                      // some heroic dungeons have 0 when expect same value as in normal dificulty case
 };
 
 struct TalentSpellPos

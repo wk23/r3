@@ -68,7 +68,7 @@ void WorldSession::HandleMoveWorldportAckOpcode()
 
     // get the destination map entry, not the current one, this will fix homebind and reset greeting
     MapEntry const* mEntry = sMapStore.LookupEntry(loc.mapid);
-    InstanceTemplate const* mInstance = objmgr.GetInstanceTemplate(loc.mapid);
+    InstanceTemplate const* mInstance = ObjectMgr::GetInstanceTemplate(loc.mapid);
 
     // reset instance validity, except if going to an instance inside an instance
     if(GetPlayer()->m_InstanceValid == false && !mInstance)
@@ -77,7 +77,7 @@ void WorldSession::HandleMoveWorldportAckOpcode()
     GetPlayer()->SetSemaphoreTeleportFar(false);
 
     // relocate the player to the teleport destination
-    GetPlayer()->SetMap(MapManager::Instance().CreateMap(loc.mapid, GetPlayer()));
+    GetPlayer()->SetMap(sMapMgr.CreateMap(loc.mapid, GetPlayer()));
     GetPlayer()->Relocate(loc.coord_x, loc.coord_y, loc.coord_z, loc.orientation);
 
     GetPlayer()->SendInitialPacketsBeforeAddToMap();
@@ -145,24 +145,16 @@ void WorldSession::HandleMoveWorldportAckOpcode()
         {
             GetPlayer()->ResurrectPlayer(0.5f);
             GetPlayer()->SpawnCorpseBones();
-            GetPlayer()->SaveToDB();
         }
     }
 
-    if (mInstance)
+    if (mInstance && mEntry->IsDungeon())
     {
-        if(mEntry->IsRaid())
+        Difficulty diff = GetPlayer()->GetDifficulty(mEntry->IsRaid());
+        if (uint32 timeReset = sInstanceSaveMgr.GetResetTimeFor(GetPlayer()->GetMapId(),diff))
         {
-            uint32 timeleft = sInstanceSaveManager.GetResetTimeFor(GetPlayer()->GetMapId()) - time(NULL);
-            GetPlayer()->SendInstanceResetWarning(GetPlayer()->GetMapId(), GetPlayer()->GetRaidDifficulty(), timeleft);
-        }
-        else if(mEntry->IsNonRaidDungeon() && GetPlayer()->GetDungeonDifficulty() > DUNGEON_DIFFICULTY_NORMAL)
-        {
-            if(MapDifficulty const* mapDiff = GetMapDifficultyData(mEntry->MapID,GetPlayer()->GetDungeonDifficulty()))
-            {
-                uint32 timeleft = sInstanceSaveManager.GetResetTimeFor(GetPlayer()->GetMapId()) - time(NULL);
-                GetPlayer()->SendInstanceResetWarning(GetPlayer()->GetMapId(), GetPlayer()->GetDungeonDifficulty(), timeleft);
-            }
+            uint32 timeleft = timeReset - time(NULL);
+            GetPlayer()->SendInstanceResetWarning(GetPlayer()->GetMapId(), diff, timeleft);
         }
     }
 
@@ -324,7 +316,7 @@ void WorldSession::HandleMovementOpcodes( WorldPacket & recv_data )
             if (plMover && !plMover->m_transport)
             {
                 // elevators also cause the client to send MOVEMENTFLAG_ONTRANSPORT - just unmount if the guid can be found in the transport list
-                for (MapManager::TransportSet::const_iterator iter = MapManager::Instance().m_Transports.begin(); iter != MapManager::Instance().m_Transports.end(); ++iter)
+                for (MapManager::TransportSet::const_iterator iter = sMapMgr.m_Transports.begin(); iter != sMapMgr.m_Transports.end(); ++iter)
                 {
                     if ((*iter)->GetGUID() == movementInfo.t_guid)
                     {
@@ -632,7 +624,7 @@ void WorldSession::HandleMovementOpcodes( WorldPacket & recv_data )
                     #endif
                 }
             } else {
-                if (GameObjectData const* go_data = objmgr.GetGOData(plMover->m_anti_TransportGUID))
+                if (GameObjectData const* go_data = sObjectMgr.GetGOData(plMover->m_anti_TransportGUID))
                 {
                     float delta_gox = go_data->posX - movementInfo.x;
                     float delta_goy = go_data->posY - movementInfo.y;
@@ -881,7 +873,7 @@ void WorldSession::HandleDismissControlledVehicle(WorldPacket &recv_data)
     sLog.outDebug("WORLD: Recvd CMSG_DISMISS_CONTROLLED_VEHICLE");
     recv_data.hexlike();
 
-    uint64 vehicleGUID = _player->GetCharmGUID();
+    uint64 vehicleGUID = _player->GetVehicleGUID();
 
     if(!vehicleGUID)                                        // something wrong here...
     {
@@ -899,8 +891,8 @@ void WorldSession::HandleDismissControlledVehicle(WorldPacket &recv_data)
     ReadMovementInfo(recv_data, &mi);
 
     _player->m_movementInfo = mi;
-    // using charm guid, because we don't have vehicle guid...
-    if(Vehicle *vehicle = _player->GetMap()->GetVehicle(vehicleGUID))
+
+    if(Vehicle *vehicle = ObjectAccessor::GetVehicle(vehicleGUID))
     {
         if(vehicle->GetVehicleFlags() & VF_DESPAWN_AT_LEAVE)
             vehicle->Dismiss();
@@ -908,18 +900,18 @@ void WorldSession::HandleDismissControlledVehicle(WorldPacket &recv_data)
             _player->ExitVehicle();
     }
 }
- 
+
 void WorldSession::HandleRequestVehicleExit(WorldPacket &recv_data)
 {
     sLog.outDebug("WORLD: Recvd CMSG_REQUEST_VEHICLE_EXIT");
     recv_data.hexlike();
- 
+
     uint64 vehicleGUID = _player->GetVehicleGUID();
- 
+
     if(!vehicleGUID)                                        // something wrong here...
         return;
- 
-    if(Vehicle *vehicle = _player->GetMap()->GetVehicle(vehicleGUID))
+
+    if(Vehicle *vehicle = ObjectAccessor::GetVehicle(vehicleGUID))
     {
         _player->ExitVehicle();
     }
@@ -929,13 +921,13 @@ void WorldSession::HandleRequestVehiclePrevSeat(WorldPacket &recv_data)
 {
     sLog.outDebug("WORLD: Recvd CMSG_REQUEST_VEHICLE_PREV_SEAT");
     recv_data.hexlike();
- 
+
     uint64 vehicleGUID = _player->GetVehicleGUID();
 
     if(!vehicleGUID)                                        // something wrong here...
         return;
 
-    if(Vehicle *vehicle = _player->GetMap()->GetVehicle(vehicleGUID))
+    if(Vehicle *vehicle = ObjectAccessor::GetVehicle(vehicleGUID))
     {
         int8 prv_seat = _player->m_SeatData.seat;
         if(Vehicle *v = vehicle->GetNextEmptySeat(&prv_seat, false, false))
@@ -956,7 +948,7 @@ void WorldSession::HandleRequestVehicleNextSeat(WorldPacket &recv_data)
     if(!vehicleGUID)                                        // something wrong here...
         return;
 
-    if(Vehicle *vehicle = _player->GetMap()->GetVehicle(vehicleGUID))
+    if(Vehicle *vehicle = ObjectAccessor::GetVehicle(vehicleGUID))
     {
         int8 nxt_seat = _player->m_SeatData.seat;
         if(Vehicle *v = vehicle->GetNextEmptySeat(&nxt_seat, true, false))
@@ -977,7 +969,7 @@ void WorldSession::HandleRequestVehicleSwitchSeat(WorldPacket &recv_data)
     if(!vehicleGUID)                                        // something wrong here...
         return;
 
-    if(Vehicle *vehicle = _player->GetMap()->GetVehicle(vehicleGUID))
+    if(Vehicle *vehicle = ObjectAccessor::GetVehicle(vehicleGUID))
     {
         uint64 guid = 0;
         if(!recv_data.readPackGUID(guid))
@@ -990,7 +982,7 @@ void WorldSession::HandleRequestVehicleSwitchSeat(WorldPacket &recv_data)
         {
             if(vehicleGUID != guid)
             {
-                if(Vehicle *veh = _player->GetMap()->GetVehicle(guid))
+                if(Vehicle *veh = ObjectAccessor::GetVehicle(guid))
                 {
                     if(!_player->IsWithinDistInMap(veh, 10))
                         return;
@@ -1011,7 +1003,7 @@ void WorldSession::HandleRequestVehicleSwitchSeat(WorldPacket &recv_data)
         }
     }
 }
- 
+
 void WorldSession::HandleChangeSeatsOnControlledVehicle(WorldPacket &recv_data)
 {
     sLog.outDebug("WORLD: Recvd CMSG_CHANGE_SEATS_ON_CONTROLLED_VEHICLE");
@@ -1022,7 +1014,7 @@ void WorldSession::HandleChangeSeatsOnControlledVehicle(WorldPacket &recv_data)
     if(!vehicleGUID)                                        // something wrong here...
         return;
 
-    if(Vehicle *vehicle = _player->GetMap()->GetVehicle(vehicleGUID))
+    if(Vehicle *vehicle = ObjectAccessor::GetVehicle(vehicleGUID))
     {
         MovementInfo mi;
         ReadMovementInfo(recv_data, &mi);
@@ -1039,7 +1031,7 @@ void WorldSession::HandleChangeSeatsOnControlledVehicle(WorldPacket &recv_data)
         {
             if(vehicleGUID != guid)
             {
-                if(Vehicle *veh = _player->GetMap()->GetVehicle(guid))
+                if(Vehicle *veh = ObjectAccessor::GetVehicle(guid))
                 {
                     if(!_player->IsWithinDistInMap(veh, 10))
                         return;

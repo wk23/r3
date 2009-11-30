@@ -294,7 +294,8 @@ SpellSpecific GetSpellSpecific(uint32 spellId)
             if (spellInfo->SpellFamilyFlags & UI64LIT(0x0000000000002190))
                 return SPELL_HAND;
 
-            if ((spellInfo->SpellFamilyFlags & UI64LIT(0x00000800180400)) && (spellInfo->AttributesEx3 & 0x200))
+            // skip Heart of the Crusader that have also same spell family mask
+            if ((spellInfo->SpellFamilyFlags & UI64LIT(0x00000820180400)) && (spellInfo->AttributesEx3 & 0x200) && (spellInfo->SpellIconID != 237))
                 return SPELL_JUDGEMENT;
 
             // only paladin auras have this (for palaldin class family)
@@ -312,7 +313,7 @@ SpellSpecific GetSpellSpecific(uint32 spellId)
         }
 
         case SPELLFAMILY_POTION:
-            return spellmgr.GetSpellElixirSpecific(spellInfo->Id);
+            return sSpellMgr.GetSpellElixirSpecific(spellInfo->Id);
 
         case SPELLFAMILY_DEATHKNIGHT:
             if (spellInfo->Category == 47)
@@ -321,7 +322,7 @@ SpellSpecific GetSpellSpecific(uint32 spellId)
     }
 
     // elixirs can have different families, but potion most ofc.
-    if(SpellSpecific sp = spellmgr.GetSpellElixirSpecific(spellInfo->Id))
+    if(SpellSpecific sp = sSpellMgr.GetSpellElixirSpecific(spellInfo->Id))
         return sp;
 
     return SPELL_NORMAL;
@@ -851,7 +852,7 @@ bool SpellMgr::IsAffectedByMod(SpellEntry const *spellInfo, SpellModifier *mod) 
 struct DoSpellProcEvent
 {
     DoSpellProcEvent(SpellProcEventEntry const& _spe) : spe(_spe) {}
-    void operator() (uint32 spell_id) { spellmgr.mSpellProcEventMap[spell_id] = spe; }
+    void operator() (uint32 spell_id) { sSpellMgr.mSpellProcEventMap[spell_id] = spe; }
     SpellProcEventEntry const& spe;
 };
 
@@ -940,7 +941,7 @@ void SpellMgr::LoadSpellProcEvents()
 struct DoSpellProcItemEnchant
 {
     DoSpellProcItemEnchant(float _ppm) : ppm(_ppm) {}
-    void operator() (uint32 spell_id) { spellmgr.mSpellProcItemEnchantMap[spell_id] = ppm; }
+    void operator() (uint32 spell_id) { sSpellMgr.mSpellProcItemEnchantMap[spell_id] = ppm; }
     float ppm;
 };
 
@@ -1010,7 +1011,7 @@ void SpellMgr::LoadSpellProcItemEnchant()
 struct DoSpellBonusess
 {
     DoSpellBonusess(SpellBonusEntry const& _spellBonus) : spellBonus(_spellBonus) {}
-    void operator() (uint32 spell_id) { spellmgr.mSpellBonusMap[spell_id] = spellBonus; }
+    void operator() (uint32 spell_id) { sSpellMgr.mSpellBonusMap[spell_id] = spellBonus; }
     SpellBonusEntry const& spellBonus;
 };
 
@@ -1257,7 +1258,7 @@ bool SpellMgr::canStackSpellRanks(SpellEntry const *spellInfo)
     if(IsProfessionOrRidingSpell(spellInfo->Id))
         return false;
 
-    if(spellmgr.IsSkillBonusSpell(spellInfo->Id))
+    if(sSpellMgr.IsSkillBonusSpell(spellInfo->Id))
         return false;
 
     // All stance spells. if any better way, change it.
@@ -1370,6 +1371,10 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
                     //Kindred Spirits (allow stack for auras)
                     if (spellInfo_1->SpellIconID == 3559 && spellInfo_2->SpellIconID == 3559)
                         return false;
+
+	if ( (spellInfo_1->Id == 45204 && spellInfo_2->Id == 58836) ||
+	(spellInfo_2->Id == 45204 && spellInfo_1->Id == 58836) )
+	        return false;
 
                     break;
                 }
@@ -1584,6 +1589,10 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
                 //  Tree of Life (Shapeshift) and 34123 Tree of Life (Passive)
                 if ((spellId_1 == 33891 && spellId_2 == 34123) ||
                     (spellId_2 == 33891 && spellId_1 == 34123))
+                    return false;
+
+                //  Innervate and Glyph of Innervate and some other spells
+                if (spellInfo_1->SpellIconID == 62 && spellInfo_2->SpellIconID == 62)
                     return false;
 
                 // Wrath of Elune and Nature's Grace
@@ -2325,8 +2334,8 @@ void SpellMgr::LoadSpellScriptTarget()
         {
             if( spellInfo->EffectImplicitTargetA[j] == TARGET_SCRIPT || spellInfo->EffectImplicitTargetA[j] != TARGET_SELF && spellInfo->EffectImplicitTargetB[j] == TARGET_SCRIPT )
             {
-                SpellScriptTarget::const_iterator lower = spellmgr.GetBeginSpellScriptTarget(spellInfo->Id);
-                SpellScriptTarget::const_iterator upper = spellmgr.GetEndSpellScriptTarget(spellInfo->Id);
+                SpellScriptTarget::const_iterator lower = GetBeginSpellScriptTarget(spellInfo->Id);
+                SpellScriptTarget::const_iterator upper = GetEndSpellScriptTarget(spellInfo->Id);
                 if(lower==upper)
                 {
                     sLog.outErrorDb("Spell (ID: %u) has effect EffectImplicitTargetA/EffectImplicitTargetB = %u (TARGET_SCRIPT), but does not have record in `spell_script_target`",spellInfo->Id,TARGET_SCRIPT);
@@ -2473,7 +2482,7 @@ bool LoadPetDefaultSpells_helper(CreatureInfo const* cInfo, PetDefaultSpellsEntr
         return false;
 
     // remove duplicates with levelupSpells if any
-    if(PetLevelupSpellSet const *levelupSpells = cInfo->family ? spellmgr.GetPetLevelupSpellList(cInfo->family) : NULL)
+    if(PetLevelupSpellSet const *levelupSpells = cInfo->family ? sSpellMgr.GetPetLevelupSpellList(cInfo->family) : NULL)
     {
         for(int j = 0; j < MAX_CREATURE_SPELL_DATA_SLOT; ++j)
         {
@@ -2747,7 +2756,7 @@ void SpellMgr::LoadSpellAreas()
             continue;
         }
 
-        if(spellArea.questStart && !objmgr.GetQuestTemplate(spellArea.questStart))
+        if(spellArea.questStart && !sObjectMgr.GetQuestTemplate(spellArea.questStart))
         {
             sLog.outErrorDb("Spell %u listed in `spell_area` have wrong start quest (%u) requirement", spell,spellArea.questStart);
             continue;
@@ -2755,7 +2764,7 @@ void SpellMgr::LoadSpellAreas()
 
         if(spellArea.questEnd)
         {
-            if(!objmgr.GetQuestTemplate(spellArea.questEnd))
+            if(!sObjectMgr.GetQuestTemplate(spellArea.questEnd))
             {
                 sLog.outErrorDb("Spell %u listed in `spell_area` have wrong end quest (%u) requirement", spell,spellArea.questEnd);
                 continue;
@@ -2916,7 +2925,7 @@ SpellCastResult SpellMgr::GetSpellAllowedInLocationError(SpellEntry const *spell
     }
 
     // DB base check (if non empty then must fit at least single for allow)
-    SpellAreaMapBounds saBounds = spellmgr.GetSpellAreaMapBounds(spellInfo->Id);
+    SpellAreaMapBounds saBounds = GetSpellAreaMapBounds(spellInfo->Id);
     if (saBounds.first != saBounds.second)
     {
         for(SpellAreaMap::const_iterator itr = saBounds.first; itr != saBounds.second; ++itr)

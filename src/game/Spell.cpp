@@ -506,6 +506,9 @@ void Spell::FillTargetMap()
         if(IsAreaAuraEffect(m_spellInfo->Effect[i]))
             AddUnitTarget(m_caster, i);
 
+		if (m_spellInfo->EffectImplicitTargetA[i] == 0 && m_spellInfo->Effect[i] == SPELL_EFFECT_SUMMON_PHANTASM)
+			AddUnitTarget(m_caster, i);
+
         std::list<Unit*> tmpUnitMap;
 
         // TargetA/TargetB dependent from each other, we not switch to full support this dependences
@@ -1007,6 +1010,13 @@ void Spell::DoAllEffectOnTarget(TargetInfo *target)
         if (m_canTrigger && missInfo != SPELL_MISS_REFLECT)
             caster->ProcDamageAndSpell(unitTarget, procAttacker, procVictim, procEx, damageInfo.damage, m_attackType, m_spellInfo);
 
+        // Haunt (NOTE: for avoid use additional field damage stored in dummy value (replace unused 100%)
+        // apply before deal damage because aura can be removed at target kill
+        if (m_spellInfo->SpellFamilyName == SPELLFAMILY_WARLOCK && m_spellInfo->SpellIconID == 3172 &&
+            (m_spellInfo->SpellFamilyFlags & UI64LIT(0x0004000000000000)))
+            if(Aura* dummy = unitTarget->GetDummyAura(m_spellInfo->Id))
+                dummy->GetModifier()->m_amount = damageInfo.damage;
+
         caster->DealSpellDamage(&damageInfo, true);
     }
     // Passive spell hits/misses or active spells only misses (only triggers)
@@ -1314,6 +1324,8 @@ void Spell::SetTargetMap(uint32 effIndex,uint32 targetMode,UnitList& TagUnitMap)
             // Starfall
             if (m_spellInfo->SpellFamilyFlags2 & UI64LIT(0x00000100))
                 unMaxTargets = 2;
+            else if (m_spellInfo->SpellFamilyFlags & UI64LIT(0x0400000000000000))
+                unMaxTargets = m_spellInfo->EffectBasePoints[2];
             break;
         default:
             break;
@@ -1796,6 +1808,12 @@ void Spell::SetTargetMap(uint32 effIndex,uint32 targetMode,UnitList& TagUnitMap)
             break;
         case TARGET_DUELVSPLAYER:
         {
+            if (m_spellInfo->SpellFamilyName == SPELLFAMILY_SHAMAN && m_spellInfo->SpellIconID == 276) // Stoneclaw Totem absorb has wrong target
+            {
+                TagUnitMap.push_back(m_caster);
+                break;
+            }
+
             Unit *target = m_targets.getUnitTarget();
             if(target)
             {
@@ -2017,9 +2035,12 @@ void Spell::SetTargetMap(uint32 effIndex,uint32 targetMode,UnitList& TagUnitMap)
         }
         case TARGET_TABLE_X_Y_Z_COORDINATES:
         {
-            SpellTargetPosition const* st = spellmgr.GetSpellTargetPosition(m_spellInfo->Id);
+            SpellTargetPosition const* st = sSpellMgr.GetSpellTargetPosition(m_spellInfo->Id);
             if(st)
             {
+                // teleportspells are handled in another way
+                if (m_spellInfo->Effect[effIndex] == SPELL_EFFECT_TELEPORT_UNITS)
+                    break;
                 if (st->target_mapId == m_caster->GetMapId())
                     m_targets.setDestination(st->target_X, st->target_Y, st->target_Z);
                 else
@@ -2149,6 +2170,11 @@ void Spell::SetTargetMap(uint32 effIndex,uint32 targetMode,UnitList& TagUnitMap)
         {
             // add here custom effects that need default target.
             // FOR EVERY TARGET TYPE THERE IS A DIFFERENT FILL!!
+			if (m_spellInfo->SpellFamilyFlags2 & UI64LIT (0x00000020) && m_spellInfo->SpellIconID == 3217)
+			{
+				TagUnitMap.push_back(m_caster);
+				break;
+			}
             switch(m_spellInfo->Effect[effIndex])
             {
                 case SPELL_EFFECT_DUMMY:
@@ -2213,7 +2239,7 @@ void Spell::SetTargetMap(uint32 effIndex,uint32 targetMode,UnitList& TagUnitMap)
                 case SPELL_EFFECT_SUMMON_PLAYER:
                     if (m_caster->GetTypeId()==TYPEID_PLAYER && ((Player*)m_caster)->GetSelection())
                     {
-                        Player* target = objmgr.GetPlayer(((Player*)m_caster)->GetSelection());
+                        Player* target = sObjectMgr.GetPlayer(((Player*)m_caster)->GetSelection());
                         if(target)
                             TagUnitMap.push_back(target);
                     }
@@ -2370,7 +2396,7 @@ void Spell::prepare(SpellCastTargets const* targets, Aura* triggeredByAura)
         return;
     }
 
-	if(uint8 result = objmgr.IsSpellDisabled(m_spellInfo->Id))
+	if(uint8 result = sObjectMgr.IsSpellDisabled(m_spellInfo->Id))
 	{
 		if(m_caster->GetTypeId() == TYPEID_PLAYER)
 		{
@@ -2520,12 +2546,29 @@ void Spell::cast(bool skipCheck)
                 AddPrecastSpell(23230);                     // Blood Fury - Healing Reduction
             else if(m_spellInfo->Id == 20594)               // Stoneskin
                 AddTriggeredSpell(65116);                   // Stoneskin - armor 10% for 8 sec
+
+            switch(m_spellInfo->Id)                         
+            {
+                case 5728: AddTriggeredSpell(55328); break;// Stoneclaw Totem, rank 1
+                case 6397: AddTriggeredSpell(55329); break;// Stoneclaw Totem, rank 2
+                case 6398: AddTriggeredSpell(55330); break;// Stoneclaw Totem, rank 3
+                case 6399: AddTriggeredSpell(55332); break;// Stoneclaw Totem, rank 4
+                case 10425: AddTriggeredSpell(55333); break;// Stoneclaw Totem, rank 5
+                case 10426: AddTriggeredSpell(55335); break;// Stoneclaw Totem, rank 6
+                case 25513: AddTriggeredSpell(55278); break;// Stoneclaw Totem, rank 7
+                case 58583: AddTriggeredSpell(58589); break;// Stoneclaw Totem, rank 8
+                case 58584: AddTriggeredSpell(58590); break;// Stoneclaw Totem, rank 9
+                case 58585: AddTriggeredSpell(58591); break;// Stoneclaw Totem, rank 10
+                default:break;
+            }
             break;
         }
         case SPELLFAMILY_DRUID:
         {
             if (m_spellInfo->SpellIconID == 2852 && (m_spellInfo->AttributesEx & 0x28020)) // Berserk
                 AddPrecastSpell(58923); // Hit 3 targets at once with mangle in dire bear form
+          else if (m_spellInfo->Id == 16857)
+                AddTriggeredSpell(60089);
             break;
         }
         case SPELLFAMILY_MAGE:
@@ -2588,6 +2631,14 @@ void Spell::cast(bool skipCheck)
             // Heroism
             else if (m_spellInfo->Id == 32182)
                 AddPrecastSpell(57723);                     // Exhaustion
+            break;
+        }
+        case SPELLFAMILY_WARLOCK:
+        {
+            if (m_spellInfo->Id == 47897)                              // Shadowflame DD (Rank 1)
+                AddPrecastSpell(47960);                                // Shadowflame DOT
+            else if(m_spellInfo->Id == 61290)                          // Shadowflame DD (Rank 2)
+                AddPrecastSpell(61291);                                // Shadowflame DOT
             break;
         }
         default:
@@ -3240,7 +3291,7 @@ void Spell::WriteAmmoToPacket( WorldPacket * data )
                 uint32 ammoID = ((Player*)m_caster)->GetUInt32Value(PLAYER_AMMO_ID);
                 if(ammoID)
                 {
-                    ItemPrototype const *pProto = objmgr.GetItemPrototype( ammoID );
+                    ItemPrototype const *pProto = ObjectMgr::GetItemPrototype( ammoID );
                     if(pProto)
                     {
                         ammoDisplayID = pProto->DisplayInfoID;
@@ -3813,14 +3864,14 @@ void Spell::HandleThreatSpells(uint32 spellId)
     if(!m_targets.getUnitTarget()->CanHaveThreatList())
         return;
 
-    uint16 threat = spellmgr.GetSpellThreat(spellId);
+    uint16 threat = sSpellMgr.GetSpellThreat(spellId);
 
     if(!threat)
         return;
 
     m_targets.getUnitTarget()->AddThreat(m_caster, float(threat), false, GetSpellSchoolMask(m_spellInfo), m_spellInfo);
 
-    DEBUG_LOG("Spell %u, rank %u, added an additional %i threat", spellId, spellmgr.GetSpellRank(spellId), threat);
+    DEBUG_LOG("Spell %u, rank %u, added an additional %i threat", spellId, sSpellMgr.GetSpellRank(spellId), threat);
 }
 
 void Spell::HandleEffects(Unit *pUnitTarget,Item *pItemTarget,GameObject *pGOTarget,uint32 i, float DamageMultiplier)
@@ -3958,8 +4009,10 @@ SpellCastResult Spell::CheckCast(bool strict)
         return SPELL_FAILED_CASTER_AURASTATE;
 
     // Caster aura req check if need
-    if(m_spellInfo->casterAuraSpell && !m_caster->HasAura(m_spellInfo->casterAuraSpell))
-        return SPELL_FAILED_CASTER_AURASTATE;
+   if(m_spellInfo->casterAuraSpell &&
+   sSpellStore.LookupEntry(m_spellInfo->casterAuraSpell) &&
+   !m_caster->HasAura(m_spellInfo->casterAuraSpell))
+	return SPELL_FAILED_CASTER_AURASTATE;
     if(m_spellInfo->excludeCasterAuraSpell)
     {
         // Special cases of non existing auras handling
@@ -4153,7 +4206,7 @@ SpellCastResult Spell::CheckCast(bool strict)
     uint32 zone, area;
     m_caster->GetZoneAndAreaId(zone, area);
 
-    SpellCastResult locRes= spellmgr.GetSpellAllowedInLocationError(m_spellInfo,m_caster->GetMapId(),zone,area,
+    SpellCastResult locRes= sSpellMgr.GetSpellAllowedInLocationError(m_spellInfo,m_caster->GetMapId(),zone,area,
         m_caster->GetCharmerOrOwnerPlayerOrPlayerItself());
     if (locRes != SPELL_CAST_OK)
         return locRes;
@@ -4163,7 +4216,7 @@ SpellCastResult Spell::CheckCast(bool strict)
         !IsPassiveSpell(m_spellInfo->Id) && !(m_spellInfo->Attributes & SPELL_ATTR_CASTABLE_WHILE_MOUNTED))
     {
         if (m_caster->isInFlight())
-            return SPELL_FAILED_NOT_FLYING;
+            return SPELL_FAILED_NOT_ON_TAXI;
         else if(m_caster->GetVehicleGUID())
         {
             if(!(m_caster->m_SeatData.s_flags & SF_CAN_CAST))
@@ -4193,7 +4246,7 @@ SpellCastResult Spell::CheckCast(bool strict)
                m_spellInfo->EffectImplicitTargetA[j] == TARGET_FOCUS_OR_SCRIPTED_GAMEOBJECT)
             {
 
-                SpellScriptTargetBounds bounds = spellmgr.GetSpellScriptTargetBounds(m_spellInfo->Id);
+                SpellScriptTargetBounds bounds = sSpellMgr.GetSpellScriptTargetBounds(m_spellInfo->Id);
                 if(bounds.first==bounds.second)
                     sLog.outErrorDb("Spell (ID: %u) has effect EffectImplicitTargetA/EffectImplicitTargetB = TARGET_SCRIPT or TARGET_SCRIPT_COORDINATES, but does not have record in `spell_script_target`",m_spellInfo->Id);
 
@@ -4372,6 +4425,11 @@ SpellCastResult Spell::CheckCast(bool strict)
                     // hart version required facing
                     if(m_targets.getUnitTarget() && !m_caster->IsFriendlyTo(m_targets.getUnitTarget()) && !m_caster->HasInArc( M_PI, m_targets.getUnitTarget() ))
                         return SPELL_FAILED_UNIT_NOT_INFRONT;
+                }
+                else if(m_spellInfo->Id == 43286)          //Use Grick's Bonesaw
+                {
+                    if(m_targets.getUnitTarget()->isAlive())
+                        return SPELL_FAILED_BAD_TARGETS;
                 }
                 break;
             }
@@ -4660,7 +4718,7 @@ SpellCastResult Spell::CheckCast(bool strict)
                 }
                 break;
             }
-            // Not used for summon?
+            /*// Not used for summon?
             case SPELL_EFFECT_SUMMON_PHANTASM:
             {
                 if(m_caster->GetPetGUID())
@@ -4670,7 +4728,7 @@ SpellCastResult Spell::CheckCast(bool strict)
                     return SPELL_FAILED_ALREADY_HAVE_CHARM;
 
                 break;
-            }
+            }*/
             case SPELL_EFFECT_SUMMON_PET:
             {
                 if(m_caster->GetPetGUID())                  //let warlock do a replacement summon
@@ -4699,7 +4757,7 @@ SpellCastResult Spell::CheckCast(bool strict)
                 if(!((Player*)m_caster)->GetSelection())
                     return SPELL_FAILED_BAD_TARGETS;
 
-                Player* target = objmgr.GetPlayer(((Player*)m_caster)->GetSelection());
+                Player* target = sObjectMgr.GetPlayer(((Player*)m_caster)->GetSelection());
                 if( !target || ((Player*)m_caster) == target || !target->IsInSameRaidWith((Player*)m_caster) )
                     return SPELL_FAILED_BAD_TARGETS;
 
@@ -5342,7 +5400,18 @@ SpellCastResult Spell::CheckItems()
                     Powers power = Powers(m_spellInfo->EffectMiscValue[i]);
                     if (m_targets.getUnitTarget()->GetPower(power) == m_targets.getUnitTarget()->GetMaxPower(power))
                     {
-                        failReason = SPELL_FAILED_ALREADY_AT_FULL_POWER;
+                        switch (power)
+                        {
+                        case POWER_MANA:
+                            failReason = SPELL_FAILED_ALREADY_AT_FULL_MANA;
+                            break;
+                        case POWER_HEALTH:
+                            failReason = SPELL_FAILED_ALREADY_AT_FULL_HEALTH;
+                            break;
+                        default:
+                            failReason = SPELL_FAILED_ALREADY_AT_FULL_POWER;
+                            break;
+                        }
                         continue;
                     }
                     else
@@ -5632,7 +5701,7 @@ SpellCastResult Spell::CheckItems()
                             return SPELL_FAILED_NO_AMMO;
                         }
 
-                        ItemPrototype const *ammoProto = objmgr.GetItemPrototype( ammo );
+                        ItemPrototype const *ammoProto = ObjectMgr::GetItemPrototype( ammo );
                         if(!ammoProto)
                             return SPELL_FAILED_NO_AMMO;
 
@@ -5783,7 +5852,7 @@ void Spell::UpdatePointers()
 
 bool Spell::IsAffectedByAura(Aura *aura)
 {
-    return spellmgr.IsAffectedByMod(m_spellInfo, aura->getAuraSpellMod());
+    return sSpellMgr.IsAffectedByMod(m_spellInfo, aura->getAuraSpellMod());
 }
 
 bool Spell::CheckTargetCreatureType(Unit* target) const
@@ -5879,6 +5948,12 @@ bool Spell::CheckTarget( Unit* target, uint32 eff )
             break;
         case SPELL_EFFECT_DUMMY:
             if(m_spellInfo->Id != 20577)                    // Cannibalize
+                break;
+        case SPELL_EFFECT_APPLY_AURA:
+            if(m_spellInfo->Id==43383)                      // Spirit Bolts Trigger
+                break;
+        case SPELL_EFFECT_SCHOOL_DAMAGE:
+            if(m_spellInfo->Id==43382)                      // Spirit Bolts
                 break;
             //fall through
         case SPELL_EFFECT_RESURRECT_NEW:

@@ -176,13 +176,13 @@ bool OutdoorPvPObjectiveHP::Update(uint32 diff)
                     field = HP_MAP_A[m_TowerType];
                     if(((OutdoorPvPHP*)m_PvP)->m_AllianceTowersControlled)
                         ((OutdoorPvPHP*)m_PvP)->m_AllianceTowersControlled--;
-                    sWorld.SendZoneText(OutdoorPvPHPBuffZones[0],objmgr.GetMangosString(HP_LANG_LOOSE_A[m_TowerType],-1));
+                    sWorld.SendZoneText(OutdoorPvPHPBuffZones[0],sObjectMgr.GetMangosString(HP_LANG_LOOSE_A[m_TowerType],-1));
                     break;
                 case OBJECTIVESTATE_HORDE:
                     field = HP_MAP_H[m_TowerType];
                     if(((OutdoorPvPHP*)m_PvP)->m_HordeTowersControlled)
                         ((OutdoorPvPHP*)m_PvP)->m_HordeTowersControlled--;
-                    sWorld.SendZoneText(OutdoorPvPHPBuffZones[0],objmgr.GetMangosString(HP_LANG_LOOSE_H[m_TowerType],-1));
+                    sWorld.SendZoneText(OutdoorPvPHPBuffZones[0],sObjectMgr.GetMangosString(HP_LANG_LOOSE_H[m_TowerType],-1));
                     break;
                 case OBJECTIVESTATE_NEUTRAL_ALLIANCE_CHALLENGE:
                     field = HP_MAP_N[m_TowerType];
@@ -217,7 +217,7 @@ bool OutdoorPvPObjectiveHP::Update(uint32 diff)
                     artkit2 = HP_TowerArtKit_A[m_TowerType];
                     if(((OutdoorPvPHP*)m_PvP)->m_AllianceTowersControlled<3)
                         ((OutdoorPvPHP*)m_PvP)->m_AllianceTowersControlled++;
-                    sWorld.SendZoneText(OutdoorPvPHPBuffZones[0],objmgr.GetMangosString(HP_LANG_CAPTURE_A[m_TowerType],-1));
+                    sWorld.SendZoneText(OutdoorPvPHPBuffZones[0],sObjectMgr.GetMangosString(HP_LANG_CAPTURE_A[m_TowerType],-1));
                     break;
                 case OBJECTIVESTATE_HORDE:
                     field = HP_MAP_H[m_TowerType];
@@ -225,7 +225,7 @@ bool OutdoorPvPObjectiveHP::Update(uint32 diff)
                     artkit2 = HP_TowerArtKit_H[m_TowerType];
                     if(((OutdoorPvPHP*)m_PvP)->m_HordeTowersControlled<3)
                         ((OutdoorPvPHP*)m_PvP)->m_HordeTowersControlled++;
-                    sWorld.SendZoneText(OutdoorPvPHPBuffZones[0],objmgr.GetMangosString(HP_LANG_CAPTURE_H[m_TowerType],-1));
+                    sWorld.SendZoneText(OutdoorPvPHPBuffZones[0],sObjectMgr.GetMangosString(HP_LANG_CAPTURE_H[m_TowerType],-1));
                     break;
                 case OBJECTIVESTATE_NEUTRAL_ALLIANCE_CHALLENGE:
                     field = HP_MAP_N[m_TowerType];
@@ -324,12 +324,12 @@ void OutdoorPvPHP::BuffTeam(uint32 team)
     {
         for(std::set<uint64>::iterator itr = m_PlayerGuids[0].begin(); itr != m_PlayerGuids[0].end(); ++itr)
         {
-            if(Player * plr = objmgr.GetPlayer(*itr))
+            if(Player * plr = sObjectMgr.GetPlayer(*itr))
                 if(plr->IsInWorld()) plr->CastSpell(plr,AllianceBuff,true);
         }
         for(std::set<uint64>::iterator itr = m_PlayerGuids[1].begin(); itr != m_PlayerGuids[1].end(); ++itr)
         {
-            if(Player * plr = objmgr.GetPlayer(*itr))
+            if(Player * plr = sObjectMgr.GetPlayer(*itr))
                 if(plr->IsInWorld()) plr->RemoveAurasDueToSpell(HordeBuff);
         }
     }
@@ -337,12 +337,12 @@ void OutdoorPvPHP::BuffTeam(uint32 team)
     {
         for(std::set<uint64>::iterator itr = m_PlayerGuids[1].begin(); itr != m_PlayerGuids[1].end(); ++itr)
         {
-            if(Player * plr = objmgr.GetPlayer(*itr))
+            if(Player * plr = sObjectMgr.GetPlayer(*itr))
                 if(plr->IsInWorld()) plr->CastSpell(plr,HordeBuff,true);
         }
         for(std::set<uint64>::iterator itr = m_PlayerGuids[0].begin(); itr != m_PlayerGuids[0].end(); ++itr)
         {
-            if(Player * plr = objmgr.GetPlayer(*itr))
+            if(Player * plr = sObjectMgr.GetPlayer(*itr))
                 if(plr->IsInWorld()) plr->RemoveAurasDueToSpell(AllianceBuff);
         }
     }
@@ -350,12 +350,12 @@ void OutdoorPvPHP::BuffTeam(uint32 team)
     {
         for(std::set<uint64>::iterator itr = m_PlayerGuids[0].begin(); itr != m_PlayerGuids[0].end(); ++itr)
         {
-            if(Player * plr = objmgr.GetPlayer(*itr))
+            if(Player * plr = sObjectMgr.GetPlayer(*itr))
                 if(plr->IsInWorld()) plr->RemoveAurasDueToSpell(AllianceBuff);
         }
         for(std::set<uint64>::iterator itr = m_PlayerGuids[1].begin(); itr != m_PlayerGuids[1].end(); ++itr)
         {
-            if(Player * plr = objmgr.GetPlayer(*itr))
+            if(Player * plr = sObjectMgr.GetPlayer(*itr))
                 if(plr->IsInWorld()) plr->RemoveAurasDueToSpell(HordeBuff);
         }
     }

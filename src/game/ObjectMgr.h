@@ -351,7 +351,7 @@ class ObjectMgr
 
         typedef std::vector<std::string> ScriptNameMap;
 
-        Player* GetPlayer(const char* name) const { return ObjectAccessor::Instance().FindPlayerByName(name);}
+        Player* GetPlayer(const char* name) const { return ObjectAccessor::FindPlayerByName(name);}
         Player* GetPlayer(uint64 guid) const { return ObjectAccessor::FindPlayer(guid); }
 
         static GameObjectInfo const *GetGameObjectInfo(uint32 id) { return sGOStorage.LookupEntry<GameObjectInfo>(id); }
@@ -862,10 +862,10 @@ class ObjectMgr
         // first free low guid for seelcted guid type
         uint32 m_hiCharGuid;
         uint32 m_hiCreatureGuid;
+		uint32 m_hiVehicleGuid;
         uint32 m_hiItemGuid;
         uint32 m_hiGoGuid;
         uint32 m_hiCorpseGuid;
-        uint32 m_hiVehicleGuid;
 
         QuestMap            mQuestTemplates;
 
@@ -973,7 +973,7 @@ class ObjectMgr
         CacheTrainerSpellMap m_mCacheTrainerSpellMap;
 };
 
-#define objmgr MaNGOS::Singleton<ObjectMgr>::Instance()
+#define sObjectMgr MaNGOS::Singleton<ObjectMgr>::Instance()
 
 // scripting access functions
 MANGOS_DLL_SPEC bool LoadMangosStrings(DatabaseType& db, char const* table,int32 start_value = MAX_CREATURE_AI_TEXT_STRING_ID, int32 end_value = std::numeric_limits<int32>::min());

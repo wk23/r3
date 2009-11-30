@@ -207,10 +207,10 @@ void Map::DeleteStateMachine()
 Map::Map(uint32 id, time_t expiry, uint32 InstanceId, uint8 SpawnMode, Map* _parent)
   : i_mapEntry (sMapStore.LookupEntry(id)), i_spawnMode(SpawnMode),
   i_id(id), i_InstanceId(InstanceId), m_unloadTimer(0),
+  m_VisibleDistance(DEFAULT_VISIBILITY_DISTANCE),
   m_activeNonPlayersIter(m_activeNonPlayers.end()),
   i_gridExpiry(expiry), m_parentMap(_parent ? _parent : this),
-  m_VisibleDistance(DEFAULT_VISIBILITY_DISTANCE),
-  m_hiDynObjectGuid(1), m_hiPetGuid(1), m_hiVehicleGuid(1)
+  m_hiDynObjectGuid(1), m_hiPetGuid(1)
 {
     for(unsigned int idx=0; idx < MAX_NUMBER_OF_GRIDS; ++idx)
     {
@@ -232,7 +232,7 @@ Map::Map(uint32 id, time_t expiry, uint32 InstanceId, uint8 SpawnMode, Map* _par
 void Map::InitVisibilityDistance()
 {
     //init visibility for continents
-    m_VisibleDistance = sWorld.GetMaxVisibleDistanceOnContinents();
+    m_VisibleDistance = World::GetMaxVisibleDistanceOnContinents();
 }
 
 // Template specialization of utility methods
@@ -332,7 +332,7 @@ void Map::DeleteFromWorld(T* obj)
 template<>
 void Map::DeleteFromWorld(Player* pl)
 {
-    ObjectAccessor::Instance().RemoveObject(pl);
+    sObjectAccessor.RemoveObject(pl);
     delete pl;
 }
 
@@ -420,7 +420,7 @@ bool Map::EnsureGridLoaded(const Cell &cell)
         loader.LoadN();
 
         // Add resurrectable corpses to world object list in grid
-        ObjectAccessor::Instance().AddCorpsesToGrid(GridPair(cell.GridX(),cell.GridY()),(*grid)(cell.CellX(), cell.CellY()), this);
+        sObjectAccessor.AddCorpsesToGrid(GridPair(cell.GridX(),cell.GridY()),(*grid)(cell.CellX(), cell.CellY()), this);
 
         setGridObjectDataLoaded(true,cell.GridX(), cell.GridY());
         return true;
@@ -1144,6 +1144,33 @@ void Map::UnloadAll(bool pForce)
     }
 }
 
+MapDifficulty const* Map::GetMapDifficulty() const
+{
+    return GetMapDifficultyData(GetId(),GetDifficulty());
+}
+
+uint32 Map::GetMaxPlayers() const
+{
+    if(MapDifficulty const* mapDiff = GetMapDifficulty())
+    {
+        if(mapDiff->maxPlayers || IsRegularDifficulty())    // Normal case (expect that regular difficulty always have correct maxplayers)
+            return mapDiff->maxPlayers;
+        else                                                // DBC have 0 maxplayers for heroic instances with expansion < 2
+        {                                                   // The heroic entry exists, so we don't have to check anything, simply return normal max players
+            MapDifficulty const* normalDiff = GetMapDifficultyData(i_id, REGULAR_DIFFICULTY);
+            return normalDiff ? normalDiff->maxPlayers : 0;
+        }
+    }
+    else                                                    // I'd rather assert(false);
+        return 0;
+}
+
+uint32 Map::GetMaxResetDelay() const
+{
+    MapDifficulty const* mapDiff = GetMapDifficulty();
+    return mapDiff ? mapDiff->resetTime : 0;
+}
+
 //*****************************
 // Grid function
 //*****************************
@@ -1486,7 +1513,7 @@ float  GridMap::getHeightFromUint8(float x, float y) const
     return (float)((a * x) + (b * y) + c)*m_gridIntHeightMultiplier + m_gridHeight;
 }
 
-float  GridMap::getHeightFromUint16(float x, float y) const
+float GridMap::getHeightFromUint16(float x, float y) const
 {
     if (!m_uint16_V8 || !m_uint16_V9)
         return m_gridHeight;
@@ -1553,7 +1580,7 @@ float  GridMap::getHeightFromUint16(float x, float y) const
     return (float)((a * x) + (b * y) + c)*m_gridIntHeightMultiplier + m_gridHeight;
 }
 
-float  GridMap::getLiquidLevel(float x, float y)
+float GridMap::getLiquidLevel(float x, float y)
 {
     if (!m_liquid_map)
         return m_liquidLevel;
@@ -1747,6 +1774,7 @@ uint16 Map::GetAreaFlag(float x, float y, float z) const
             if(z > 350.0f) areaflag = 1950; break;
         // Dalaran
         case 2492:                                          // Forlorn Woods (Crystalsong Forest)
+        case 2371:                                          // Valley of Echoes (Icecrown Glacier)
             if (x > 5568.0f && x < 6116.0f && y > 282.0f && y < 982.0f && z > 563.0f)
             {
                 // Krasus' Landing (Dalaran), fast check
@@ -1894,6 +1922,11 @@ ZLiquidStatus Map::getLiquidStatus(float x, float y, float z, uint8 ReqLiquidTyp
 
 float Map::GetWaterLevel(float x, float y ) const
 {
+    switch (GetAreaFlag(x,y,0.0f))
+    {
+    case 707: return 39.1f;
+    }
+
     if(GridMap* gmap = const_cast<Map*>(this)->GetGrid(x, y))
         return gmap->getLiquidLevel(x, y);
     else
@@ -1937,6 +1970,12 @@ bool Map::IsInWater(float x, float y, float pZ) const
         if (getLiquidStatus(x, y, pZ, MAP_ALL_LIQUIDS, &liquid_status))
         {
             if (liquid_status.level - liquid_status.depth_level > 2)
+                return true;
+        }
+
+        if (GetAreaFlag(x,y,pZ) == 707 || GetAreaFlag(x,y,pZ) == 1637)
+        {
+            if (x > 1436 && x < 1539 && y > -4239 && y < -4148 && pZ < 41 && pZ > 30)
                 return true;
         }
     }
@@ -2076,7 +2115,7 @@ void Map::SendInitSelf( Player * player )
 void Map::SendInitTransports( Player * player )
 {
     // Hack to send out transports
-    MapManager::TransportMap& tmap = MapManager::Instance().m_TransportsByMap;
+    MapManager::TransportMap& tmap = sMapMgr.m_TransportsByMap;
 
     // no transports at map
     if (tmap.find(player->GetMapId()) == tmap.end())
@@ -2103,7 +2142,7 @@ void Map::SendInitTransports( Player * player )
 void Map::SendRemoveTransports( Player * player )
 {
     // Hack to send out transports
-    MapManager::TransportMap& tmap = MapManager::Instance().m_TransportsByMap;
+    MapManager::TransportMap& tmap = sMapMgr.m_TransportsByMap;
 
     // no transports at map
     if (tmap.find(player->GetMapId()) == tmap.end())
@@ -2323,7 +2362,7 @@ InstanceMap::~InstanceMap()
 void InstanceMap::InitVisibilityDistance()
 {
     //init visibility distance for instances
-    m_VisibleDistance = sWorld.GetMaxVisibleDistanceInInstances();
+    m_VisibleDistance = World::GetMaxVisibleDistanceInInstances();
 }
 
 /*
@@ -2376,11 +2415,11 @@ bool InstanceMap::Add(Player *player)
         if(IsDungeon())
         {
             // get or create an instance save for the map
-            InstanceSave *mapSave = sInstanceSaveManager.GetInstanceSave(GetInstanceId());
+            InstanceSave *mapSave = sInstanceSaveMgr.GetInstanceSave(GetInstanceId());
             if(!mapSave)
             {
                 sLog.outDetail("InstanceMap::Add: creating instance save for map %d spawnmode %d with instance id %d", GetId(), GetSpawnMode(), GetInstanceId());
-                mapSave = sInstanceSaveManager.AddInstanceSave(GetId(), GetInstanceId(), Difficulty(GetSpawnMode()), 0, true);
+                mapSave = sInstanceSaveMgr.AddInstanceSave(GetId(), GetInstanceId(), Difficulty(GetSpawnMode()), 0, true);
             }
 
             // check for existing instance binds
@@ -2490,7 +2529,7 @@ void InstanceMap::CreateInstanceData(bool load)
     if(i_data != NULL)
         return;
 
-    InstanceTemplate const* mInstance = objmgr.GetInstanceTemplate(GetId());
+    InstanceTemplate const* mInstance = ObjectMgr::GetInstanceTemplate(GetId());
     if (mInstance)
     {
         i_script_id = mInstance->script_id;
@@ -2510,7 +2549,7 @@ void InstanceMap::CreateInstanceData(bool load)
             const char* data = fields[0].GetString();
             if(data)
             {
-                sLog.outDebug("Loading instance data for `%s` with id %u", objmgr.GetScriptName(i_script_id), i_InstanceId);
+                sLog.outDebug("Loading instance data for `%s` with id %u", sObjectMgr.GetScriptName(i_script_id), i_InstanceId);
                 i_data->Load(data);
             }
             delete result;
@@ -2518,7 +2557,7 @@ void InstanceMap::CreateInstanceData(bool load)
     }
     else
     {
-        sLog.outDebug("New instance data, \"%s\" ,initialized!", objmgr.GetScriptName(i_script_id));
+        sLog.outDebug("New instance data, \"%s\" ,initialized!", sObjectMgr.GetScriptName(i_script_id));
         i_data->Initialize();
     }
 }
@@ -2569,7 +2608,7 @@ void InstanceMap::PermBindAllPlayers(Player *player)
     if(!IsDungeon())
         return;
 
-    InstanceSave *save = sInstanceSaveManager.GetInstanceSave(GetInstanceId());
+    InstanceSave *save = sInstanceSaveMgr.GetInstanceSave(GetInstanceId());
     if(!save)
     {
         sLog.outError("Cannot bind players, no instance save available for map!");
@@ -2611,7 +2650,7 @@ void InstanceMap::UnloadAll(bool pForce)
     }
 
     if(m_resetAfterUnload == true)
-        objmgr.DeleteRespawnTimeForInstance(GetInstanceId());
+        sObjectMgr.DeleteRespawnTimeForInstance(GetInstanceId());
 
     Map::UnloadAll(pForce);
 }
@@ -2627,20 +2666,12 @@ void InstanceMap::SetResetSchedule(bool on)
     // only for normal instances
     // the reset time is only scheduled when there are no payers inside
     // it is assumed that the reset time will rarely (if ever) change while the reset is scheduled
-    if(IsDungeon() && !HavePlayers() && !IsRaid() && !IsHeroic())
+    if(IsDungeon() && !HavePlayers() && !IsRaidOrHeroicDungeon())
     {
-        InstanceSave *save = sInstanceSaveManager.GetInstanceSave(GetInstanceId());
+        InstanceSave *save = sInstanceSaveMgr.GetInstanceSave(GetInstanceId());
         if(!save) sLog.outError("InstanceMap::SetResetSchedule: cannot turn schedule %s, no save available for instance %d of %d", on ? "on" : "off", GetInstanceId(), GetId());
-        else sInstanceSaveManager.ScheduleReset(on, save->GetResetTime(), InstanceSaveManager::InstResetEvent(0, GetId(), GetInstanceId()));
+        else sInstanceSaveMgr.ScheduleReset(on, save->GetResetTime(), InstanceSaveManager::InstResetEvent(0, GetId(), Difficulty(GetSpawnMode()), GetInstanceId()));
     }
-}
-
-uint32 InstanceMap::GetMaxPlayers() const
-{
-    InstanceTemplate const* iTemplate = objmgr.GetInstanceTemplate(GetId());
-    if(!iTemplate)
-        return 0;
-    return IsHeroic() ? iTemplate->maxPlayersHeroic : iTemplate->maxPlayers;
 }
 
 /* ******* Battleground Instance Maps ******* */
@@ -2659,7 +2690,7 @@ BattleGroundMap::~BattleGroundMap()
 void BattleGroundMap::InitVisibilityDistance()
 {
     //init visibility distance for BG/Arenas
-    m_VisibleDistance = sWorld.GetMaxVisibleDistanceInBGArenas();
+    m_VisibleDistance = World::GetMaxVisibleDistanceInBGArenas();
 }
 
 bool BattleGroundMap::CanEnter(Player * player)
@@ -3481,18 +3512,12 @@ Corpse* Map::GetCorpse(uint64 guid)
     return ret;
 }
 
-Creature* Map::GetCreatureOrPetOrVehicle(uint64 guid)
+Unit* Map::GetCreatureOrPet(uint64 guid)
 {
-    if (IS_PLAYER_GUID(guid))
-        return NULL;
+    if (Unit* ret = GetCreature(guid))
+        return ret;
 
-    if (IS_PET_GUID(guid))
-        return GetPet(guid);
-
-    if (IS_VEHICLE_GUID(guid))
-        return GetVehicle(guid);
-
-    return GetCreature(guid);
+    return GetPet(guid);
 }
 
 GameObject* Map::GetGameObject(uint64 guid)
@@ -3563,13 +3588,13 @@ uint32 Map::GenerateLocalLowGuid(HighGuid guidhigh)
                 World::StopNow(ERROR_EXIT_CODE);
             }
             return m_hiPetGuid++;
-        case HIGHGUID_VEHICLE:
+        /*case HIGHGUID_VEHICLE:
             if(m_hiVehicleGuid>=0x00FFFFFF)
             {
                 sLog.outError("Vehicle guid overflow!! Can't continue, shutting down server. ");
                 World::StopNow(ERROR_EXIT_CODE);
             }
-            return m_hiVehicleGuid++;
+            return m_hiVehicleGuid++;*/
         default:
             ASSERT(0);
     }
@@ -3577,4 +3602,3 @@ uint32 Map::GenerateLocalLowGuid(HighGuid guidhigh)
     ASSERT(0);
     return 0;
 }
-

@@ -30,6 +30,7 @@
 #include "BattleGroundMgr.h"
 #include <fstream>
 #include "ObjectMgr.h"
+#include "ObjectDefines.h"
 #include "SpellMgr.h"
 
 bool ChatHandler::HandleDebugSendSpellFailCommand(const char* args)
@@ -614,7 +615,7 @@ bool ChatHandler::HandleDebugSpawnVehicle(const char* args)
     uint32 entry = (uint32)atoi(e);
     uint32 id = (uint32)atoi(i);
 
-    CreatureInfo const *ci = objmgr.GetCreatureTemplate(entry);
+    CreatureInfo const *ci = ObjectMgr::GetCreatureTemplate(entry);
 
     if (!ci)
         return false;
@@ -626,7 +627,8 @@ bool ChatHandler::HandleDebugSpawnVehicle(const char* args)
 
     Vehicle *v = new Vehicle;
     Map *map = m_session->GetPlayer()->GetMap();
-    if (!v->Create(objmgr.GenerateLowGuid(HIGHGUID_VEHICLE), map, m_session->GetPlayer()->GetPhaseMaskForSpawn(), entry, id, m_session->GetPlayer()->GetTeam()))
+
+    if (!v->Create(sObjectMgr.GenerateLowGuid(HIGHGUID_VEHICLE), map, m_session->GetPlayer()->GetPhaseMaskForSpawn(), entry, id, m_session->GetPlayer()->GetTeam()))
     {
         delete v;
         return false;
@@ -654,7 +656,7 @@ bool ChatHandler::HandleDebugSpawnVehicle(const char* args)
 bool ChatHandler::HandleDebugSpellCheckCommand(const char* /*args*/)
 {
     sLog.outString( "Check expected in code spell properties base at table 'spell_check' content...");
-    spellmgr.CheckUsedSpells("spell_check");
+    sSpellMgr.CheckUsedSpells("spell_check");
     return true;
 }
 

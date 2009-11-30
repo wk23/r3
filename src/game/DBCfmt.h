@@ -29,7 +29,7 @@ const char BankBagSlotPricesEntryfmt[]="ni";
 const char BarberShopStyleEntryfmt[]="nixxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxiii";
 const char BattlemasterListEntryfmt[]="niiiiiiiiiiiixxxssssssssssssssssxxx";
 const char CharStartOutfitEntryfmt[]="diiiiiiiiiiiiiiiiiiiiiiiiixxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
-const char CharTitlesEntryfmt[]="nxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxi";
+const char CharTitlesEntryfmt[]="nxssssssssssssssssxxxxxxxxxxxxxxxxxxi";
 const char ChatChannelsEntryfmt[]="iixssssssssssssssssxxxxxxxxxxxxxxxxxx";
                                                             // ChatChannelsEntryfmt, index not used (more compact store)
 const char ChrClassesEntryfmt[]="nxixxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxixii";
@@ -86,7 +86,7 @@ const char SpellCastTimefmt[]="nixx";
 const char SpellDurationfmt[]="niii";
 const char SpellEntryfmt[]="niiiiiiiiiixixixiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiifxiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiffffffiiiiiiiiiiiiiiiiiiiiifffiiiiiiiiiiiiiiifffiiiiiiiiiiiiixssssssssssssssssxssssssssssssssssxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxiiiiiiiiiiixfffxxxiiiiixxxxxx";
 const char SpellFocusObjectfmt[]="nxxxxxxxxxxxxxxxxx";
-const char SpellItemEnchantmentfmt[]="nxiiiiiixxxiiissssssssssssssssxiiiixxx";
+const char SpellItemEnchantmentfmt[]="nxiiiiiixxxiiissssssssssssssssxiiiiiii";
 const char SpellItemEnchantmentConditionfmt[]="nbbbbbxxxxxbbbbbbbbbbiiiiiXXXXX";
 const char SpellRadiusfmt[]="nfxf";
 const char SpellRangefmt[]="nffffxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";

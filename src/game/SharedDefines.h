@@ -1198,7 +1198,11 @@ enum GameObjectFlags
     GO_FLAG_TRANSPORT       = 0x00000008,                   //any kind of transport? Object can transport (elevator, boat, car)
     GO_FLAG_UNK1            = 0x00000010,                   //
     GO_FLAG_NODESPAWN       = 0x00000020,                   //never despawn, typically for doors, they just change state
-    GO_FLAG_TRIGGERED       = 0x00000040                    //typically, summoned objects. Triggered by spell or other events
+    GO_FLAG_TRIGGERED       = 0x00000040,                   //typically, summoned objects. Triggered by spell or other events
+    GO_FLAG_UNK_8           = 0x00000080,
+    GO_FLAG_UNK_9           = 0x00000100,                   //? Seen on type 33, possible meaning "destruct in progress"
+    GO_FLAG_UNK_10          = 0x00000200,                   //? Seen on type 33
+    GO_FLAG_UNK_11          = 0x00000400                    //? Seen on type 33, possibly meaning "destructed"
 };
 
 enum TextEmotes
@@ -2499,6 +2503,7 @@ enum SummonType
     SUMMON_TYPE_TOTEM       = 121,
     SUMMON_TYPE_UNKNOWN3    = 181,
     SUMMON_TYPE_UNKNOWN4    = 187,
+    SUMMON_TYPE_RUNE_BLADE  = 208,
     SUMMON_TYPE_UNKNOWN1    = 247,
     SUMMON_TYPE_CRITTER2    = 407,
     SUMMON_TYPE_CRITTER3    = 307,
@@ -2508,19 +2513,21 @@ enum SummonType
     SUMMON_TYPE_UNKNOWN2    = 427,
     SUMMON_TYPE_POSESSED2   = 428,
     SUMMON_TYPE_WILD2       = 429,
+    SUMMON_TYPE_QUEST_CRITTER = 487,
     SUMMON_TYPE_VEHICLE3    = 488,
     SUMMON_TYPE_VEHICLE4    = 493,
+    SUMMON_TYPE_QUEST_WILD  = 587,
     SUMMON_TYPE_VEHICLE5    = 607,
     SUMMON_TYPE_VEHICLE6    = 708,
     SUMMON_TYPE_VEHICLE7    = 710,
-    SUMMON_TYPE_QUEST_CRITTER = 487,
-    SUMMON_TYPE_QUEST_WILD  = 587,
     SUMMON_TYPE_INFERNO     = 711,
     SUMMON_TYPE_GUARDIAN2   = 713,
     SUMMON_TYPE_VEHICLE8    = 716,
     SUMMON_TYPE_VEHICLE9    = 901,
     SUMMON_TYPE_VEHICLE10   = 941,
+   SUMMON_TYPE_ILLUSION    = 1021,
     SUMMON_TYPE_VEHICLE11   = 1081,
+    SUMMON_TYPE_LIGHTWELL   = 1141,
     SUMMON_TYPE_GUARDIAN3   = 1161,
     SUMMON_TYPE_VEHICLE12   = 1162,
     SUMMON_TYPE_CREATURE    = 1302,

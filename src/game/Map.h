@@ -38,7 +38,6 @@
 #include <bitset>
 #include <list>
 
-class Creature;
 class Unit;
 class WorldPacket;
 class InstanceData;
@@ -228,9 +227,6 @@ struct InstanceTemplate
     uint32 parent;
     uint32 levelMin;
     uint32 levelMax;
-    uint32 maxPlayers;
-    uint32 maxPlayersHeroic;
-    uint32 reset_delay;                                 // FIX ME: now exist normal/heroic raids with possible different time of reset.
     float startLocX;
     float startLocY;
     float startLocZ;
@@ -366,15 +362,25 @@ class MANGOS_DLL_SPEC Map : public GridRefManager<NGridType>, public MaNGOS::Obj
         bool CheckGridIntegrity(Creature* c, bool moved) const;
 
         uint32 GetInstanceId() const { return i_InstanceId; }
-        uint8 GetSpawnMode() const { return (i_spawnMode); }
         virtual bool CanEnter(Player* /*player*/) { return true; }
         const char* GetMapName() const;
+
+        // have meaning only for instanced map (that have set real difficulty), NOT USE its for BaseMap
+        // _currently_ spawnmode == difficulty, but this can be changes later, so use appropriate spawmmode/difficult functions
+        // for simplify later code support
+        // regular difficulty = continent/dungeon normal/first raid normal difficulty
+        uint8 GetSpawnMode() const { return (i_spawnMode); }
+        Difficulty GetDifficulty() const { return Difficulty(GetSpawnMode()); }
+        bool IsRegularDifficulty() const { return GetDifficulty() == REGULAR_DIFFICULTY; }
+        uint32 GetMaxPlayers() const;                       // dependent from map difficulty
+        uint32 GetMaxResetDelay() const;                    // dependent from map difficulty
+        MapDifficulty const* GetMapDifficulty() const;      // dependent from map difficulty
 
         bool Instanceable() const { return i_mapEntry && i_mapEntry->Instanceable(); }
         // NOTE: this duplicate of Instanceable(), but Instanceable() can be changed when BG also will be instanceable
         bool IsDungeon() const { return i_mapEntry && i_mapEntry->IsDungeon(); }
         bool IsRaid() const { return i_mapEntry && i_mapEntry->IsRaid(); }
-        bool IsHeroic() const { return IsRaid() ? i_spawnMode >= RAID_DIFFICULTY_10MAN_HEROIC : i_spawnMode >= DUNGEON_DIFFICULTY_HEROIC; }
+        bool IsRaidOrHeroicDungeon() const { return IsRaid() || GetDifficulty() > DUNGEON_DIFFICULTY_NORMAL; }
         bool IsBattleGround() const { return i_mapEntry && i_mapEntry->IsBattleGround(); }
         bool IsBattleArena() const { return i_mapEntry && i_mapEntry->IsBattleArena(); }
         bool IsBattleGroundOrArena() const { return i_mapEntry && i_mapEntry->IsBattleGroundOrArena(); }
@@ -434,7 +440,7 @@ class MANGOS_DLL_SPEC Map : public GridRefManager<NGridType>, public MaNGOS::Obj
         Creature* GetCreature(uint64 guid);
         Vehicle* GetVehicle(uint64 guid);
         Pet* GetPet(uint64 guid);
-        Creature* GetCreatureOrPetOrVehicle(uint64 guid);
+        Unit* GetCreatureOrPet(uint64 guid);
         GameObject* GetGameObject(uint64 guid);
         DynamicObject* GetDynamicObject(uint64 guid);
         Corpse* GetCorpse(uint64 guid);
@@ -541,7 +547,6 @@ class MANGOS_DLL_SPEC Map : public GridRefManager<NGridType>, public MaNGOS::Obj
         // Map local low guid counters
         uint32 m_hiDynObjectGuid;
         uint32 m_hiPetGuid;
-        uint32 m_hiVehicleGuid;
 
         // Type specific code for add/remove to/from grid
         template<class T>
@@ -605,7 +610,6 @@ class MANGOS_DLL_SPEC InstanceMap : public Map
         bool CanEnter(Player* player);
         void SendResetWarnings(uint32 timeLeft) const;
         void SetResetSchedule(bool on);
-        uint32 GetMaxPlayers() const;
 
         virtual void InitVisibilityDistance();
     private:

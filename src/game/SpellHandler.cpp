@@ -363,7 +363,7 @@ void WorldSession::HandleCastSpellOpcode(WorldPacket& recvPacket)
     // auto-selection buff level base at target level (in spellInfo)
     if(targets.getUnitTarget())
     {
-        SpellEntry const *actualSpellInfo = spellmgr.SelectAuraRankForPlayerLevel(spellInfo,targets.getUnitTarget()->getLevel());
+        SpellEntry const *actualSpellInfo = sSpellMgr.SelectAuraRankForPlayerLevel(spellInfo,targets.getUnitTarget()->getLevel());
 
         // if rank not found then function return NULL but in explicit cast case original spell can be casted and later failed with appropriate error message
         if(actualSpellInfo)
@@ -464,7 +464,7 @@ void WorldSession::HandlePetCancelAuraOpcode( WorldPacket& recvPacket)
         return;
     }
 
-    Creature* pet = GetPlayer()->GetMap()->GetCreatureOrPetOrVehicle(guid);
+    Creature* pet=ObjectAccessor::GetCreatureOrPetOrVehicle(*_player,guid);
 
     if(!pet)
     {
@@ -556,7 +556,7 @@ void WorldSession::HandleSpellClick( WorldPacket & recv_data )
     if (_player->isInCombat())                              // client prevent click and set different icon at combat state
         return;
 
-    Creature *unit = _player->GetMap()->GetCreatureOrPetOrVehicle(guid);
+    Creature *unit = ObjectAccessor::GetCreatureOrPetOrVehicle(*_player, guid);
     if (!unit || unit->isInCombat())                        // client prevent click and set different icon at combat state
         return;
 
@@ -607,7 +607,7 @@ void WorldSession::HandleSpellClick( WorldPacket & recv_data )
     }
     else
     {
-        SpellClickInfoMapBounds clickPair = objmgr.GetSpellClickInfoMapBounds(unit->GetEntry());
+        SpellClickInfoMapBounds clickPair = sObjectMgr.GetSpellClickInfoMapBounds(unit->GetEntry());
         for(SpellClickInfoMap::const_iterator itr = clickPair.first; itr != clickPair.second; ++itr)
         {
             if (itr->second.IsFitToRequirements(_player))
@@ -619,4 +619,84 @@ void WorldSession::HandleSpellClick( WorldPacket & recv_data )
             }
         }
     }
+}
+
+void WorldSession::HandleMirrrorImageDataRequest( WorldPacket & recv_data )
+{
+	sLog.outDebug("WORLD: CMSG_GET_MIRRORIMAGE_DATA");
+	uint64 guid;
+	recv_data >> guid;
+
+	// Get unit for which data is needed by client
+	Unit *unit = ObjectAccessor::GetUnit(*_player, guid);
+	if(!unit)
+		return;
+	// Get creator of the unit
+	Unit *creator = ObjectAccessor::GetUnit(*_player, unit->GetCreatorGUID());;
+	if (!creator)
+		return;
+	WorldPacket data(SMSG_MIRRORIMAGE_DATA, 68);
+	data << (uint64)guid;
+	data << (uint32)creator->GetDisplayId();
+	if (creator->GetTypeId() == TYPEID_PLAYER)
+	{
+		Player * pCreator = (Player *)creator;
+		data << (uint8)pCreator->getRace();
+		data << (uint8)pCreator->getGender();
+		data << (uint8)pCreator->getClass();
+		data << (uint8)pCreator->GetByteValue(PLAYER_BYTES, 0); // skin
+
+		data << (uint8)pCreator->GetByteValue(PLAYER_BYTES, 1); // face
+		data << (uint8)pCreator->GetByteValue(PLAYER_BYTES, 2); // hair
+		data << (uint8)pCreator->GetByteValue(PLAYER_BYTES, 3); // haircolor
+		data << (uint8)pCreator->GetByteValue(PLAYER_BYTES_2, 0); // facialhair
+
+		data << (uint32)pCreator->GetGuildId();  // unk
+		static const EquipmentSlots ItemSlots[] =
+		{
+			EQUIPMENT_SLOT_HEAD,
+			EQUIPMENT_SLOT_SHOULDERS,
+			EQUIPMENT_SLOT_BODY,
+			EQUIPMENT_SLOT_CHEST,
+			EQUIPMENT_SLOT_WAIST,
+			EQUIPMENT_SLOT_LEGS,
+			EQUIPMENT_SLOT_FEET,
+			EQUIPMENT_SLOT_WRISTS,
+			EQUIPMENT_SLOT_HANDS,
+			EQUIPMENT_SLOT_BACK,
+			EQUIPMENT_SLOT_TABARD,
+			EQUIPMENT_SLOT_END
+		};
+		// Display items in visible slots
+		for (EquipmentSlots const* itr = &ItemSlots[0]; *itr!=EQUIPMENT_SLOT_END; ++itr)
+		{
+			if (*itr == EQUIPMENT_SLOT_HEAD && pCreator->HasFlag(PLAYER_FLAGS, PLAYER_FLAGS_HIDE_HELM))
+				data << (uint32)0;
+			else if (*itr == EQUIPMENT_SLOT_BACK && pCreator->HasFlag(PLAYER_FLAGS, PLAYER_FLAGS_HIDE_CLOAK))
+				data << (uint32)0;
+			else if (Item const *item = pCreator->GetItemByPos(INVENTORY_SLOT_BAG_0, *itr))
+				data << (uint32)item->GetProto()->DisplayInfoID;
+			else
+				data << (uint32)0;
+		}
+	}
+	else
+	{
+		// Skip player data for creatures
+		data << (uint32)0;
+		data << (uint32)0;
+		data << (uint32)0;
+		data << (uint32)0;
+		data << (uint32)0;
+		data << (uint32)0;
+		data << (uint32)0;
+		data << (uint32)0;
+		data << (uint32)0;
+		data << (uint32)0;
+		data << (uint32)0;
+		data << (uint32)0;
+		data << (uint32)0;
+		data << (uint32)0;
+	}
+	SendPacket( &data );
 }

@@ -25,6 +25,7 @@
 #include "Log.h"
 #include "MapManager.h"
 #include "ObjectMgr.h"
+#include "ObjectDefines.h"
 #include "SpellMgr.h"
 #include "UpdateMask.h"
 #include "World.h"
@@ -129,10 +130,10 @@ ObjectMgr::ObjectMgr()
 {
     m_hiCharGuid        = 1;
     m_hiCreatureGuid    = 1;
+	m_hiVehicleGuid     = 1;
     m_hiItemGuid        = 1;
     m_hiGoGuid          = 1;
     m_hiCorpseGuid      = 1;
-    m_hiVehicleGuid     = 1;
     m_hiPetNumber       = 1;
     m_ItemTextId        = 1;
     m_mailid            = 1;
@@ -462,7 +463,7 @@ struct SQLCreatureLoader : public SQLStorageLoaderBase<SQLCreatureLoader>
     template<class D>
     void convert_from_str(uint32 /*field_pos*/, char *src, D &dst)
     {
-        dst = D(objmgr.GetScriptId(src));
+        dst = D(sObjectMgr.GetScriptId(src));
     }
 };
 
@@ -1744,7 +1745,7 @@ struct SQLItemLoader : public SQLStorageLoaderBase<SQLItemLoader>
     template<class D>
     void convert_from_str(uint32 /*field_pos*/, char *src, D &dst)
     {
-        dst = D(objmgr.GetScriptId(src));
+        dst = D(sObjectMgr.GetScriptId(src));
     }
 };
 
@@ -2215,7 +2216,7 @@ void ObjectMgr::LoadItemRequiredTarget()
                 if (pItemProto->Spells[i].SpellTrigger == ITEM_SPELLTRIGGER_ON_USE ||
                     pItemProto->Spells[i].SpellTrigger == ITEM_SPELLTRIGGER_ON_NO_DELAY_USE)
                 {
-                    SpellScriptTargetBounds bounds = spellmgr.GetSpellScriptTargetBounds(pSpellInfo->Id);
+                    SpellScriptTargetBounds bounds = sSpellMgr.GetSpellScriptTargetBounds(pSpellInfo->Id);
                     if (bounds.first != bounds.second)
                         break;
 
@@ -2586,8 +2587,15 @@ void ObjectMgr::LoadPlayerInfo()
                     continue;
                 }
 
+                uint32 spell_id = fields[2].GetUInt32();
+                if (!sSpellStore.LookupEntry(spell_id))
+                {
+                    sLog.outErrorDb("Non existing spell %u in `playercreateinfo_spell` table, ignoring.", spell_id);
+                    continue;
+                }
+
                 PlayerInfo* pInfo = &playerInfo[current_race][current_class];
-                pInfo->spell.push_back(fields[2].GetUInt32());
+                pInfo->spell.push_back(spell_id);
 
                 bar.step();
                 ++count;
@@ -2638,8 +2646,15 @@ void ObjectMgr::LoadPlayerInfo()
                     continue;
                 }
 
+                uint8 action_button  = fields[2].GetUInt8();
+                uint32 action = fields[3].GetUInt32();
+                uint8 action_type = fields[4].GetUInt8();
+
+                if (!Player::IsActionButtonDataValid(action_button,action,action_type,NULL))
+                    continue;
+
                 PlayerInfo* pInfo = &playerInfo[current_race][current_class];
-                pInfo->action.push_back(PlayerCreateInfoAction(fields[2].GetUInt8(),fields[3].GetUInt32(),fields[4].GetUInt8()));
+                pInfo->action.push_back(PlayerCreateInfoAction(action_button,action,action_type));
 
                 bar.step();
                 ++count;
@@ -3315,7 +3330,7 @@ void ObjectMgr::LoadGroups()
                 diff = 0;                                   // default for both difficaly types
             }
 
-            InstanceSave *save = sInstanceSaveManager.AddInstanceSave(mapEntry->MapID, fields[2].GetUInt32(), Difficulty(diff), (time_t)fields[5].GetUInt64(), (fields[6].GetUInt32() == 0), true);
+            InstanceSave *save = sInstanceSaveMgr.AddInstanceSave(mapEntry->MapID, fields[2].GetUInt32(), Difficulty(diff), (time_t)fields[5].GetUInt64(), (fields[6].GetUInt32() == 0), true);
             group->BindToInstance(save, fields[3].GetBool(), true);
         }while( result->NextRow() );
         delete result;
@@ -4190,7 +4205,7 @@ void ObjectMgr::LoadScripts(ScriptMapMap& scripts, char const* tablename)
                     continue;
                 }
 
-                // if(!objmgr.GetMangosStringLocale(tmp.dataint)) will checked after db_script_string loading
+                // if(!GetMangosStringLocale(tmp.dataint)) will checked after db_script_string loading
                 break;
             }
 
@@ -4655,7 +4670,7 @@ struct SQLInstanceLoader : public SQLStorageLoaderBase<SQLInstanceLoader>
     template<class D>
     void convert_from_str(uint32 /*field_pos*/, char *src, D &dst)
     {
-        dst = D(objmgr.GetScriptId(src));
+        dst = D(sObjectMgr.GetScriptId(src));
     }
 };
 
@@ -4670,42 +4685,14 @@ void ObjectMgr::LoadInstanceTemplate()
         if(!temp)
             continue;
 
-        const MapEntry* entry = sMapStore.LookupEntry(temp->map);
-        if(!entry)
-        {
+        if(!MapManager::IsValidMAP(temp->map))
             sLog.outErrorDb("ObjectMgr::LoadInstanceTemplate: bad mapid %d for template!", temp->map);
-            continue;
-        }
 
-        //FIXME: now exist heroic instance, normal/heroic raid instances
-        // entry->resetTimeHeroic store reset time for both heroic mode instance (raid and non-raid)
-        // entry->resetTimeRaid   store reset time for normal raid only
-        // for current state  entry->resetTimeRaid == entry->resetTimeHeroic in case raid instances with heroic mode.
-        // but at some point wee need implement reset time dependent from raid instance mode
-        if(temp->reset_delay == 0)
+        if(!MapManager::IsValidMapCoord(temp->parent,temp->startLocX,temp->startLocY,temp->startLocZ,temp->startLocO))
         {
-            MapDifficulty const* mapDiffNorm   = GetMapDifficultyData(temp->map,DUNGEON_DIFFICULTY_NORMAL);
-            MapDifficulty const* mapDiffHeroic = GetMapDifficultyData(temp->map,DUNGEON_DIFFICULTY_HEROIC);
-
-            // no reset time
-            if ((!mapDiffNorm || mapDiffNorm->resetTime == 0) &&
-                (!mapDiffHeroic || mapDiffHeroic->resetTime == 0))
-                continue;
-
-            // use defaults from the DBC
-            if(mapDiffHeroic && mapDiffHeroic->resetTime)   // for both raid and non raids, read above
-            {
-                temp->reset_delay = mapDiffHeroic->resetTime / DAY;
-            }
-            else if (mapDiffNorm && mapDiffNorm->resetTime && entry->map_type == MAP_RAID)
-                                                            // for normal raid only
-            {
-                temp->reset_delay = mapDiffNorm->resetTime / DAY;
-            }
+            sLog.outErrorDb("ObjectMgr::LoadInstanceTemplate: bad parent entrance coordinates for map id %d template!", temp->map);
+            temp->parent = 0;                               // will have wrong continent 0 parent, at least existed
         }
-
-        // the reset_delay must be at least one day
-        temp->reset_delay = std::max((uint32)1, (uint32)(temp->reset_delay * sWorld.getRate(RATE_INSTANCE_RESET_TIME)));
     }
 
     sLog.outString( ">> Loaded %u Instance Template definitions", sInstanceTemplate.RecordCount );
@@ -5220,11 +5207,11 @@ uint32 ObjectMgr::GetTaxiMountDisplayId( uint32 id, uint32 team, bool allowed_al
     if (!mount_info)
         return 0;
 
-    uint16 mount_id = objmgr.ChooseDisplayId(team,mount_info);
+    uint16 mount_id = ChooseDisplayId(team,mount_info);
     if (!mount_id)
         return 0;
 
-    CreatureModelInfo const *minfo = objmgr.GetCreatureModelRandomGender(mount_id);
+    CreatureModelInfo const *minfo = GetCreatureModelRandomGender(mount_id);
     if (minfo)
         mount_id = minfo->modelid;
 
@@ -5341,7 +5328,7 @@ void ObjectMgr::LoadGraveyardZones()
 WorldSafeLocsEntry const *ObjectMgr::GetClosestGraveYard(float x, float y, float z, uint32 MapId, uint32 team)
 {
     // search for zone associated closest graveyard
-    uint32 zoneId = MapManager::Instance().GetZoneId(MapId,x,y,z);
+    uint32 zoneId = sMapMgr.GetZoneId(MapId,x,y,z);
 
     // Simulate std. algorithm:
     //   found some graveyard associated to (ghost_zone,ghost_map)
@@ -5721,7 +5708,6 @@ void ObjectMgr::SetHighestGuids()
     if( result )
     {
         m_hiCreatureGuid = (*result)[0].GetUInt32()+1;
-        m_hiVehicleGuid = m_hiCreatureGuid;
         delete result;
     }
 
@@ -5887,6 +5873,13 @@ uint32 ObjectMgr::GenerateLowGuid(HighGuid guidhigh)
                 World::StopNow(ERROR_EXIT_CODE);
             }
             return m_hiCreatureGuid++;
+        case HIGHGUID_VEHICLE:
+            if(m_hiVehicleGuid>=0x00FFFFFF)
+            {
+                sLog.outError("Vehicle guid overflow!! Can't continue, shutting down server. ");
+                World::StopNow(ERROR_EXIT_CODE);
+            }
+            return m_hiVehicleGuid++;
         case HIGHGUID_PLAYER:
             if(m_hiCharGuid>=0xFFFFFFFE)
             {
@@ -5908,13 +5901,6 @@ uint32 ObjectMgr::GenerateLowGuid(HighGuid guidhigh)
                 World::StopNow(ERROR_EXIT_CODE);
             }
             return m_hiCorpseGuid++;
-        case HIGHGUID_VEHICLE:
-            if(m_hiVehicleGuid>=0xFFFFFFFE)
-            {
-                sLog.outError("Vehicle guid overflow!! Can't continue, shutting down server. ");
-                World::StopNow(ERROR_EXIT_CODE);
-            }
-            return m_hiVehicleGuid;
         default:
             ASSERT(0);
     }
@@ -5999,7 +5985,7 @@ struct SQLGameObjectLoader : public SQLStorageLoaderBase<SQLGameObjectLoader>
     template<class D>
     void convert_from_str(uint32 /*field_pos*/, char *src, D &dst)
     {
-        dst = D(objmgr.GetScriptId(src));
+        dst = D(sObjectMgr.GetScriptId(src));
     }
 };
 
@@ -6390,7 +6376,7 @@ void ObjectMgr::LoadCorpses()
             continue;
         }
 
-        ObjectAccessor::Instance().AddCorpse(corpse);
+        sObjectAccessor.AddCorpse(corpse);
 
         ++count;
     }
@@ -7460,7 +7446,7 @@ bool PlayerCondition::Meets(Player const * player) const
         case CONDITION_NO_AURA:
             return !player->HasAura(value1, value2);
         case CONDITION_ACTIVE_EVENT:
-            return gameeventmgr.IsActiveEvent(value1);
+            return sGameEventMgr.IsActiveEvent(value1);
         default:
             return false;
     }
@@ -7493,7 +7479,7 @@ bool PlayerCondition::IsValid(ConditionType condition, uint32 value1, uint32 val
         }
         case CONDITION_ITEM:
         {
-            ItemPrototype const *proto = objmgr.GetItemPrototype(value1);
+            ItemPrototype const *proto = ObjectMgr::GetItemPrototype(value1);
             if(!proto)
             {
                 sLog.outErrorDb("Item condition requires to have non existing item (%u), skipped", value1);
@@ -7503,7 +7489,7 @@ bool PlayerCondition::IsValid(ConditionType condition, uint32 value1, uint32 val
         }
         case CONDITION_ITEM_EQUIPPED:
         {
-            ItemPrototype const *proto = objmgr.GetItemPrototype(value1);
+            ItemPrototype const *proto = ObjectMgr::GetItemPrototype(value1);
             if(!proto)
             {
                 sLog.outErrorDb("ItemEquipped condition requires to have non existing item (%u) equipped, skipped", value1);
@@ -7563,7 +7549,7 @@ bool PlayerCondition::IsValid(ConditionType condition, uint32 value1, uint32 val
         case CONDITION_QUESTREWARDED:
         case CONDITION_QUESTTAKEN:
         {
-            Quest const *Quest = objmgr.GetQuestTemplate(value1);
+            Quest const *Quest = sObjectMgr.GetQuestTemplate(value1);
             if (!Quest)
             {
                 sLog.outErrorDb("Quest condition specifies non-existing quest (%u), skipped", value1);
@@ -7597,7 +7583,7 @@ bool PlayerCondition::IsValid(ConditionType condition, uint32 value1, uint32 val
         }
         case CONDITION_ACTIVE_EVENT:
         {
-            GameEventMgr::GameEventDataMap const& events = gameeventmgr.GetEventMap();
+            GameEventMgr::GameEventDataMap const& events = sGameEventMgr.GetEventMap();
             if(value1 >=events.size() || !events[value1].isValid())
             {
                 sLog.outErrorDb("Active event condition requires existed event id (%u), skipped", value1);
@@ -8274,7 +8260,7 @@ void ObjectMgr::CheckScripts(ScriptMapMap const& scripts,std::set<int32>& ids)
                 case SCRIPT_COMMAND_TALK:
                 {
                     if(!GetMangosStringLocale (itrM->second.dataint))
-                        sLog.outErrorDb( "Table `db_script_string` not has string id  %u used db script (ID: %u)", itrM->second.dataint, itrMM->first);
+                        sLog.outErrorDb( "Table `db_script_string` is missing string id %u, used in database script id %u.", itrM->second.dataint, itrMM->first);
 
                     if(ids.count(itrM->second.dataint))
                         ids.erase(itrM->second.dataint);
@@ -8300,7 +8286,7 @@ void ObjectMgr::LoadDbScriptStrings()
     CheckScripts(sGameObjectScripts,ids);
     CheckScripts(sEventScripts,ids);
 
-    WaypointMgr.CheckTextsExistance(ids);
+    sWaypointMgr.CheckTextsExistance(ids);
 
     for(std::set<int32>::const_iterator itr = ids.begin(); itr != ids.end(); ++itr)
         sLog.outErrorDb( "Table `db_script_string` has unused string id  %u", *itr);
@@ -8309,7 +8295,7 @@ void ObjectMgr::LoadDbScriptStrings()
 // Functions for scripting access
 uint32 GetAreaTriggerScriptId(uint32 trigger_id)
 {
-    return objmgr.GetAreaTriggerScriptId(trigger_id);
+    return sObjectMgr.GetAreaTriggerScriptId(trigger_id);
 }
 
 bool LoadMangosStrings(DatabaseType& db, char const* table,int32 start_value, int32 end_value)
@@ -8322,17 +8308,17 @@ bool LoadMangosStrings(DatabaseType& db, char const* table,int32 start_value, in
         return false;
     }
 
-    return objmgr.LoadMangosStrings(db,table,start_value,end_value);
+    return sObjectMgr.LoadMangosStrings(db,table,start_value,end_value);
 }
 
 uint32 MANGOS_DLL_SPEC GetScriptId(const char *name)
 {
-    return objmgr.GetScriptId(name);
+    return sObjectMgr.GetScriptId(name);
 }
 
 ObjectMgr::ScriptNameMap & GetScriptNames()
 {
-    return objmgr.GetScriptNames();
+    return sObjectMgr.GetScriptNames();
 }
 
 CreatureInfo const* GetCreatureTemplateStore(uint32 entry)
@@ -8462,5 +8448,5 @@ void ObjectMgr::LoadVehicleSeatData()
 
 Quest const* GetQuestTemplateStore(uint32 entry)
 {
-    return objmgr.GetQuestTemplate(entry);
+    return sObjectMgr.GetQuestTemplate(entry);
 }

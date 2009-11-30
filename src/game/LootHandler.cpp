@@ -23,6 +23,7 @@
 #include "GameObject.h"
 #include "Player.h"
 #include "ObjectAccessor.h"
+#include "ObjectDefines.h"
 #include "WorldSession.h"
 #include "InstanceSaveMgr.h"
 #include "LootMgr.h"
@@ -314,7 +315,7 @@ void WorldSession::DoLootRelease( uint64 lguid )
                     Map *map = go->GetMap();
                     if (map->IsDungeon())
                     {
-                        if (map->IsRaid() || map->IsHeroic())
+                        if (map->IsRaid() || map->IsRaidOrHeroicDungeon())
                         {
                             ((InstanceMap *)map)->PermBindAllPlayers(player);
                         }
@@ -323,7 +324,7 @@ void WorldSession::DoLootRelease( uint64 lguid )
                             // the reset time is set but not added to the scheduler
                             // until the players leave the instance
                             time_t resettime = go->GetRespawnTimeEx() + 2 * HOUR;
-                            if(InstanceSave *save = sInstanceSaveManager.GetInstanceSave(player->GetInstanceId()))
+                            if(InstanceSave *save = sInstanceSaveMgr.GetInstanceSave(player->GetInstanceId()))
                             if(save->GetResetTime() < resettime) save->SetResetTime(resettime);
                         }
                     }
@@ -369,7 +370,7 @@ void WorldSession::DoLootRelease( uint64 lguid )
             else if (go->GetGoType() == GAMEOBJECT_TYPE_FISHINGHOLE)
             {                                               // The fishing hole used once more
                 go->AddUse();                               // if the max usage is reached, will be despawned in next tick
-                if (go->GetUseCount()>=irand(go->GetGOInfo()->fishinghole.minSuccessOpens,go->GetGOInfo()->fishinghole.maxSuccessOpens))
+                if (go->GetUseCount() >= irand(go->GetGOInfo()->fishinghole.minSuccessOpens,go->GetGOInfo()->fishinghole.maxSuccessOpens))
                 {
                     go->SetLootState(GO_JUST_DEACTIVATED);
                 }

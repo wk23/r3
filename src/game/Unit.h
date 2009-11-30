@@ -26,7 +26,7 @@
 #include "UpdateFields.h"
 #include "SharedDefines.h"
 #include "ThreatManager.h"
-#include "HostilRefManager.h"
+#include "HostileRefManager.h"
 #include "FollowerReference.h"
 #include "FollowerRefManager.h"
 #include "Utilities/EventProcessor.h"
@@ -137,13 +137,18 @@ enum UnitStandStateType
     UNIT_STAND_STATE_SIT_MEDIUM_CHAIR  = 5,
     UNIT_STAND_STATE_SIT_HIGH_CHAIR    = 6,
     UNIT_STAND_STATE_DEAD              = 7,
-    UNIT_STAND_STATE_KNEEL             = 8
+    UNIT_STAND_STATE_KNEEL             = 8,
+    UNIT_STAND_STATE_SUBMERGED         = 9
 };
 
 // byte flag value (UNIT_FIELD_BYTES_1,2)
 enum UnitStandFlags
 {
+    UNIT_STAND_FLAGS_UNK1         = 0x01,
     UNIT_STAND_FLAGS_CREEP        = 0x02,
+    UNIT_STAND_FLAGS_UNK3         = 0x04,
+    UNIT_STAND_FLAGS_UNK4         = 0x08,
+    UNIT_STAND_FLAGS_UNK5         = 0x10,
     UNIT_STAND_FLAGS_ALL          = 0xFF
 };
 
@@ -151,6 +156,7 @@ enum UnitStandFlags
 enum UnitBytes1_Flags
 {
     UNIT_BYTE1_FLAG_ALWAYS_STAND = 0x01,
+    UNIT_BYTE1_FLAG_UNK_2        = 0x02,
     UNIT_BYTE1_FLAG_UNTRACKABLE  = 0x04,
     UNIT_BYTE1_FLAG_ALL          = 0xFF
 };
@@ -196,7 +202,7 @@ enum SheathState
 #define MAX_SHEATH_STATE    3
 
 // byte (1 from 0..3) of UNIT_FIELD_BYTES_2
-enum UnitBytes2_Flags
+enum UnitPVPStateFlags
 {
     UNIT_BYTE2_FLAG_PVP         = 0x01,
     UNIT_BYTE2_FLAG_UNK1        = 0x02,
@@ -532,6 +538,7 @@ enum UnitFlags2
     UNIT_FLAG2_FEIGN_DEATH      = 0x00000001,
     UNIT_FLAG2_UNK1             = 0x00000002,               // Hide unit model (show only player equip)
     UNIT_FLAG2_COMPREHEND_LANG  = 0x00000008,
+   UNIT_FLAG2_MIRROR_IMAGE     = 0x00000010,
     UNIT_FLAG2_FORCE_MOVE       = 0x00000040,
     UNIT_FLAG2_REGENERATE_POWER = 0x00000800
 };
@@ -945,6 +952,7 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         Unit* getVictim() const { return m_attacking; }
         void CombatStop(bool includingCast = false);
         void CombatStopWithPets(bool includingCast = false);
+        void StopAttackFaction(uint32 faction_id);
         Unit* SelectNearbyTarget(Unit* except = NULL) const;
         bool hasNegativeAuraWithInterruptFlag(uint32 flag);
         void SendMeleeAttackStop(Unit* victim);
@@ -1181,6 +1189,11 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         void SendMonsterMove(float NewPosX, float NewPosY, float NewPosZ, uint8 type, MonsterMovementFlags flags, uint32 Time, Player* player = NULL);
         void SendMonsterMoveByPath(Path const& path, uint32 start, uint32 end, MonsterMovementFlags flags);
 
+        void SendHighestThreatUpdate(HostileReference* pHostileReference);
+        void SendThreatClear();
+        void SendThreatRemove(HostileReference* pHostileReference);
+        void SendThreatUpdate();
+
         void BuildHeartBeatMsg( WorldPacket *data ) const;
 
         virtual void MoveOutOfRange(Player &) {  };
@@ -1220,6 +1233,7 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         Pet* GetPet() const;
         Unit* GetCharmer() const;
         Unit* GetCharm() const;
+        void Uncharm();
         Unit* GetCharmerOrOwner() const { return GetCharmerGUID() ? GetCharmer() : GetOwner(); }
         Unit* GetCharmOrPet() const { return GetCharmGUID() ? GetCharm() : (Unit*)GetPet(); }
         Unit* GetCharmerOrOwnerOrSelf()
@@ -1393,6 +1407,7 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         void TauntApply(Unit* pVictim);
         void TauntFadeOut(Unit *taunter);
         ThreatManager& getThreatManager() { return m_ThreatManager; }
+        ThreatManager const& getThreatManager() const { return m_ThreatManager; }
         void addHatedBy(HostileReference* pHostileReference) { m_HostileRefManager.insertFirst(pHostileReference); };
         void removeHatedBy(HostileReference* /*pHostileReference*/ ) { /* nothing to do yet */ }
         HostileRefManager& getHostileRefManager() { return m_HostileRefManager; }

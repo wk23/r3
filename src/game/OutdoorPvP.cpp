@@ -79,7 +79,7 @@ bool OutdoorPvPObjective::AddObject(uint32 type, uint32 entry, uint32 map, float
         return false;
 
     GameObject* go = new GameObject;
-    if (!go->Create(objmgr.GenerateLowGuid(HIGHGUID_GAMEOBJECT), entry, pMap,
+    if (!go->Create(sObjectMgr.GenerateLowGuid(HIGHGUID_GAMEOBJECT), entry, pMap,
         PHASEMASK_NORMAL, x, y, z, o, rotation0, rotation1, rotation2, rotation3, 100, GO_STATE_READY))
     {
         sLog.outError("OutdoorPvP: Gameobject template %u not found in database.", entry);
@@ -100,7 +100,7 @@ bool OutdoorPvPObjective::AddCreature(uint32 type, uint32 entry, uint32 teamval,
         return false;
 
     Creature* pCreature = new Creature;
-    if (!pCreature->Create(objmgr.GenerateLowGuid(HIGHGUID_UNIT), pMap, PHASEMASK_NORMAL, entry, teamval))
+    if (!pCreature->Create(sObjectMgr.GenerateLowGuid(HIGHGUID_UNIT), pMap, PHASEMASK_NORMAL, entry, teamval))
     {
         sLog.outError("OutdoorPvP: Can't create creature entry: %u",entry);
         delete pCreature;
@@ -136,7 +136,7 @@ bool OutdoorPvPObjective::AddCapturePoint(uint32 entry, uint32 map, float x, flo
         return false;
 
     GameObject* go = new GameObject;
-    if (!go->Create(objmgr.GenerateLowGuid(HIGHGUID_GAMEOBJECT), entry, pMap,
+    if (!go->Create(sObjectMgr.GenerateLowGuid(HIGHGUID_GAMEOBJECT), entry, pMap,
         PHASEMASK_NORMAL, x, y, z, o, rotation0, rotation1, rotation2, rotation3, 100, GO_STATE_READY))
     {
         sLog.outError("OutdoorPvP: Gameobject template %u not found in database.", entry);
@@ -148,7 +148,7 @@ bool OutdoorPvPObjective::AddCapturePoint(uint32 entry, uint32 map, float x, flo
         go->AddToWorld();
 
     Creature* pCreature = new Creature;
-    if (!pCreature->Create(objmgr.GenerateLowGuid(HIGHGUID_UNIT), pMap,PHASEMASK_NORMAL, OPVP_TRIGGER_CREATURE_ENTRY, 0))
+    if (!pCreature->Create(sObjectMgr.GenerateLowGuid(HIGHGUID_UNIT), pMap,PHASEMASK_NORMAL, OPVP_TRIGGER_CREATURE_ENTRY, 0))
     {
         sLog.outError("OutdoorPvP: Can't create creature entry: %u",entry);
         delete pCreature;
@@ -410,7 +410,7 @@ void OutdoorPvP::SendUpdateWorldState(uint32 field, uint32 value)
     for(int i = 0; i < 2; ++i)
         // send to all players present in the area
         for(std::set<uint64>::iterator itr = m_PlayerGuids[i].begin(); itr != m_PlayerGuids[i].end(); ++itr)
-            if (Player* plr = objmgr.GetPlayer(*itr))
+            if (Player* plr = sObjectMgr.GetPlayer(*itr))
                 plr->SendUpdateWorldState(field,value);
 }
 
@@ -418,7 +418,7 @@ void OutdoorPvPObjective::SendUpdateWorldState(uint32 field, uint32 value)
 {
     // send to all players present in the area
     for(std::set<uint64>::iterator itr = m_ActivePlayerGuids.begin(); itr != m_ActivePlayerGuids.end(); ++itr)
-        if (Player* plr = objmgr.GetPlayer(*itr))
+        if (Player* plr = sObjectMgr.GetPlayer(*itr))
             plr->SendUpdateWorldState(field,value);
 }
 
@@ -441,7 +441,7 @@ void OutdoorPvPObjective::SendObjectiveComplete(uint32 id,uint64 guid)
     // send to all players present in the area
     for(std::set<uint64>::iterator itr = m_ActivePlayerGuids.begin(); itr != m_ActivePlayerGuids.end(); ++itr)
     {
-        Player * plr = objmgr.GetPlayer(*itr);
+        Player * plr = sObjectMgr.GetPlayer(*itr);
         if(plr && plr->GetTeam() == controlling_faction)
             plr->KilledMonsterCredit(id,guid);
     }

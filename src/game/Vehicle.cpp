@@ -83,7 +83,7 @@ bool Vehicle::Create(uint32 guidlow, Map *map, uint32 phaseMask, uint32 Entry, u
     SetMap(map);
     SetPhaseMask(phaseMask,false);
 
-    CreatureInfo const *cinfo = objmgr.GetCreatureTemplate(Entry);
+    CreatureInfo const *cinfo = sObjectMgr.GetCreatureTemplate(Entry);
     if(!cinfo)
     {
         sLog.outErrorDb("Creature entry %u does not exist.", Entry);
@@ -134,7 +134,7 @@ bool Vehicle::SetVehicleId(uint32 vehicleid)
     m_vehicleInfo = vehicleInfo;
 
     // can be NULL
-    VehicleDataStructure const *VDStructure = objmgr.GetVehicleData(vehicleid);
+    VehicleDataStructure const *VDStructure = sObjectMgr.GetVehicleData(vehicleid);
     if(VDStructure)
         m_VehicleData = VDStructure;
 
@@ -158,7 +158,7 @@ void Vehicle::InitSeats()
                 //newseat.seatInfo = veSeat;
                 newseat.passenger = NULL;
                 newseat.flags = SEAT_FREE;
-                newseat.vs_flags = objmgr.GetSeatFlags(seatId);
+                newseat.vs_flags = sObjectMgr.GetSeatFlags(seatId);
                 m_Seats[i] = newseat;
             }
         }
@@ -289,7 +289,7 @@ void Vehicle::EmptySeatsCountChanged()
 
     if(uint64 vehicleGUID = GetVehicleGUID())
     {
-        if(Vehicle *vehicle = GetMap()->GetVehicle(vehicleGUID))
+        if(Vehicle *vehicle = ObjectAccessor::GetVehicle(vehicleGUID))
         {
             if(u_count > 0)
                 vehicle->ChangeSeatFlag(m_SeatData.seat, SEAT_VEHICLE_FREE);
@@ -406,7 +406,7 @@ void Vehicle::AddPassenger(Unit *unit, int8 seatId, bool force)
             }
         }
 
-        SpellClickInfoMapBounds clickPair = objmgr.GetSpellClickInfoMapBounds(GetEntry());
+        SpellClickInfoMapBounds clickPair = sObjectMgr.GetSpellClickInfoMapBounds(GetEntry());
         for(SpellClickInfoMap::const_iterator itr = clickPair.first; itr != clickPair.second; ++itr)
         {
             if (unit->GetTypeId() == TYPEID_UNIT || itr->second.IsFitToRequirements((Player*)unit))

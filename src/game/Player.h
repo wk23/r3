@@ -572,6 +572,25 @@ enum QuestSlotStateMask
     QUEST_STATE_FAIL     = 0x0002
 };
 
+enum SkillUpdateState
+{
+    SKILL_UNCHANGED     = 0,
+    SKILL_CHANGED       = 1,
+    SKILL_NEW           = 2,
+    SKILL_DELETED       = 3
+};
+
+struct SkillStatusData
+{
+    SkillStatusData(uint8 _pos, SkillUpdateState _uState) : pos(_pos), uState(_uState)
+    {
+    }
+    uint8 pos;
+    SkillUpdateState uState;
+};
+
+typedef UNORDERED_MAP<uint32, SkillStatusData> SkillStatusMap;
+
 class Quest;
 class Spell;
 class Item;
@@ -903,9 +922,10 @@ enum PlayerLoginQueryIndex
     PLAYER_LOGIN_QUERY_LOADEQUIPMENTSETS        = 20,
     PLAYER_LOGIN_QUERY_LOADBGDATA               = 21,
     PLAYER_LOGIN_QUERY_LOADACCOUNTDATA          = 22,
-    PLAYER_LOGIN_QUERY_LOADGLYPHS               = 23,
-    PLAYER_LOGIN_QUERY_LOADTALENTS              = 24,
-    MAX_PLAYER_LOGIN_QUERY                      = 25
+    PLAYER_LOGIN_QUERY_LOADSKILLS               = 23,
+    PLAYER_LOGIN_QUERY_LOADGLYPHS               = 24,
+    PLAYER_LOGIN_QUERY_LOADTALENTS              = 25,
+    MAX_PLAYER_LOGIN_QUERY                      = 26
 };
 
 enum PlayerDelayedOperations
@@ -1144,7 +1164,6 @@ class MANGOS_DLL_SPEC Player : public Unit
         void RemoveMiniPet();
         Pet* GetMiniPet();
         void SetMiniPet(Pet* pet) { m_miniPet = pet->GetGUID(); }
-        void Uncharm();
         uint32 GetPhaseMaskForSpawn() const;                // used for proper set phase for DB at GM-mode creature/GO spawn
 
         void Say(const std::string& text, const uint32 language);
@@ -1650,6 +1669,7 @@ class MANGOS_DLL_SPEC Player : public Unit
             m_cinematic = cine;
         }
 
+        static bool IsActionButtonDataValid(uint8 button, uint32 action, uint8 type, Player* player);
         ActionButton* addActionButton(uint8 button, uint32 action, uint8 type);
         void removeActionButton(uint8 button);
         void SendInitialActionButtons() const { SendActionButtons(0); }
@@ -2356,7 +2376,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         void _LoadQuestStatus(QueryResult *result);
         void _LoadDailyQuestStatus(QueryResult *result);
         void _LoadGroup(QueryResult *result);
-        void _LoadSkills();
+        void _LoadSkills(QueryResult *result);
         void _LoadSpells(QueryResult *result);
         void _LoadFriendList(QueryResult *result);
         bool _LoadHomeBind(QueryResult *result);
@@ -2377,6 +2397,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         void _SaveMail();
         void _SaveQuestStatus();
         void _SaveDailyQuestStatus();
+        void _SaveSkills();
         void _SaveSpells();
         void _SaveEquipmentSets();
         void _SaveBGData();
@@ -2425,6 +2446,8 @@ class MANGOS_DLL_SPEC Player : public Unit
         int8 m_comboPoints;
 
         QuestStatusMap mQuestStatus;
+
+        SkillStatusMap mSkillStatus;
 
         uint32 m_GuildIdInvited;
         uint32 m_ArenaTeamIdInvited;
@@ -2624,9 +2647,6 @@ template <class T> T Player::ApplySpellMod(uint32 spellId, SpellModOp op, T &bas
     for (SpellModList::iterator itr = m_spellMods[op].begin(); itr != m_spellMods[op].end(); ++itr)
     {
         SpellModifier *mod = *itr;
-        
-        if (!mod)
-            continue;
 
         if(!IsAffectedBySpellmod(spellInfo,mod,spell))
             continue;

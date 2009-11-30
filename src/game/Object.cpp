@@ -27,6 +27,7 @@
 #include "Player.h"
 #include "Vehicle.h"
 #include "ObjectMgr.h"
+#include "ObjectDefines.h"
 #include "UpdateData.h"
 #include "UpdateMask.h"
 #include "Util.h"
@@ -180,8 +181,8 @@ void Object::BuildCreateUpdateBlockForPlayer(UpdateData *data, Player *target) c
 
         if(isType(TYPEMASK_UNIT))
         {
-            if(((Unit*)this)->GetTargetGUID())
-                flags |= UPDATEFLAG_HAS_TARGET;
+            if(((Unit*)this)->getVictim())
+                flags |= UPDATEFLAG_HAS_ATTACKING_TARGET;
         }
     }
 
@@ -260,9 +261,29 @@ void Object::BuildMovementUpdate(ByteBuffer * data, uint16 flags, uint32 flags2)
         {
             case TYPEID_UNIT:
             {
-                flags2 = ((Creature*)this)->canFly() ? (MOVEMENTFLAG_FORWARD | MOVEMENTFLAG_LEVITATING) : MOVEMENTFLAG_NONE;
-                if(((Creature*)this)->GetVehicleGUID())
+                flags2 = MOVEMENTFLAG_NONE;
+                if(((Unit*)this)->GetVehicleGUID())
                     flags2 |= (MOVEMENTFLAG_ONTRANSPORT | MOVEMENTFLAG_FLY_UNK1);
+
+                if (!((Creature*)this)->IsStopped())
+                    flags2 |= MOVEMENTFLAG_FORWARD;         // not set if not really moving
+
+                if (((Creature*)this)->canFly())
+                {
+                    flags2 |= MOVEMENTFLAG_LEVITATING;      // (ok) most seem to have this
+
+                    if (((Creature*)this)->IsStopped())
+                        flags2 |= MOVEMENTFLAG_FLY_UNK1;    // (ok) possibly some "hover" mode
+                    else
+                    {
+                        if (((Creature*)this)->IsMounted())
+                            flags2 |= MOVEMENTFLAG_FLYING;  // seems to be often when mounted
+                        /* for further research
+                        else
+                            flags2 |= MOVEMENTFLAG_FLYING2; // not seen, but work on some, even if not "correct"
+                        */
+                    }
+                }
             }
             break;
             case TYPEID_PLAYER:
@@ -282,7 +303,7 @@ void Object::BuildMovementUpdate(ByteBuffer * data, uint16 flags, uint32 flags2)
 
                 if(((Player*)this)->isInFlight())
                 {
-                    WPAssert(((Player*)this)->GetMotionMaster()->GetCurrentMovementGeneratorType() == FLIGHT_MOTION_TYPE);
+                    ASSERT(((Player*)this)->GetMotionMaster()->GetCurrentMovementGeneratorType() == FLIGHT_MOTION_TYPE);
                     flags2 = (MOVEMENTFLAG_FORWARD | MOVEMENTFLAG_SPLINE2);
                 }
             }
@@ -400,7 +421,7 @@ void Object::BuildMovementUpdate(ByteBuffer * data, uint16 flags, uint32 flags2)
                 return;
             }
 
-            WPAssert(((Player*)this)->GetMotionMaster()->GetCurrentMovementGeneratorType() == FLIGHT_MOTION_TYPE);
+            ASSERT(((Player*)this)->GetMotionMaster()->GetCurrentMovementGeneratorType() == FLIGHT_MOTION_TYPE);
 
             FlightPathMovementGenerator *fmg = (FlightPathMovementGenerator*)(((Player*)this)->GetMotionMaster()->top());
 
@@ -561,9 +582,12 @@ void Object::BuildMovementUpdate(ByteBuffer * data, uint16 flags, uint32 flags2)
     }
 
     // 0x4
-    if(flags & UPDATEFLAG_HAS_TARGET)                       // packed guid (current target guid)
+    if(flags & UPDATEFLAG_HAS_ATTACKING_TARGET)             // packed guid (current target guid)
     {
-        data->appendPackGUID(((Unit*)this)->GetTargetGUID());
+        if (((Unit*)this)->getVictim())
+            data->append(((Unit*)this)->getVictim()->GetPackGUID());
+        else
+            data->appendPackGUID(0);
     }
 
     // 0x2
@@ -632,7 +656,7 @@ void Object::BuildValuesUpdate(uint8 updatetype, ByteBuffer * data, UpdateMask *
         }
     }
 
-    WPAssert(updateMask && updateMask->GetCount() == m_valuesCount);
+    ASSERT(updateMask && updateMask->GetCount() == m_valuesCount);
 
     *data << (uint8)updateMask->GetBlockCount();
     data->append( updateMask->GetMask(), updateMask->GetLength() );
@@ -1130,8 +1154,8 @@ void Object::BuildUpdateData( UpdateDataMapType& update_players )
 }
 
 WorldObject::WorldObject()
-    : m_mapId(0), m_InstanceId(0), m_phaseMask(PHASEMASK_NORMAL),
-    m_positionX(0.0f), m_positionY(0.0f), m_positionZ(0.0f), m_orientation(0.0f), m_currMap(NULL)
+    : m_currMap(NULL), m_mapId(0), m_InstanceId(0), m_phaseMask(PHASEMASK_NORMAL),
+    m_positionX(0.0f), m_positionY(0.0f), m_positionZ(0.0f), m_orientation(0.0f)
 {
 }
 
@@ -1170,8 +1194,6 @@ InstanceData* WorldObject::GetInstanceData()
                                                             //slow
 float WorldObject::GetDistance(const WorldObject* obj) const
 {
-    if(!obj)
-       return 0;
     float dx = GetPositionX() - obj->GetPositionX();
     float dy = GetPositionY() - obj->GetPositionY();
     float dz = GetPositionZ() - obj->GetPositionZ();
@@ -1201,8 +1223,6 @@ float WorldObject::GetDistance(float x, float y, float z) const
 
 float WorldObject::GetDistance2d(const WorldObject* obj) const
 {
-    if(!obj)
-       return 0;
     float dx = GetPositionX() - obj->GetPositionX();
     float dy = GetPositionY() - obj->GetPositionY();
     float sizefactor = GetObjectSize() + obj->GetObjectSize();
@@ -1212,8 +1232,6 @@ float WorldObject::GetDistance2d(const WorldObject* obj) const
 
 float WorldObject::GetDistanceZ(const WorldObject* obj) const
 {
-    if(!obj)
-       return 0;
     float dz = fabs(GetPositionZ() - obj->GetPositionZ());
     float sizefactor = GetObjectSize() + obj->GetObjectSize();
     float dist = dz - sizefactor;
@@ -1247,8 +1265,6 @@ bool WorldObject::IsWithinDist2d(float x, float y, float dist2compare) const
 
 bool WorldObject::_IsWithinDist(WorldObject const* obj, float dist2compare, bool is3D) const
 {
-    if(!obj)
-       return false;
     float dx = GetPositionX() - obj->GetPositionX();
     float dy = GetPositionY() - obj->GetPositionY();
     float distsq = dx*dx + dy*dy;
@@ -1265,8 +1281,6 @@ bool WorldObject::_IsWithinDist(WorldObject const* obj, float dist2compare, bool
 
 bool WorldObject::IsWithinLOSInMap(const WorldObject* obj) const
 {
-    if(!obj)
-       return false;
     if (!IsInMap(obj)) return false;
     float ox,oy,oz;
     obj->GetPosition(ox,oy,oz);
@@ -1306,8 +1320,6 @@ bool WorldObject::GetDistanceOrder(WorldObject const* obj1, WorldObject const* o
 
 bool WorldObject::IsInRange(WorldObject const* obj, float minRange, float maxRange, bool is3D /* = true */) const
 {
-    if(!obj)
-       return false;
     float dx = GetPositionX() - obj->GetPositionX();
     float dy = GetPositionY() - obj->GetPositionY();
     float distsq = dx*dx + dy*dy;
@@ -1392,8 +1404,6 @@ float WorldObject::GetAngle( const float x, const float y ) const
 bool WorldObject::HasInArc(const float arcangle, const WorldObject* obj) const
 {
     // always have self in arc
-    if(!obj)
-       return false;
     if(obj == this)
         return true;
 
@@ -1456,7 +1466,7 @@ void WorldObject::UpdateGroundPositionZ(float x, float y, float &z) const
 {
     float new_z = GetBaseMap()->GetHeight(x,y,z,true);
     if(new_z > INVALID_HEIGHT)
-        z = new_z; //+ 0.05f;                                   // just to be sure that we are not a few pixel under the surface
+        z = new_z+ 0.05f;                                   // just to be sure that we are not a few pixel under the surface
 }
 
 bool WorldObject::IsPositionValid() const
@@ -1487,7 +1497,7 @@ void WorldObject::MonsterTextEmote(const char* text, uint64 TargetGuid, bool IsB
 
 void WorldObject::MonsterWhisper(const char* text, uint64 receiver, bool IsBossWhisper)
 {
-    Player *player = objmgr.GetPlayer(receiver);
+    Player *player = sObjectMgr.GetPlayer(receiver);
     if(!player || !player->GetSession())
         return;
 
@@ -1506,7 +1516,7 @@ namespace MaNGOS
                 : i_object(obj), i_msgtype(msgtype), i_textId(textId), i_language(language), i_targetGUID(targetGUID) {}
             void operator()(WorldPacket& data, int32 loc_idx)
             {
-                char const* text = objmgr.GetMangosString(i_textId,loc_idx);
+                char const* text = sObjectMgr.GetMangosString(i_textId,loc_idx);
 
                 // TODO: i_object.GetName() also must be localized?
                 i_object.BuildMonsterChat(&data,i_msgtype,text,i_language,i_object.GetNameForLocaleIdx(loc_idx),i_targetGUID);
@@ -1584,12 +1594,12 @@ void WorldObject::MonsterTextEmote(int32 textId, uint64 TargetGuid, bool IsBossE
 
 void WorldObject::MonsterWhisper(int32 textId, uint64 receiver, bool IsBossWhisper)
 {
-    Player *player = objmgr.GetPlayer(receiver);
+    Player *player = sObjectMgr.GetPlayer(receiver);
     if(!player || !player->GetSession())
         return;
 
     uint32 loc_idx = player->GetSession()->GetSessionDbLocaleIndex();
-    char const* text = objmgr.GetMangosString(textId,loc_idx);
+    char const* text = sObjectMgr.GetMangosString(textId,loc_idx);
 
     WorldPacket data(SMSG_MESSAGECHAT, 200);
     BuildMonsterChat(&data,IsBossWhisper ? CHAT_MSG_RAID_BOSS_WHISPER : CHAT_MSG_MONSTER_WHISPER,text,LANG_UNIVERSAL,GetNameForLocaleIdx(loc_idx),receiver);
@@ -1619,7 +1629,7 @@ void WorldObject::BuildMonsterChat(WorldPacket *data, uint8 msgtype, char const*
 void WorldObject::SendMessageToSet(WorldPacket *data, bool /*bToSelf*/)
 {
     //if object is in world, map for it already created!
-    Map * _map = IsInWorld() ? GetMap() : MapManager::Instance().FindMap(GetMapId(), GetInstanceId());
+    Map * _map = IsInWorld() ? GetMap() : sMapMgr.FindMap(GetMapId(), GetInstanceId());
     if(_map)
         _map->MessageBroadcast(this, data);
 }
@@ -1627,7 +1637,7 @@ void WorldObject::SendMessageToSet(WorldPacket *data, bool /*bToSelf*/)
 void WorldObject::SendMessageToSetInRange(WorldPacket *data, float dist, bool /*bToSelf*/)
 {
     //if object is in world, map for it already created!
-    Map * _map = IsInWorld() ? GetMap() : MapManager::Instance().FindMap(GetMapId(), GetInstanceId());
+    Map * _map = IsInWorld() ? GetMap() : sMapMgr.FindMap(GetMapId(), GetInstanceId());
     if(_map)
         _map->MessageDistBroadcast(this, data, dist);
 }
@@ -1667,7 +1677,7 @@ Creature* WorldObject::SummonCreature(uint32 id, float x, float y, float z, floa
     if (GetTypeId()==TYPEID_PLAYER)
         team = ((Player*)this)->GetTeam();
 
-    if (!pCreature->Create(objmgr.GenerateLowGuid(HIGHGUID_UNIT), GetMap(), GetPhaseMask(), id, team))
+    if (!pCreature->Create(sObjectMgr.GenerateLowGuid(HIGHGUID_UNIT), GetMap(), GetPhaseMask(), id, team))
     {
         delete pCreature;
         return NULL;
@@ -1703,7 +1713,7 @@ Vehicle* WorldObject::SummonVehicle(uint32 id, float x, float y, float z, float 
     if (GetTypeId()==TYPEID_PLAYER)
         team = ((Player*)this)->GetTeam();
 
-    if(!v->Create(objmgr.GenerateLowGuid(HIGHGUID_VEHICLE), map, GetPhaseMask(), id, vehicleId, team))
+    if(!v->Create(sObjectMgr.GenerateLowGuid(HIGHGUID_VEHICLE), map, GetPhaseMask(), id, vehicleId, team))
     {
         delete v;
         return NULL;
@@ -1862,7 +1872,7 @@ void WorldObject::GetNearPoint(WorldObject const* searcher, float &x, float &y, 
     }
 
     float angle;                                            // candidate of angle for free pos
-    
+
     // special case when one from list empty and then empty side preferred
     if(selector.FirstAngle(angle))
     {
@@ -1876,12 +1886,7 @@ void WorldObject::GetNearPoint(WorldObject const* searcher, float &x, float &y, 
 
     // set first used pos in lists
     selector.InitializeAngle();
-    
-    // Debugging LoS problem when angle == 0.00, set some vars
-    bool localDebug = false;
-    uint32 localCounter = 0;
-    uint32 localCounter2 = 0;
-    
+
     // select in positions after current nodes (selection one by one)
     while(selector.NextAngle(angle))                        // angle for free pos
     {
@@ -1891,94 +1896,53 @@ void WorldObject::GetNearPoint(WorldObject const* searcher, float &x, float &y, 
 
         if(IsWithinLOS(x,y,z))
             return;
-
-        // Start outputting debug when angle == 0.00
-        if(!angle && !localCounter) {
-                sLog.outError("WorldObject::GetNearPoint: DEBUG START (angle = %f, map_id = %u, x = %f, y = %f, z = %f)", angle, GetMapId(), x, y, z);
-                localDebug = true;
-        }
-        
-        if(++localCounter > 100) {
-            sLog.outError("WorldObject::GetNearPoint: FIRST WHILE LOOP more then 100 iterations, BREAK (angle = %f, map_id = %u, x = %f, y = %f, z = %f)", angle, GetMapId(), x, y, z);
-            break;
-        }
     }
 
     // BAD NEWS: not free pos (or used or have LOS problems)
     // Attempt find _used_ pos without LOS problem
-    
-    if(localDebug) sLog.outError("WorldObject::GetNearPoint: CHECKPOINT 1 (angle = %f, map_id = %u, x = %f, y = %f, z = %f)", angle, GetMapId(), x, y, z);
 
     if(!first_los_conflict)
     {
-        if(localDebug) sLog.outError("WorldObject::GetNearPoint: CHECKPOINT 1A (angle = %f, map_id = %u, x = %f, y = %f, z = %f)", angle, GetMapId(), x, y, z);
-        
         x = first_x;
         y = first_y;
 
         UpdateGroundPositionZ(x,y,z);                       // update to LOS height if available
-        
-        if(localDebug) sLog.outError("WorldObject::GetNearPoint: RETURN POINT 1 (angle = %f, map_id = %u, x = %f, y = %f, z = %f)", angle, GetMapId(), x, y, z);
         return;
     }
-    
-    if(localDebug) sLog.outError("WorldObject::GetNearPoint: CHECKPOINT 2 (angle = %f, map_id = %u, x = %f, y = %f, z = %f)", angle, GetMapId(), x, y, z);
 
     // special case when one from list empty and then empty side preferred
     if( selector.IsNonBalanced() )
     {
-        if(localDebug) sLog.outError("WorldObject::GetNearPoint: CHECKPOINT 2A (angle = %f, map_id = %u, x = %f, y = %f, z = %f)", angle, GetMapId(), x, y, z);
-        
         if(!selector.FirstAngle(angle))                     // _used_ pos
         {
-            if(localDebug) sLog.outError("WorldObject::GetNearPoint: CHECKPOINT 2B (angle = %f, map_id = %u, x = %f, y = %f, z = %f)", angle, GetMapId(), x, y, z);
-            
             GetNearPoint2D(x,y,distance2d,absAngle+angle);
             z = GetPositionZ();
             UpdateGroundPositionZ(x,y,z);                   // update to LOS height if available
 
-            if(IsWithinLOS(x,y,z)) {
-                if(localDebug) sLog.outError("WorldObject::GetNearPoint: RETURN POINT 2 (angle = %f, map_id = %u, x = %f, y = %f, z = %f)", angle, GetMapId(), x, y, z);
+            if(IsWithinLOS(x,y,z))
                 return;
-            }
         }
     }
-    
-    if(localDebug) sLog.outError("WorldObject::GetNearPoint: CHECKPOINT 3 (angle = %f, map_id = %u, x = %f, y = %f, z = %f)", angle, GetMapId(), x, y, z);
 
     // set first used pos in lists
     selector.InitializeAngle();
-    
-    if(localDebug) sLog.outError("WorldObject::GetNearPoint: CHECKPOINT 4 (angle = %f, map_id = %u, x = %f, y = %f, z = %f)", angle, GetMapId(), x, y, z);
 
     // select in positions after current nodes (selection one by one)
     while(selector.NextUsedAngle(angle))                    // angle for used pos but maybe without LOS problem
     {
-        if(localDebug) sLog.outError("WorldObject::GetNearPoint: CHECKPOINT 4A (angle = %f, map_id = %u, x = %f, y = %f, z = %f)", angle, GetMapId(), x, y, z);
-        
         GetNearPoint2D(x,y,distance2d,absAngle+angle);
         z = GetPositionZ();
         UpdateGroundPositionZ(x,y,z);                       // update to LOS height if available
 
-        if(IsWithinLOS(x,y,z)) {
-            if(localDebug) sLog.outError("WorldObject::GetNearPoint: RETURN POINT 3 (angle = %f, map_id = %u, x = %f, y = %f, z = %f)", angle, GetMapId(), x, y, z);
+        if(IsWithinLOS(x,y,z))
             return;
-        }
-        
-        if(++localCounter2 > 100) {
-            sLog.outError("WorldObject::GetNearPoint: SECOND WHILE LOOP more then 100 iterations, BREAK (angle = %f, map_id = %u, x = %f, y = %f, z = %f)", angle, GetMapId(), x, y, z);
-            break;
-        }
     }
-    
-    if(localDebug) sLog.outError("WorldObject::GetNearPoint: CHECKPOINT 5 (angle = %f, map_id = %u, x = %f, y = %f, z = %f)", angle, GetMapId(), x, y, z);
 
     // BAD BAD NEWS: all found pos (free and used) have LOS problem :(
     x = first_x;
     y = first_y;
 
     UpdateGroundPositionZ(x,y,z);                           // update to LOS height if available
-    if(localDebug) sLog.outError("WorldObject::GetNearPoint: RETURN POINT 4 (angle = %f, map_id = %u, x = %f, y = %f, z = %f)", angle, GetMapId(), x, y, z);
 }
 
 void WorldObject::SetPhaseMask(uint32 newPhaseMask, bool update)

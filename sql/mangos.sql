@@ -24,7 +24,7 @@ CREATE TABLE `db_version` (
   `version` varchar(120) default NULL,
   `creature_ai_version` varchar(120) default NULL,
   `cache_id` int(10) default '0',
-  `required_8777_02_mangos_gameobject` bit(1) default NULL
+  `required_8893_01_mangos_mangos_string` bit(1) default NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 ROW_FORMAT=FIXED COMMENT='Used DB version notes';
 
 --
@@ -541,6 +541,7 @@ INSERT INTO `command` VALUES
 ('character level',3,'Syntax: .character level [$playername] [#level]\r\n\r\nSet the level of character with $playername (or the selected if not name provided) by #numberoflevels Or +1 if no #numberoflevels provided). If #numberoflevels is omitted, the level will be increase by 1. If #numberoflevels is 0, the same level will be restarted. If no character is selected and name not provided, increase your level. Command can be used for offline character. All stats and dependent values recalculated. At level decrease talents can be reset if need. Also at level decrease equipped items with greater level requirement can be lost.'),
 ('character rename',2,'Syntax: .character rename [$name]\r\n\r\nMark selected in game or by $name in command character for rename at next login.'),
 ('character reputation',2,'Syntax: .character reputation [$player_name]\r\n\r\nShow reputation information for selected player or player find by $player_name.'),
+('character titles',2,'Syntax: .character titles [$player_name]\r\n\r\nShow known titles list for selected player or player find by $player_name.'),
 ('combatstop',2,'Syntax: .combatstop [$playername]\r\nStop combat for selected character. If selected non-player then command applied to self. If $playername provided then attempt applied to online player $playername.'),
 ('commands',0,'Syntax: .commands\r\n\r\nDisplay a list of available commands for your account level.'),
 ('cooldown',3,'Syntax: .cooldown [#spell_id]\r\n\r\nRemove all (if spell_id not provided) or #spel_id spell cooldown from selected character or you (if no selection).'),
@@ -641,6 +642,7 @@ INSERT INTO `command` VALUES
 ('lookup spell',3,'Syntax: .lookup spell $namepart\r\n\r\nLooks up a spell by $namepart, and returns all matches with their spell ID\'s.'),
 ('lookup taxinode',3,'Syntax: .lookup taxinode $substring\r\n\r\nSearch and output all taxinodes with provide $substring in name.'),
 ('lookup tele',1,'Syntax: .lookup tele $substring\r\n\r\nSearch and output all .tele command locations with provide $substring in name.'),
+('lookup title',2,'Syntax: .lookup title $$namepart\r\n\r\nLooks up a title by $namepart, and returns all matches with their title ID\'s and index\'s.'),
 ('maxskill',3,'Syntax: .maxskill\r\nSets all skills of the targeted player to their maximum VALUESfor its current level.'),
 ('modify arena',1,'Syntax: .modify arena #value\r\nAdd $amount arena points to the selected player.'),
 ('modify aspeed',1,'Syntax: .modify aspeed #rate\r\n\r\nModify all speeds -run,swim,run back,swim back- of the selected player to \"normalbase speed for this move type\"*rate. If no player is selected, modify your speed.\r\n\r\n #rate may range from 0.1 to 10.'),
@@ -665,7 +667,6 @@ INSERT INTO `command` VALUES
 ('modify spell',1,''),
 ('modify standstate',2,'Syntax: .modify standstate #emoteid\r\n\r\nChange the emote of your character while standing to #emoteid.'),
 ('modify swim',1,'Syntax: .modify swim #rate\r\n\r\nModify the swim speed of the selected player to \"normal swim speed\"*rate. If no player is selected, modify your speed.\r\n\r\n #rate may range from 0.1 to 10.'),
-('modify titles',1,'Syntax: .modify titles #mask\r\n\r\nAllows user to use all titles from #mask.\r\n\r\n #mask=0 disables the title-choose-field'),
 ('modify tp',1,'Syntax: .modify tp #amount\r\n\r\nSet free talent pointes for selected character or character\'s pet. It will be reset to default expected at next levelup/login/quest reward.'),
 ('movegens',3,'Syntax: .movegens\r\n  Show movement generators stack for selected creature or player.'),
 ('mute',1,'Syntax: .mute [$playerName] $timeInMinutes\r\n\r\nDisible chat messaging for any character from account of character $playerName (or currently selected) at $timeInMinutes minutes. Player can be offline.'),
@@ -753,6 +754,10 @@ INSERT INTO `command` VALUES
 ('tele group',1,'Syntax: .tele group#location\r\n\r\nTeleport a selected player and his group members to a given location.'),
 ('tele name',1,'Syntax: .tele name [#playername] #location\r\n\r\nTeleport the given character to a given location. Character can be offline.'),
 ('ticket',2,'Syntax: .ticket on\r\n        .ticket off\r\n        .ticket #num\r\n        .ticket $character_name\r\n\r\non/off for GMs to show or not a new ticket directly, $character_name to show ticket of this character, #num to show ticket #num.'),
+('titles add',2,'Syntax: .titles add #title\r\nAdd title #title (id or shift-link) to known titles list for selected player.'),
+('titles current',2,'Syntax: .titles current #title\r\nSet title #title (id or shift-link) as current selected titl for selected player. If title not in known title list for player then it will be added to list.'),
+('titles remove',2,'Syntax: .titles remove #title\r\nRemove title #title (id or shift-link) from known titles list for selected player.'),
+('titles setmask',2,'Syntax: .titles setmask #mask\r\n\r\nAllows user to use all titles from #mask.\r\n\r\n #mask=0 disables the title-choose-field'),
 ('unaura',3,'Syntax: .unaura #spellid\r\n\r\nRemove aura due to spell #spellid from the selected Unit.'),
 ('unban account',3,'Syntax: .unban account $Name\r\nUnban accounts for account name pattern.'),
 ('unban character',3,'Syntax: .unban character $Name\r\nUnban accounts for character name pattern.'),
@@ -1150,7 +1155,7 @@ CREATE TABLE `creature_template` (
 LOCK TABLES `creature_template` WRITE;
 /*!40000 ALTER TABLE `creature_template` DISABLE KEYS */;
 INSERT INTO `creature_template` VALUES
-(1,0,0,0,10045,0,10045,0,'Waypoint(Only GM can see it)','Visual',NULL,1,1,64,64,0,0,0,35,35,0,0.91,1,0,14,15,0,100,1,2000,2200,8,4096,0,0,0,0,0,0,1.76,2.42,100,8,5242886,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,3,1.0,1.0,0,0,0,0,0,0,0,0,1,0,0,0x82,'');
+(1,0,0,0,0,0,10045,0,10045,0,'Waypoint(Only GM can see it)','Visual',NULL,1,1,64,64,0,0,0,35,35,0,0.91,1,0,14,15,0,100,1,2000,2200,8,4096,0,0,0,0,0,0,1.76,2.42,100,8,5242886,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,3,1.0,1.0,0,0,0,0,0,0,0,0,1,0,0,0x82,'');
 /*!40000 ALTER TABLE `creature_template` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1904,9 +1909,6 @@ CREATE TABLE `instance_template` (
   `parent` int(10) unsigned NOT NULL,
   `levelMin` tinyint(3) unsigned NOT NULL default '0',
   `levelMax` tinyint(3) unsigned NOT NULL default '0',
-  `maxPlayers` tinyint(3) unsigned NOT NULL default '0',
-  `maxPlayersHeroic` tinyint(3) unsigned NOT NULL default '0',
-  `reset_delay` int(10) unsigned NOT NULL default '0',
   `startLocX` float default NULL,
   `startLocY` float default NULL,
   `startLocZ` float default NULL,
@@ -2847,6 +2849,9 @@ INSERT INTO `mangos_string` VALUES
 (57,'Using World DB: %s',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
 (58,'Using script library: %s',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
 (59,'Using creature EventAI: %s',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
+(60,'I\'m busy right now, come back later.',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
+(61,'Username: ',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
+(62,'Password: ',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
 (100,'Global notify: ',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
 (101,'Map: %u (%s) Zone: %u (%s) Area: %u (%s) Phase: %u\nX: %f Y: %f Z: %f Orientation: %f\ngrid[%u,%u]cell[%u,%u] InstanceID: %u\n ZoneX: %f ZoneY: %f\nGroundZ: %f FloorZ: %f Have height data (Map: %u VMap: %u)',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
 (102,'%s is already being teleported.',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
@@ -3070,6 +3075,14 @@ INSERT INTO `mangos_string` VALUES
 (346,'Forced customize for player %s (GUID #%u) will be requested at next login.',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
 (347,'TaxiNode ID %u not found!',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
 (348,'Game Object (Entry: %u) have invalid data and can\'t be spawned',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
+(349,'%d (idx:%d) - |cffffffff|Htitle:%d|h[%s %s]|h|r %s %s ',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
+(350,'%d (idx:%d) - [%s %s] %s %s ',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
+(351,'No titles found!',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
+(352,'Invalid title id: %u',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
+(353,'Title %u (%s) added to known titles list for player %s.',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
+(354,'Title %u (%s) removed from known titles list for player %s.',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
+(355,'Title %u (%s) set as current selected title for player %s.',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
+(356,'Current selected title for player %s reset as not known now.',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
 (400,'|cffff0000[System Message]:|rScripts reloaded',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
 (401,'You change security level of account %s to %i.',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
 (402,'%s changed your security level to %i.',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
@@ -3338,12 +3351,10 @@ INSERT INTO `mangos_string` VALUES
 (711,'Queue status for %s (Lvl: %u to %u)\nQueued alliances: %u (Need at least %u more)\nQueued hordes: %u (Need at least %u more)',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
 (712,'|cffff0000[BG Queue Announcer]:|r %s -- [%u-%u] A: %u/%u, H: %u/%u|r',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
 (713,'You must be level %u to join an arena team!',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
-(714,'%s is not high enough level to join your team',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
 (715,'You don\'t meet Battleground level requirements',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
-(716,'Your arena team is full, %s cannot join it.',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
 (717,'|cffff0000[BG Queue Announcer]:|r %s -- [%u-%u] Started!|r',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
-(718,'|cffff0000[Arena Queue Announcer]:|r %s -- Joined : %ux%u : %u|r',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
-(719,'|cffff0000[Arena Queue Announcer]:|r %s -- Exited : %ux%u : %u|r',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
+(718,'|cffff0000[Arena Queue Announcer]:|r All Arenas -- Joined : %ux%u : %u|r',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
+(719,'|cffff0000[Arena Queue Announcer]:|r All Arenas -- Exited : %ux%u : %u|r',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
 (720,'Your group is too large for this battleground. Please regroup to join.',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
 (721,'Your group is too large for this arena. Please regroup to join.',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
 (722,'Your group has members not in your arena team. Please regroup to join.',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
@@ -3372,15 +3383,12 @@ INSERT INTO `mangos_string` VALUES
 (746,'Done flushing Arena points.',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
 (750,'Not enough players. This game will close in %u mins.',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
 (751,'Not enough players. This game will close in %u seconds.',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
-(753,'The battle for Warsong Gulch begins in 2 minutes.',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
-(754,'The battle for Arathi Basin begins in 2 minutes.',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
-(755,'The battle begins in 2 minutes.',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
-(757,'Alliance',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
-(758,'Horde',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
+(752,'Only the Alliance can use that portal',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
+(753,'Only the Horde can use that portal',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
 (759,'%s was destroyed by the %s!',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
 (760,'The %s is under attack! If left unchecked, the %s will destroy it!',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
 (761,'The %s was taken by the %s!',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
-(762,'The %s was taken by the %s!',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
+(762,'The %s was taken by the %s!',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL), -- WTF? why 3 same strings?
 (763,'The %s was taken by the %s!',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
 (764,'The %s is under attack! If left unchecked, the %s will capture it!',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
 (765,'The %s has taken the %s! Its supplies will now be used for reinforcements!',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
@@ -3401,7 +3409,6 @@ INSERT INTO `mangos_string` VALUES
 (780,'East Frostwolf Tower',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
 (781,'West Frostwolf Tower',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
 (782,'Frostwolf Relief Hut',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
-(783,'2 minutes until the battle for Alterac Valley begins.',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
 (784,'1 minute until the battle for Alterac Valley begins.',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
 (785,'30 seconds until the battle for Alterac Valley begins. Prepare yourselves!',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
 (786,'The battle for Alterac Valley has begun!',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
@@ -10420,7 +10427,7 @@ INSERT INTO `playercreateinfo_action` VALUES
 (8,1,72,6603,0),
 (8,1,73,78,0),
 (8,1,74,2764,0),
-(8,1,75,26296,0),
+(8,1,75,26297,0),
 (8,1,83,117,128),
 (8,1,84,6603,0),
 (8,1,96,6603,0),
@@ -10428,7 +10435,7 @@ INSERT INTO `playercreateinfo_action` VALUES
 (8,3,0,6603,0),
 (8,3,1,2973,0),
 (8,3,2,75,0),
-(8,3,3,20554,0),
+(8,3,3,26297,0),
 (8,3,10,159,128),
 (8,3,11,4604,128),
 (8,4,0,6603,0),
@@ -10440,7 +10447,7 @@ INSERT INTO `playercreateinfo_action` VALUES
 (8,5,0,6603,0),
 (8,5,1,585,0),
 (8,5,2,2050,0),
-(8,5,3,20554,0),
+(8,5,3,26297,0),
 (8,5,10,159,128),
 (8,5,11,4540,128),
 (8,6,0,6603,0),
@@ -10449,17 +10456,17 @@ INSERT INTO `playercreateinfo_action` VALUES
 (8,6,3,45462,0),
 (8,6,4,45902,0),
 (8,6,5,47541,0),
-(8,6,10,50621,0),
+(8,6,10,26297,0),
 (8,7,0,6603,0),
 (8,7,1,403,0),
 (8,7,2,331,0),
-(8,7,3,20554,0),
+(8,7,3,26297,0),
 (8,7,10,159,128),
 (8,7,11,117,128),
 (8,8,0,6603,0),
 (8,8,1,133,0),
 (8,8,2,168,0),
-(8,8,3,20554,0),
+(8,8,3,26297,0),
 (8,8,10,159,128),
 (8,8,11,117,128),
 (10,2,0,6603,0),
@@ -12513,7 +12520,7 @@ INSERT INTO `playercreateinfo_spell` VALUES
 (8,1,22027,'Remove Insignia'),
 (8,1,22810,'Opening - No Text'),
 (8,1,26290,'Bow Specialization'),
-(8,1,26296,'Berserking'),
+(8,1,26297,'Berserking'),
 (8,1,32215,'Victorious State'),
 (8,1,45927,'Summon Friend'),
 (8,1,58943,'Da Voodoo Shuffle'),
@@ -12547,7 +12554,7 @@ INSERT INTO `playercreateinfo_spell` VALUES
 (8,3,9078,'Cloth'),
 (8,3,9125,'Generic'),
 (8,3,13358,'Defensive State (DND)'),
-(8,3,20554,'Berserking'),
+(8,3,26297,'Berserking'),
 (8,3,20555,'Regeneration'),
 (8,3,20557,'Beast Slaying'),
 (8,3,20558,'Throwing Specialization'),
@@ -12632,7 +12639,7 @@ INSERT INTO `playercreateinfo_spell` VALUES
 (8,5,8386,'Attacking'),
 (8,5,9078,'Cloth'),
 (8,5,9125,'Generic'),
-(8,5,20554,'Berserking'),
+(8,5,26297,'Berserking'),
 (8,5,20555,'Regeneration'),
 (8,5,20557,'Beast Slaying'),
 (8,5,20558,'Throwing Specialization'),
@@ -12707,7 +12714,7 @@ INSERT INTO `playercreateinfo_spell` VALUES
 (8,6,48266,'Blood Presence'),
 (8,6,49410,'Forceful Deflection'),
 (8,6,49576,'Death Grip'),
-(8,6,50621,'Berserking'),
+(8,6,26297,'Berserking'),
 (8,6,52665,'Sigil'),
 (8,6,58943,'Da Voodoo Shuffle'),
 (8,6,59879,'Blood Plague'),
@@ -12744,7 +12751,7 @@ INSERT INTO `playercreateinfo_spell` VALUES
 (8,7,9078,'Cloth'),
 (8,7,9116,'Shield'),
 (8,7,9125,'Generic'),
-(8,7,20554,'Berserking'),
+(8,7,26297,'Berserking'),
 (8,7,20555,'Regeneration'),
 (8,7,20557,'Beast Slaying'),
 (8,7,20558,'Throwing Specialization'),
@@ -12785,7 +12792,7 @@ INSERT INTO `playercreateinfo_spell` VALUES
 (8,8,8386,'Attacking'),
 (8,8,9078,'Cloth'),
 (8,8,9125,'Generic'),
-(8,8,20554,'Berserking'),
+(8,8,26297,'Berserking'),
 (8,8,20555,'Regeneration'),
 (8,8,20557,'Beast Slaying'),
 (8,8,20558,'Throwing Specialization'),
@@ -14039,11 +14046,13 @@ INSERT INTO `spell_bonus_data` VALUES
 (34861, 0.402,  0,       0,     'Priest - Circle of Healing'),
 (19236, 0.8068, 0,       0,     'Priest - Desperate Prayer'),
 (2944,  0,      0.1849,  0,     'Priest - Devouring Plague'),
+(63544, 0,      0,       0,     'Priest - Empowered Renew Triggered'),
 (14914, 0.5711, 0.024,   0,     'Priest - Holy Fire'),
 (15237, 0.1606, 0,       0,     'Priest - Holy Nova Damage'),
 (2061,  0.8068, 0,       0,     'Priest - Flash Heal'),
 (2060,  1.6135, 0,       0,     'Priest - Greater Heal'),
 (23455, 0.3035, 0,       0,     'Priest - Holy Nova Heal'),
+(63675, 0,      0,       0,     'Priest - Improved Devouring Plague Triggered'),
 (8129,  0,      0,       0,     'Priest - Mana Burn'),
 (58381, 0.257143,0,      0,     'Priest - Mind Flay Triggered'),
 (49821, 0.14286,0,       0,     'Priest - Mind Sear Trigger'),
@@ -14436,7 +14445,11 @@ INSERT INTO spell_chain VALUES
 (25208,11574,772,8,0),
 (46845,25208,772,9,0),
 (47465,46845,772,10,0),
-/*ThunderClap*/
+/*Taste for Blood*/
+(56636,0,56636,1,0),
+(56637,56636,56636,2,0),
+(56638,56637,56636,3,0),
+/*Thunder Clap*/
 (6343,0,6343,1,0),
 (8198,6343,6343,2,0),
 (8204,8198,6343,3,0),
@@ -15162,6 +15175,10 @@ INSERT INTO spell_chain VALUES
 (27180,24239,24275,4,0),
 (48805,27180,24275,5,0),
 (48806,48805,24275,6,0),
+/*Heart of the Crusader*/
+(20335, 0, 20335, 1, 0),
+(20336, 20335, 20335, 2, 0),
+(20337, 20336, 20335, 3, 0),
 /*Retribution Aura*/
 (7294,0,7294,1,0),
 (10298,7294,7294,2,0),
@@ -17121,6 +17138,10 @@ INSERT INTO spell_chain VALUES
 (51423,49020,49020,2,0),
 (51424,51423,49020,3,0),
 (51425,51424,49020,4,0),
+/*Threat of Thassarian*/
+(65661,0,65661,1,0),
+(66191,65661,65661,2,0),
+(66192,66191,65661,3,0),
 /*------------------
 --(772)Unholy
 ------------------*/
@@ -17417,6 +17438,9 @@ INSERT INTO `spell_elixir` VALUES
 (60346,0x1),
 (60347,0x2),
 (62380,0x3),
+(67016,0x3),
+(67017,0x3),
+(67018,0x3),
 (67019,0x3);
 
 
@@ -17455,6 +17479,7 @@ INSERT INTO `spell_learn_spell` VALUES
 (34769,33388,1),
 (53428,53341,1),
 (53428,53343,1),
+(56815,56816,0),
 (58984,21009,1);
 /*!40000 ALTER TABLE `spell_learn_spell` ENABLE KEYS */;
 UNLOCK TABLES;
@@ -17549,7 +17574,8 @@ INSERT INTO `spell_pet_auras` VALUES
 (23822, 0, 17252, 35703),
 (23823, 0, 17252, 35704),
 (23824, 0, 17252, 35705),
-(23825, 0, 17252, 35706);
+(23825, 0, 17252, 35706),
+(58228, 0, 19668, 57989);
 
 /*!40000 ALTER TABLE `spell_pet_auras` ENABLE KEYS */;
 UNLOCK TABLES;
@@ -17560,7 +17586,7 @@ UNLOCK TABLES;
 
 DROP TABLE IF EXISTS `spell_proc_event`;
 CREATE TABLE `spell_proc_event` (
-  `entry` smallint(5) unsigned NOT NULL default '0',
+  `entry` mediumint(8) unsigned NOT NULL default '0',
   `SchoolMask` tinyint(4) NOT NULL default '0',
   `SpellFamilyName` smallint(5) unsigned NOT NULL default '0',
   `SpellFamilyMask0` int(10) unsigned NOT NULL default '0',
@@ -17748,6 +17774,7 @@ INSERT INTO `spell_proc_event` VALUES
 (20215, 0x00000000, 10, 0xC0000000, 0x00010000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
 (20234, 0x00000000, 10, 0x00008000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (20235, 0x00000000, 10, 0x00008000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
+(20335, 0x00000000, 10, 0x00800000, 0x00000000, 0x00000008, 0x00000100, 0x00000000, 0.000000, 100.000000, 0),
 (20375, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 7.000000, 0.000000,  0),
 (20500, 0x00000000,  4, 0x10000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (20501, 0x00000000,  4, 0x10000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
@@ -18237,7 +18264,7 @@ INSERT INTO `spell_proc_event` VALUES
 (53553, 0x00000000, 10, 0x00001000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (53569, 0x00000000, 10, 0x00200000, 0x00010000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
 (53576, 0x00000000, 10, 0x00200000, 0x00010000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
-(53601, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  6),
+(53601, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x000A02A8, 0x00000000, 0.000000, 0.000000,  6),
 (53646, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
 (53671, 0x00000000, 10, 0x00800000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (53673, 0x00000000, 10, 0x00800000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
@@ -18286,9 +18313,8 @@ INSERT INTO `spell_proc_event` VALUES
 (56612, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
 (56613, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
 (56614, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
-(56636, 0x00000000,  4, 0x00000020, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
-(56637, 0x00000000,  4, 0x00000020, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
-(56638, 0x00000000,  4, 0x00000020, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
+(56636, 0x00000000,  4, 0x00000020, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  6),
+(56816, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000030, 0.000000, 0.000000,  0),
 (56821, 0x00000000,  8, 0x00000002, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
 (56822, 0x00000000, 15, 0x00000002, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (56834, 0x00000000, 15, 0x00440000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
@@ -18303,7 +18329,7 @@ INSERT INTO `spell_proc_event` VALUES
 (58364, 0x00000000,  4, 0x00000400, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (58372, 0x00000000,  4, 0x00000002, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (58386, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000020, 0.000000, 0.000000,  0),
-(58616, 0x00000000, 15, 0x00040000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
+(58616, 0x00000000, 15, 0x01000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (58620, 0x00000000, 15, 0x00000000, 0x00004000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (58626, 0x00000000, 15, 0x02000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (58631, 0x00000000, 15, 0x00000002, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
@@ -18354,8 +18380,13 @@ INSERT INTO `spell_proc_event` VALUES
 (63156, 0x00000000,  0, 0x00000001, 0x00000040, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (63245, 0x00000000,  5, 0x00000100, 0x00800000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
 (63320, 0x00000000,  5, 0x00040000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
+(63534, 0x00000000,  6, 0x00000040, 0x00000000, 0x00000000, 0x00004000, 0x00000000, 0.000000, 0.000000,  0),
+(63625, 0x00000000,  6, 0x02000000, 0x00000000, 0x00000000, 0x00010000, 0x00000000, 0.000000, 0.000000,  0),
 (63730, 0x00000000,  6, 0x00000800, 0x00000004, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
-(64928, 0x00000000, 11, 0x00000001, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0);
+(64928, 0x00000000, 11, 0x00000001, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
+(64976, 0x00000000,  4, 0x00000001, 0x00000000, 0x00000000, 0x00010000, 0x00000000, 0.000000, 0.000000,  0),
+(65661, 0x00000000, 15, 0x00400010, 0x20020004, 0x00000000, 0x00000010, 0x00000000, 0.000000, 100.000000, 0);
+
 /*!40000 ALTER TABLE `spell_proc_event` ENABLE KEYS */;
 UNLOCK TABLES;
 

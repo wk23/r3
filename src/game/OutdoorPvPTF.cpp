@@ -135,12 +135,12 @@ void OutdoorPvPTF::BuffTeam(uint32 team)
     {
         for(std::set<uint64>::iterator itr = m_PlayerGuids[0].begin(); itr != m_PlayerGuids[0].end(); ++itr)
         {
-            if(Player * plr = objmgr.GetPlayer(*itr))
+            if(Player * plr = sObjectMgr.GetPlayer(*itr))
                 if(plr->IsInWorld()) plr->CastSpell(plr,TF_CAPTURE_BUFF,true);
         }
         for(std::set<uint64>::iterator itr = m_PlayerGuids[1].begin(); itr != m_PlayerGuids[1].end(); ++itr)
         {
-            if(Player * plr = objmgr.GetPlayer(*itr))
+            if(Player * plr = sObjectMgr.GetPlayer(*itr))
                 if(plr->IsInWorld()) plr->RemoveAurasDueToSpell(TF_CAPTURE_BUFF);
         }
     }
@@ -148,12 +148,12 @@ void OutdoorPvPTF::BuffTeam(uint32 team)
     {
         for(std::set<uint64>::iterator itr = m_PlayerGuids[1].begin(); itr != m_PlayerGuids[1].end(); ++itr)
         {
-            if(Player * plr = objmgr.GetPlayer(*itr))
+            if(Player * plr = sObjectMgr.GetPlayer(*itr))
                 if(plr->IsInWorld()) plr->CastSpell(plr,TF_CAPTURE_BUFF,true);
         }
         for(std::set<uint64>::iterator itr = m_PlayerGuids[0].begin(); itr != m_PlayerGuids[0].end(); ++itr)
         {
-            if(Player * plr = objmgr.GetPlayer(*itr))
+            if(Player * plr = sObjectMgr.GetPlayer(*itr))
                 if(plr->IsInWorld()) plr->RemoveAurasDueToSpell(TF_CAPTURE_BUFF);
         }
     }
@@ -161,12 +161,12 @@ void OutdoorPvPTF::BuffTeam(uint32 team)
     {
         for(std::set<uint64>::iterator itr = m_PlayerGuids[0].begin(); itr != m_PlayerGuids[0].end(); ++itr)
         {
-            if(Player * plr = objmgr.GetPlayer(*itr))
+            if(Player * plr = sObjectMgr.GetPlayer(*itr))
                 if(plr->IsInWorld()) plr->RemoveAurasDueToSpell(TF_CAPTURE_BUFF);
         }
         for(std::set<uint64>::iterator itr = m_PlayerGuids[1].begin(); itr != m_PlayerGuids[1].end(); ++itr)
         {
-            if(Player * plr = objmgr.GetPlayer(*itr))
+            if(Player * plr = sObjectMgr.GetPlayer(*itr))
                 if(plr->IsInWorld()) plr->RemoveAurasDueToSpell(TF_CAPTURE_BUFF);
         }
     }
@@ -299,14 +299,14 @@ bool OutdoorPvPObjectiveTF::Update(uint32 diff)
             {
                 if(((OutdoorPvPTF*)m_PvP)->m_AllianceTowersControlled)
                     ((OutdoorPvPTF*)m_PvP)->m_AllianceTowersControlled--;
-                sWorld.SendZoneText(OutdoorPvPTFBuffZones[0],objmgr.GetMangosString(LANG_OPVP_TF_LOOSE_A, -1));
+                sWorld.SendZoneText(OutdoorPvPTFBuffZones[0],sObjectMgr.GetMangosString(LANG_OPVP_TF_LOOSE_A, -1));
             }
             // if changing from controlling horde to alliance
             else if ( m_OldState == OBJECTIVESTATE_HORDE )
             {
                 if(((OutdoorPvPTF*)m_PvP)->m_HordeTowersControlled)
                     ((OutdoorPvPTF*)m_PvP)->m_HordeTowersControlled--;
-                sWorld.SendZoneText(OutdoorPvPTFBuffZones[0],objmgr.GetMangosString(LANG_OPVP_TF_LOOSE_H,-1));
+                sWorld.SendZoneText(OutdoorPvPTFBuffZones[0],sObjectMgr.GetMangosString(LANG_OPVP_TF_LOOSE_H,-1));
             }
 
             uint8 artkit = 21;
@@ -318,14 +318,14 @@ bool OutdoorPvPObjectiveTF::Update(uint32 diff)
                     artkit = 2;
                     if(((OutdoorPvPTF*)m_PvP)->m_AllianceTowersControlled<TF_TOWER_NUM)
                         ((OutdoorPvPTF*)m_PvP)->m_AllianceTowersControlled++;
-                    sWorld.SendZoneText(OutdoorPvPTFBuffZones[0],objmgr.GetMangosString(LANG_OPVP_TF_CAPTURE_A,-1));
+                    sWorld.SendZoneText(OutdoorPvPTFBuffZones[0],sObjectMgr.GetMangosString(LANG_OPVP_TF_CAPTURE_A,-1));
                     break;
                 case OBJECTIVESTATE_HORDE:
                     m_TowerState = TF_TOWERSTATE_H;
                     artkit = 1;
                     if(((OutdoorPvPTF*)m_PvP)->m_HordeTowersControlled<TF_TOWER_NUM)
                         ((OutdoorPvPTF*)m_PvP)->m_HordeTowersControlled++;
-                    sWorld.SendZoneText(OutdoorPvPTFBuffZones[0],objmgr.GetMangosString(LANG_OPVP_TF_CAPTURE_H,-1));
+                    sWorld.SendZoneText(OutdoorPvPTFBuffZones[0],sObjectMgr.GetMangosString(LANG_OPVP_TF_CAPTURE_H,-1));
                     break;
                 case OBJECTIVESTATE_NEUTRAL:
                 case OBJECTIVESTATE_NEUTRAL_ALLIANCE_CHALLENGE:

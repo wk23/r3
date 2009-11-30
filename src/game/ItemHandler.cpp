@@ -285,7 +285,7 @@ void WorldSession::HandleItemQuerySingleOpcode( WorldPacket & recv_data )
 
     sLog.outDetail("STORAGE: Item Query = %u", item);
 
-    ItemPrototype const *pProto = objmgr.GetItemPrototype( item );
+    ItemPrototype const *pProto = ObjectMgr::GetItemPrototype( item );
     if( pProto )
     {
         std::string Name        = pProto->Name1;
@@ -294,7 +294,7 @@ void WorldSession::HandleItemQuerySingleOpcode( WorldPacket & recv_data )
         int loc_idx = GetSessionDbLocaleIndex();
         if ( loc_idx >= 0 )
         {
-            ItemLocale const *il = objmgr.GetItemLocale(pProto->ItemId);
+            ItemLocale const *il = sObjectMgr.GetItemLocale(pProto->ItemId);
             if (il)
             {
                 if (il->Name.size() > size_t(loc_idx) && !il->Name[loc_idx].empty())
@@ -700,29 +700,32 @@ void WorldSession::HandleListInventoryOpcode( WorldPacket & recv_data )
     SendListInventory( guid );
 }
 
-void WorldSession::SendListInventory( uint64 vendorguid )
+void WorldSession::SendListInventory(uint64 vendorguid)
 {
-    sLog.outDebug( "WORLD: Sent SMSG_LIST_INVENTORY" );
+    sLog.outDebug("WORLD: Sent SMSG_LIST_INVENTORY");
 
     Creature *pCreature = GetPlayer()->GetNPCIfCanInteractWith(vendorguid, UNIT_NPC_FLAG_VENDOR);
+
     if (!pCreature)
     {
-        sLog.outDebug( "WORLD: SendListInventory - Unit (GUID: %u) not found or you can't interact with him.", uint32(GUID_LOPART(vendorguid)) );
-        _player->SendSellError( SELL_ERR_CANT_FIND_VENDOR, NULL, 0, 0);
+        sLog.outDebug("WORLD: SendListInventory - Unit (GUID: %u) not found or you can't interact with him.", uint32(GUID_LOPART(vendorguid)));
+        _player->SendSellError(SELL_ERR_CANT_FIND_VENDOR, NULL, 0, 0);
         return;
     }
 
     // remove fake death
-    if(GetPlayer()->hasUnitState(UNIT_STAT_DIED))
+    if (GetPlayer()->hasUnitState(UNIT_STAT_DIED))
         GetPlayer()->RemoveSpellsCausingAura(SPELL_AURA_FEIGN_DEATH);
 
     // Stop the npc if moving
-    pCreature->StopMoving();
+    if (!pCreature->IsStopped())
+        pCreature->StopMoving();
 
     VendorItemData const* vItems = pCreature->GetVendorItems();
-    if(!vItems)
+
+    if (!vItems)
     {
-        _player->SendSellError( SELL_ERR_CANT_FIND_VENDOR, NULL, 0, 0);
+        _player->SendSellError(SELL_ERR_CANT_FIND_VENDOR, NULL, 0, 0);
         return;
     }
 
@@ -739,7 +742,7 @@ void WorldSession::SendListInventory( uint64 vendorguid )
     {
         if(VendorItem const* crItem = vItems->GetItem(i))
         {
-            if(ItemPrototype const *pProto = objmgr.GetItemPrototype(crItem->item))
+            if(ItemPrototype const *pProto = ObjectMgr::GetItemPrototype(crItem->item))
             {
                 if((pProto->AllowableClass & _player->getClassMask()) == 0 && pProto->Bonding == BIND_WHEN_PICKED_UP && !_player->isGameMaster())
                     continue;
@@ -971,7 +974,7 @@ void WorldSession::HandleItemNameQueryOpcode(WorldPacket & recv_data)
     recv_data.read_skip<uint64>();                          // guid
 
     sLog.outDebug("WORLD: CMSG_ITEM_NAME_QUERY %u", itemid);
-    ItemPrototype const *pProto = objmgr.GetItemPrototype( itemid );
+    ItemPrototype const *pProto = ObjectMgr::GetItemPrototype( itemid );
     if( pProto )
     {
         std::string Name;
@@ -980,7 +983,7 @@ void WorldSession::HandleItemNameQueryOpcode(WorldPacket & recv_data)
         int loc_idx = GetSessionDbLocaleIndex();
         if (loc_idx >= 0)
         {
-            ItemLocale const *il = objmgr.GetItemLocale(pProto->ItemId);
+            ItemLocale const *il = sObjectMgr.GetItemLocale(pProto->ItemId);
             if (il)
             {
                 if (il->Name.size() > size_t(loc_idx) && !il->Name[loc_idx].empty())
