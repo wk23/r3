@@ -19,7 +19,7 @@
 class MANGOS_DLL_DECL AttunedToNatureAura : public Aura
 {
     public:
-        AttunedToNatureAura(const SpellEntry *spell, uint32 eff, int32 *bp, Unit *target, Unit *caster) : Aura(spell, eff, bp, target, caster, NULL)
+        AttunedToNatureAura(SpellEntry *spell, uint32 eff, int32 *bp, Unit *target, Unit *caster) : Aura(spell, eff, bp, target, caster, NULL)
             {}
 };
 
@@ -30,10 +30,6 @@ struct MANGOS_DLL_DECL boss_freyaAI : public ScriptedAI
         pInstance = (ScriptedInstance*)pCreature->GetInstanceData();
         Regular = pCreature->GetMap()->IsRegularDifficulty();
         sp = (SpellEntry *)GetSpellStore()->LookupEntry(SP_ATTUNED_TO_NATURE);
-        bp = 8;
-        if(!pCreature->HasAura(SP_ATTUNED_TO_NATURE, 0))
-            pCreature->AddAura(new AttunedToNatureAura(sp, 0, &bp, pCreature, pCreature));
-        pCreature->GetAura(SP_ATTUNED_TO_NATURE, 0)->SetStackAmount(150);
         Reset();
     }
 
@@ -46,7 +42,7 @@ struct MANGOS_DLL_DECL boss_freyaAI : public ScriptedAI
 
     bool Regular;
     ScriptedInstance *pInstance;
-    SpellEntry const *sp;
+    SpellEntry *sp;
     int32 bp;
 
     void Reset()
@@ -57,7 +53,7 @@ struct MANGOS_DLL_DECL boss_freyaAI : public ScriptedAI
         WaveTypeInc = irand(1,2);
         SunbeamTimer = rand()%10000;
         EnrageTimer = 600000; //10 minutes
-
+        bp = 8;
         if(!m_creature->HasAura(SP_ATTUNED_TO_NATURE, 0))
             m_creature->AddAura(new AttunedToNatureAura(sp, 0, &bp, m_creature, m_creature));
         m_creature->GetAura(SP_ATTUNED_TO_NATURE, 0)->SetStackAmount(150);
@@ -67,10 +63,6 @@ struct MANGOS_DLL_DECL boss_freyaAI : public ScriptedAI
 
     void Aggro(Unit *who) 
     {
-        if(!m_creature->HasAura(SP_ATTUNED_TO_NATURE, 0))
-            m_creature->AddAura(new AttunedToNatureAura(sp, 0, &bp, m_creature, m_creature));
-        m_creature->GetAura(SP_ATTUNED_TO_NATURE, 0)->SetStackAmount(150);
-
         DoCast(m_creature, Regular ? SP_TOUCH_OF_EONAR : H_SP_TOUCH_OF_EONAR);
 
         if(pInstance) pInstance->SetData(TYPE_FREYA, IN_PROGRESS);
@@ -110,20 +102,23 @@ struct MANGOS_DLL_DECL boss_freyaAI : public ScriptedAI
     {
         Creature *add;
         Unit *target;
-        add = DoSpawnCreature(CR_WATER_SPIRIT, 0, 0, 0, 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 2000);
+        if (Creature* add = DoSpawnCreature(CR_WATER_SPIRIT, 0, 0, 0, 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 2000)) {
         target = SelectUnit(SELECT_TARGET_RANDOM, 0);
-        if(add && target)
+        if(target)
             add->AddThreat(target, 1.0f);
+        }
 
-        add = DoSpawnCreature(CR_STORM_LASHER, 0, 0, 0, 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 2000);
+        if (Creature* add = DoSpawnCreature(CR_STORM_LASHER, 0, 0, 0, 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 2000)) {
         target = SelectUnit(SELECT_TARGET_RANDOM, 0);
-        if(add && target)
+        if(target)
             add->AddThreat(target, 1.0f);
+        }
 
-        add = DoSpawnCreature(CR_SNAPLASHER, 0, 0, 0, 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 2000);
+        if (Creature* add = DoSpawnCreature(CR_SNAPLASHER, 0, 0, 0, 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 2000)) {
         target = SelectUnit(SELECT_TARGET_RANDOM, 0);
-        if(add && target)
+        if(target)
             add->AddThreat(target, 1.0f);
+        }
     }
 
     void SummonedCreatureDespawn(Creature* mob)
