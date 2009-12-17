@@ -673,22 +673,23 @@ bool OutdoorPvPObjectiveEP_PWT::HandleCapturePointEvent(Player *plr, uint32 even
 
 void OutdoorPvPObjectiveEP_PWT::SummonFlightMaster(uint32 team)
 {
-    DelCreature(EP_PWT_FLIGHTMASTER);
+/*    DelCreature(EP_PWT_FLIGHTMASTER);
     AddCreature(EP_PWT_FLIGHTMASTER,EP_PWT_FlightMaster.entry,team,EP_PWT_FlightMaster.map,EP_PWT_FlightMaster.x,EP_PWT_FlightMaster.y,EP_PWT_FlightMaster.z,EP_PWT_FlightMaster.o);
 
     Map* map = m_PvP->GetMap();
     Creature * c = map->GetCreature(m_Creatures[EP_PWT_FLIGHTMASTER]);
     if(c)
     {
-        GossipOption * gso = new GossipOption;
-        gso->Action = GOSSIP_OPTION_OUTDOORPVP;
-        gso->GossipId = 0;
-        gso->OptionText.assign("As the breeze whips straight as an arrow, let her go over Kill Devil Hill!");
-        gso->Id = 50;
-        gso->Icon = 1;
-        gso->NpcFlag = 0;
+        GossipMenuItems * gso = new GossipMenuItems;
+        gso->action_menu_id = GOSSIP_OPTION_OUTDOORPVP;
+        gso->option_id = 0;
+        gso->option_text.assign("As the breeze whips straight as an arrow, let her go over Kill Devil Hill!");
+        gso->id = 50;
+        gso->option_icon = 1;
+        gso->npc_option_npcflag = 0;
         c->addGossipOption(*gso);
-    }
+//AddGossipMenuItemData(itr->second.action_menu_id, itr->second.action_poi_id, itr->second.action_script_id);
+    }*/
 }
 
 bool OutdoorPvPObjectiveEP_PWT::HandleGossipOption(Player *plr, uint64 guid, uint32 gossipid)

@@ -81,7 +81,7 @@ class GameObject;
 class WorldPacket;
 class Creature;
 class Unit;
-struct GossipOption;
+struct GossipMenuItems;
 
 class OutdoorPvP;
 class OutdoorPvPObjective
@@ -128,7 +128,7 @@ class OutdoorPvPObjective
 
         virtual bool HandleDropFlag(Player * /*plr*/, uint32 /*spellId*/) { return false; }
         virtual bool HandleGossipOption(Player * /*plr*/, uint64 /*guid*/, uint32 /*gossipid*/) { return false; }
-        virtual bool CanTalkTo(Player * /*plr*/, Creature * /*c*/, GossipOption & /*gso*/) { return false; }
+        virtual bool CanTalkTo(Player * plr, Creature * c, GossipMenuItems * gso) { return false; }
 
         void DeleteSpawns();
     protected:
@@ -229,7 +229,7 @@ class OutdoorPvP
 
         virtual bool HandleGossipOption(Player *plr, uint64 guid, uint32 gossipid);
 
-        virtual bool CanTalkTo(Player * plr, Creature * c, GossipOption &gso);
+        virtual bool CanTalkTo(Player * plr, Creature * c, GossipMenuItems * gso);
 
         void SetMap(Map* map) { m_Map = map; }
         Map* GetMap() { return m_Map; }

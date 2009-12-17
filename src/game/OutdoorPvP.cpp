@@ -527,7 +527,7 @@ bool OutdoorPvP::HandleGossipOption(Player * plr, uint64 guid, uint32 id)
     return false;
 }
 
-bool OutdoorPvP::CanTalkTo(Player * plr, Creature * c, GossipOption &gso)
+bool OutdoorPvP::CanTalkTo(Player * plr, Creature * c, GossipMenuItems * gso)
 {
     for(OutdoorPvPObjectiveSet::iterator itr = m_OutdoorPvPObjectives.begin(); itr != m_OutdoorPvPObjectives.end(); ++itr)
         if((*itr)->CanTalkTo(plr, c, gso))

@@ -216,6 +216,7 @@ class MANGOS_DLL_SPEC Aura
        void HandleAuraCloneCaster(bool Apply, bool Real);
         void HandleModTargetArmorPct(bool Apply, bool Real);
         void HandleAuraModAllCritChance(bool Apply, bool Real);
+        void HandleAllowOnlyAbility(bool Apply, bool Real);
 
         virtual ~Aura();
 
@@ -270,6 +271,13 @@ class MANGOS_DLL_SPEC Aura
         {
             if (m_procCharges == 0)
                 return false;
+
+            // exist spells that have maxStack > 1 and m_procCharges > 0 (==1 in fact)
+            // all like stacks have 1 value in one from this fields
+            // so return true for allow remove one aura from stacks as expired
+            if (GetStackAmount() > 1)
+                return true;
+
             m_procCharges--;
             SendAuraUpdate(false);
             return m_procCharges == 0;
@@ -347,7 +355,7 @@ class MANGOS_DLL_SPEC Aura
         void PeriodicDummyTick();
 
         bool IsCritFromAbilityAura(Unit* caster, uint32& damage);
-        void ReapplyAffectedPassiveAuras(Unit* target);
+        void ReapplyAffectedPassiveAuras(Unit* target, bool owner_mode);
 
         Modifier m_modifier;
         SpellModifier *m_spellmod;

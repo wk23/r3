@@ -184,6 +184,32 @@ pkgdata_DATA = \
 	8889_01_mangos_spell_pet_auras.sql \
 	8891_01_mangos_spell_proc_event.sql \
 	8893_01_mangos_mangos_string.sql \
+	8899_01_mangos_spell_proc_event.sql \
+	8908_01_mangos_spell_chain.sql \
+	8909_01_mangos_spell_proc_event.sql \
+	8912_01_mangos_spell_proc_event.sql \
+	8917_01_mangos_spell_proc_event.sql \
+	8923_01_mangos_gossip.sql \
+	8929_01_mangos_gossip_scripts.sql \
+	8930_01_mangos_spell_proc_event.sql \
+	8931_01_mangos_spell_bonus_data.sql \
+	8932_01_mangos_spell_chain.sql \
+	8938_01_mangos_spell_proc_event.sql \
+	8943_01_mangos_spell_chain.sql \
+	8946_01_mangos_spell_proc_event.sql \
+	8950_01_mangos_spell_proc_event.sql \
+	8965_01_mangos_mangos_string.sql \
+	8965_02_mangos_command.sql \
+	8980_01_mangos_spell_bonus_data.sql \
+	8981_01_mangos_spell_proc_event.sql \
+	8988_01_mangos_spell_proc_event.sql \
+	8992_01_mangos_spell_proc_event.sql \
+	8992_02_mangos_spell_chain.sql \
+	8993_01_mangos_spell_proc_event.sql \
+	8995_01_mangos_spell_proc_event.sql \
+	8996_01_mangos_spell_proc_event.sql \
+	9001_01_mangos_spell_proc_event.sql \
+	9005_01_mangos_spell_proc_event.sql \
 	README
 
 ## Additional files to include when running 'make dist'
@@ -348,4 +374,30 @@ EXTRA_DIST = \
 	8889_01_mangos_spell_pet_auras.sql \
 	8891_01_mangos_spell_proc_event.sql \
 	8893_01_mangos_mangos_string.sql \
+	8899_01_mangos_spell_proc_event.sql \
+	8908_01_mangos_spell_chain.sql \
+	8909_01_mangos_spell_proc_event.sql \
+	8912_01_mangos_spell_proc_event.sql \
+	8917_01_mangos_spell_proc_event.sql \
+	8923_01_mangos_gossip.sql \
+	8929_01_mangos_gossip_scripts.sql \
+	8930_01_mangos_spell_proc_event.sql \
+	8931_01_mangos_spell_bonus_data.sql \
+	8932_01_mangos_spell_chain.sql \
+	8938_01_mangos_spell_proc_event.sql \
+	8943_01_mangos_spell_chain.sql \
+	8946_01_mangos_spell_proc_event.sql \
+	8950_01_mangos_spell_proc_event.sql \
+	8965_01_mangos_mangos_string.sql \
+	8965_02_mangos_command.sql \
+	8980_01_mangos_spell_bonus_data.sql \
+	8981_01_mangos_spell_proc_event.sql \
+	8988_01_mangos_spell_proc_event.sql \
+	8992_01_mangos_spell_proc_event.sql \
+	8992_02_mangos_spell_chain.sql \
+	8993_01_mangos_spell_proc_event.sql \
+	8995_01_mangos_spell_proc_event.sql \
+	8996_01_mangos_spell_proc_event.sql \
+	9001_01_mangos_spell_proc_event.sql \
+	9005_01_mangos_spell_proc_event.sql \
 	README
