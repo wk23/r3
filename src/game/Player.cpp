@@ -4250,7 +4250,6 @@ void Player::BuildPlayerRepop()
     {
         sLog.outError("BuildPlayerRepop: player %s(%d) already has a corpse", GetName(), GetGUIDLow());
         assert(false);
-        return;
     }
 
     // create a corpse and place it at the player's location
