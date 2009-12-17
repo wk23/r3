@@ -1098,9 +1098,6 @@ void Player::SetDrunkValue(uint16 newDrunkenValue, uint32 itemId)
 
 void Player::Update( uint32 p_time )
 {
-    if(GetSession()->IsUpdating())
-        return;
-
     if(!IsInWorld())
         return;
 
@@ -15600,11 +15597,6 @@ void Player::_LoadAuras(QueryResult *result, uint32 timediff)
             int32 maxduration = (int32)fields[5].GetUInt32();
             int32 remaintime = (int32)fields[6].GetUInt32();
             int32 remaincharges = (int32)fields[7].GetUInt32();
-
-            Unit* a_caster = ObjectAccessor::GetObjectInWorld(caster_guid, (Unit*)NULL);
-            if( !IS_PLAYER_GUID(caster_guid) )
-               if  (!a_caster || !a_caster->IsInWorld())  
-                continue;
 
             SpellEntry const* spellproto = sSpellStore.LookupEntry(spellid);
             if(!spellproto)
