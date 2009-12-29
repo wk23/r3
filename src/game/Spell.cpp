@@ -596,11 +596,13 @@ void Spell::FillTargetMap()
                             SetTargetMap(i, m_spellInfo->EffectImplicitTargetB[i], tmpUnitMap);
                         }
                         break;
+                    case 0:
+                        SetTargetMap(i, m_spellInfo->EffectImplicitTargetA[i], tmpUnitMap);
+                        tmpUnitMap.push_back(m_caster);
+                        break;
                     default:
-                        {
-                            SetTargetMap(i, m_spellInfo->EffectImplicitTargetA[i], tmpUnitMap);
-                            SetTargetMap(i, m_spellInfo->EffectImplicitTargetB[i], tmpUnitMap);
-                        }
+                        SetTargetMap(i, m_spellInfo->EffectImplicitTargetA[i], tmpUnitMap);
+                        SetTargetMap(i, m_spellInfo->EffectImplicitTargetB[i], tmpUnitMap);
                         break;
                 }
                 break;
@@ -705,24 +707,29 @@ void Spell::prepareDataForTriggerSystem()
                 else if (m_spellInfo->SpellFamilyFlags & UI64LIT(0x0000010000000000))
                     m_canTrigger = true;
                 break;
-            case SPELLFAMILY_WARLOCK: // For Hellfire Effect / Rain of Fire / Seed of Corruption triggers need do it
+            case SPELLFAMILY_WARLOCK:
+                // For Hellfire Effect / Rain of Fire / Seed of Corruption triggers need do it
                 if (m_spellInfo->SpellFamilyFlags & UI64LIT(0x0000800000000060))
                     m_canTrigger = true;
                 break;
-            case SPELLFAMILY_PRIEST: // For Penance,Mind Sear,Mind Flay heal/damage triggers need do it
+            case SPELLFAMILY_PRIEST:
+                // For Penance,Mind Sear,Mind Flay heal/damage triggers need do it
                 if (m_spellInfo->SpellFamilyFlags & UI64LIT(0x0001800000800000) || (m_spellInfo->SpellFamilyFlags2 & 0x00000040))
                     m_canTrigger = true;
                 break;
-            case SPELLFAMILY_ROGUE:   // For poisons need do it
+            case SPELLFAMILY_ROGUE:
+                // For poisons need do it
                 if (m_spellInfo->SpellFamilyFlags & UI64LIT(0x000000101001E000))
                     m_canTrigger = true;
                 break;
-            case SPELLFAMILY_HUNTER:  // Hunter Rapid Killing/Explosive Trap Effect/Immolation Trap Effect/Frost Trap Aura/Snake Trap Effect/Explosive Shot
+            case SPELLFAMILY_HUNTER:
+                // Hunter Rapid Killing/Explosive Trap Effect/Immolation Trap Effect/Frost Trap Aura/Snake Trap Effect/Explosive Shot
                 if ((m_spellInfo->SpellFamilyFlags & UI64LIT(0x0100200000000214)) ||
                     m_spellInfo->SpellFamilyFlags2 & 0x200)
                     m_canTrigger = true;
                 break;
-            case SPELLFAMILY_PALADIN: // For Judgements (all) / Holy Shock triggers need do it
+            case SPELLFAMILY_PALADIN:
+                // For Judgements (all) / Holy Shock triggers need do it
                 if (m_spellInfo->SpellFamilyFlags & UI64LIT(0x0001000900B80400))
                     m_canTrigger = true;
                 break;
@@ -1325,7 +1332,7 @@ void Spell::SetTargetMap(uint32 effIndex,uint32 targetMode,UnitList& TagUnitMap)
     {
         case SPELLFAMILY_DRUID:
             // Starfall
-            if (m_spellInfo->SpellFamilyFlags2 & UI64LIT(0x00000100))
+            if (m_spellInfo->SpellFamilyFlags2 & 0x00000100)
                 unMaxTargets = 2;
             else if (m_spellInfo->SpellFamilyFlags & UI64LIT(0x0400000000000000))
                 unMaxTargets = m_spellInfo->EffectBasePoints[2];
@@ -1643,9 +1650,6 @@ void Spell::SetTargetMap(uint32 effIndex,uint32 targetMode,UnitList& TagUnitMap)
                     break;
                 default:
                     FillAreaTargets(TagUnitMap,m_targets.m_destX, m_targets.m_destY,radius,PUSH_DEST_CENTER,SPELL_TARGETS_AOE_DAMAGE);
-
-                    // exclude caster (this can be important if this not original caster)
-                    TagUnitMap.remove(m_caster);
                     break;
             }
             break;
@@ -2446,13 +2450,21 @@ void Spell::prepare(SpellCastTargets const* targets, Aura* triggeredByAura)
         m_caster->RemoveSpellsCausingAura(SPELL_AURA_FEIGN_DEATH);
     }
 
-    if(m_IsTriggeredSpell)
-        cast(true);
-    else
+    // add non-triggered (with cast time and without)
+    if (!m_IsTriggeredSpell)
     {
+        // add to cast type slot
         m_caster->SetCurrentCastedSpell( this );
+
+        // will show cast bar
         SendSpellStart();
     }
+    // execute triggered without cast time explicitly in call point
+    else if(m_timer == 0)
+        cast(true);
+    // else triggered with cast time will execute execute at next tick or later
+    // without adding to cast type slot
+    // will not show cast bar but will show effects at casting time etc
 }
 
 void Spell::cancel()
@@ -2566,14 +2578,6 @@ void Spell::cast(bool skipCheck)
             }
             break;
         }
-        case SPELLFAMILY_DRUID:
-        {
-            if (m_spellInfo->SpellIconID == 2852 && (m_spellInfo->AttributesEx & 0x28020)) // Berserk
-                AddPrecastSpell(58923); // Hit 3 targets at once with mangle in dire bear form
-          else if (m_spellInfo->Id == 16857)
-                AddTriggeredSpell(60089);
-            break;
-        }
         case SPELLFAMILY_MAGE:
         {
             // Ice Block
@@ -2604,6 +2608,17 @@ void Spell::cast(bool skipCheck)
                 case 48078: AddTriggeredSpell(48076); break;// Holy Nova, rank 9
                 default:break;
             }
+            break;
+        }
+        case SPELLFAMILY_DRUID:
+        {
+            // Faerie Fire (Feral)
+            if (m_spellInfo->Id == 16857 && m_caster->m_form != FORM_CAT)
+                AddTriggeredSpell(60089);
+            if (m_spellInfo->SpellIconID == 2852 && (m_spellInfo->AttributesEx & 0x28020)) // Berserk
+                AddPrecastSpell(58923); // Hit 3 targets at once with mangle in dire bear form
+           else if (m_spellInfo->Id == 16857)
+                AddTriggeredSpell(60089);
             break;
         }
         case SPELLFAMILY_ROGUE:
@@ -3543,14 +3558,11 @@ void Spell::SendChannelUpdate(uint32 time)
         m_caster->SetUInt32Value(UNIT_CHANNEL_SPELL, 0);
     }
 
-    if (m_caster->GetTypeId() != TYPEID_PLAYER)
-        return;
-
     WorldPacket data( MSG_CHANNEL_UPDATE, 8+4 );
     data.append(m_caster->GetPackGUID());
     data << uint32(time);
 
-    ((Player*)m_caster)->GetSession()->SendPacket( &data );
+    m_caster->SendMessageToSet(&data, true);
 }
 
 void Spell::SendChannelStart(uint32 duration)
@@ -3581,15 +3593,12 @@ void Spell::SendChannelStart(uint32 duration)
         }
     }
 
-    if (m_caster->GetTypeId() == TYPEID_PLAYER)
-    {
-        WorldPacket data( MSG_CHANNEL_START, (8+4+4) );
-        data.append(m_caster->GetPackGUID());
-        data << uint32(m_spellInfo->Id);
-        data << uint32(duration);
+    WorldPacket data( MSG_CHANNEL_START, (8+4+4) );
+    data.append(m_caster->GetPackGUID());
+    data << uint32(m_spellInfo->Id);
+    data << uint32(duration);
 
-        ((Player*)m_caster)->GetSession()->SendPacket( &data );
-    }
+    m_caster->SendMessageToSet(&data, true);
 
     m_timer = duration;
     if(target)
@@ -4171,20 +4180,34 @@ SpellCastResult Spell::CheckCast(bool strict)
             }
         }
 
-        // TODO: this check can be applied and for player to prevent cheating when IsPositiveSpell will return always correct result.
-        // check target for pet/charmed casts (not self targeted), self targeted cast used for area effects and etc
-        if(non_caster_target && m_caster->GetTypeId() == TYPEID_UNIT && m_caster->GetCharmerOrOwnerGUID())
+        if(non_caster_target)
         {
-            // check correctness positive/negative cast target (pet cast real check and cheating check)
-            if(IsPositiveSpell(m_spellInfo->Id))
+            // simple cases
+            if (IsExplicitPositiveTarget(m_spellInfo->EffectImplicitTargetA[0]))
             {
                 if(m_caster->IsHostileTo(target))
                     return SPELL_FAILED_BAD_TARGETS;
             }
-            else
+            else if (IsExplicitNegativeTarget(m_spellInfo->EffectImplicitTargetA[0]))
             {
                 if(m_caster->IsFriendlyTo(target))
                     return SPELL_FAILED_BAD_TARGETS;
+            }
+            // TODO: this check can be applied and for player to prevent cheating when IsPositiveSpell will return always correct result.
+            // check target for pet/charmed casts (not self targeted), self targeted cast used for area effects and etc
+            else if (m_caster->GetTypeId() == TYPEID_UNIT && m_caster->GetCharmerOrOwnerGUID())
+            {
+                // check correctness positive/negative cast target (pet cast real check and cheating check)
+                if(IsPositiveSpell(m_spellInfo->Id))
+                {
+                    if(m_caster->IsHostileTo(target))
+                        return SPELL_FAILED_BAD_TARGETS;
+                }
+                else
+                {
+                    if(m_caster->IsFriendlyTo(target))
+                        return SPELL_FAILED_BAD_TARGETS;
+                }
             }
         }
 
@@ -5400,11 +5423,11 @@ SpellCastResult Spell::CheckItems()
     {
         uint32 itemid = m_CastItem->GetEntry();
         if( !p_caster->HasItemCount(itemid, 1) )
-            return SPELL_FAILED_ITEM_NOT_READY;
+            return SPELL_FAILED_ITEM_NOT_FOUND;
 
         ItemPrototype const *proto = m_CastItem->GetProto();
         if(!proto)
-            return SPELL_FAILED_ITEM_NOT_READY;
+            return SPELL_FAILED_ITEM_NOT_FOUND;
 
         for (int i = 0; i < 5; ++i)
             if (proto->Spells[i].SpellCharges)
@@ -5531,7 +5554,7 @@ SpellCastResult Spell::CheckItems()
             {
                 ItemPrototype const *proto = m_CastItem->GetProto();
                 if(!proto)
-                    return SPELL_FAILED_ITEM_NOT_READY;
+                    return SPELL_FAILED_REAGENTS;
                 for(int s = 0; s < MAX_ITEM_PROTO_SPELLS; ++s)
                 {
                     // CastItem will be used up and does not count as reagent
@@ -5544,7 +5567,7 @@ SpellCastResult Spell::CheckItems()
                 }
             }
             if( !p_caster->HasItemCount(itemid, itemcount) )
-                return SPELL_FAILED_ITEM_NOT_READY;         //0x54
+                return SPELL_FAILED_REAGENTS;
         }
     }
 
@@ -5900,7 +5923,10 @@ void Spell::UpdatePointers()
 
 bool Spell::IsAffectedByAura(Aura *aura) const
 {
-    return sSpellMgr.IsAffectedByMod(m_spellInfo, aura->getAuraSpellMod());
+    if(SpellModifier* mod = aura->getAuraSpellMod())
+        return mod->isAffectedOnSpell(m_spellInfo);
+    else
+        return false;
 }
 
 bool Spell::CheckTargetCreatureType(Unit* target) const

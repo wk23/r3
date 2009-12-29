@@ -44,23 +44,33 @@ void WorldSession::HandlePetAction( WorldPacket & recv_data )
     // used also for charmed creature
     Unit* pet= ObjectAccessor::GetUnit(*_player, guid1);
     sLog.outDetail("HandlePetAction.Pet %u flag is %u, spellid is %u, target %u.", uint32(GUID_LOPART(guid1)), uint32(flag), spellid, uint32(GUID_LOPART(guid2)) );
-    if(!pet)
+    if (!pet)
     {
         sLog.outError( "Pet %u not exist.", uint32(GUID_LOPART(guid1)) );
         return;
     }
 
-    if(pet != GetPlayer()->GetPet() && pet != GetPlayer()->GetCharm())
+    if (pet != GetPlayer()->GetPet() && pet != GetPlayer()->GetCharm())
     {
         sLog.outError("HandlePetAction.Pet %u isn't pet of player %s.", uint32(GUID_LOPART(guid1)), GetPlayer()->GetName() );
         return;
     }
 
-    if(!pet->isAlive())
+    if (!pet->isAlive())
         return;
 
-    if(pet->GetTypeId() == TYPEID_PLAYER && !(flag == ACT_COMMAND && spellid == COMMAND_ATTACK))
-        return;
+    if (pet->GetTypeId() == TYPEID_PLAYER)
+    {
+        // controller player can only do melee attack
+        if (!(flag == ACT_COMMAND && spellid == COMMAND_ATTACK))
+            return;
+    }
+    else if (((Creature*)pet)->isPet())
+    {
+        // pet can have action bar disabled
+        if(((Pet*)pet)->GetModeFlags() & PET_MODE_DISABLE_ACTIONS)
+            return;
+    }
 
     CharmInfo *charmInfo = pet->GetCharmInfo();
     if(!charmInfo)
@@ -321,6 +331,10 @@ void WorldSession::HandlePetSetAction( WorldPacket & recv_data )
         return;
     }
 
+    // pet can have action bar disabled
+    if(pet->isPet() && ((Pet*)pet)->GetModeFlags() & PET_MODE_DISABLE_ACTIONS)
+        return;
+
     CharmInfo *charmInfo = pet->GetCharmInfo();
     if(!charmInfo)
     {
@@ -357,22 +371,28 @@ void WorldSession::HandlePetSetAction( WorldPacket & recv_data )
         }
     }
 
-    // check swap
+    // check swap (at command->spell swap client remove spell first in another packet, so check only command move correctness)
     if (move_command)
     {
         uint8 act_state_0 = UNIT_ACTION_BUTTON_TYPE(data[0]);
-        uint32 spell_id_0 = UNIT_ACTION_BUTTON_ACTION(data[0]);
-        UnitActionBarEntry const* actionEntry_1 = charmInfo->GetActionBarEntry(position[1]);
-        if (!actionEntry_1 || spell_id_0 != actionEntry_1->GetAction() ||
-            act_state_0 != actionEntry_1->GetType())
-            return;
+        if(act_state_0 == ACT_COMMAND || act_state_0 == ACT_REACTION)
+        {
+            uint32 spell_id_0 = UNIT_ACTION_BUTTON_ACTION(data[0]);
+            UnitActionBarEntry const* actionEntry_1 = charmInfo->GetActionBarEntry(position[1]);
+            if (!actionEntry_1 || spell_id_0 != actionEntry_1->GetAction() ||
+                act_state_0 != actionEntry_1->GetType())
+                return;
+        }
 
         uint8 act_state_1 = UNIT_ACTION_BUTTON_TYPE(data[1]);
-        uint32 spell_id_1 = UNIT_ACTION_BUTTON_ACTION(data[1]);
-        UnitActionBarEntry const* actionEntry_0 = charmInfo->GetActionBarEntry(position[0]);
-        if (!actionEntry_0 || spell_id_1 != actionEntry_0->GetAction() ||
-            act_state_1 != actionEntry_0->GetType())
-            return;
+        if(act_state_1 == ACT_COMMAND || act_state_1 == ACT_REACTION)
+        {
+            uint32 spell_id_1 = UNIT_ACTION_BUTTON_ACTION(data[1]);
+            UnitActionBarEntry const* actionEntry_0 = charmInfo->GetActionBarEntry(position[0]);
+            if (!actionEntry_0 || spell_id_1 != actionEntry_0->GetAction() ||
+                act_state_1 != actionEntry_0->GetType())
+                return;
+        }
     }
 
     for(uint8 i = 0; i < count; ++i)
