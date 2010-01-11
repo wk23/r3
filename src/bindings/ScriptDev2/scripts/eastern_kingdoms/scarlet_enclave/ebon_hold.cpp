@@ -1100,6 +1100,508 @@ bool GOHello_go_acherus_soul_prison(Player* pPlayer, GameObject* pGo)
     return false;
 }
 
+/*######
+## npc_salanar_the_horseman
+######*/
+enum salanar
+{
+    SPELL_REALM_OF_SHADOWS          = 52275,
+    //SPELL_DEATH_RACE_COMPLETE       = 52361,
+    SPELL_HORSEMANS_CALL            = 52362, // not working
+    NPC_ACHERUS_DEATHCHARGER        = 28782,
+    NPC_DARK_RIDER_OF_ACHERUS       = 28768
+};
+
+bool GossipHello_npc_salanar_the_horseman(Player* pPlayer, Creature* pCreature)
+{
+    if (pCreature->isQuestGiver())
+        pPlayer->PrepareQuestMenu( pCreature->GetGUID() );
+
+    if (pPlayer->GetQuestStatus(12687) == QUEST_STATUS_INCOMPLETE)
+        pPlayer->ADD_GOSSIP_ITEM( 0, "Send me into the Realm of Shadows.", GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+1);
+
+    //pPlayer->SEND_GOSSIP_MENU(pCreature->GetNpcTextId(), pCreature->GetGUID());
+    pPlayer->SEND_GOSSIP_MENU(pPlayer->GetGossipTextId(pCreature), pCreature->GetGUID());
+
+    return true;
+}
+
+bool GossipSelect_npc_salanar_the_horseman(Player* pPlayer, Creature *pCreature, uint32 uiSender, uint32 uiAction)
+{
+    switch (uiAction)
+    {
+        case GOSSIP_ACTION_INFO_DEF+1:
+            pPlayer->CLOSE_GOSSIP_MENU();
+            pPlayer->CastSpell(pPlayer, SPELL_REALM_OF_SHADOWS, true);
+            pPlayer->SummonCreature(NPC_DARK_RIDER_OF_ACHERUS, pCreature->GetPositionX(), pCreature->GetPositionY(), pCreature->GetPositionZ(), 0, TEMPSUMMON_TIMED_DESPAWN, 180000);
+            break;
+    }
+    return true;
+}
+
+/*######
+## Mob Dark Rider of Acherus
+######*/
+enum darkrider
+{
+    //SPELL_ICY_TOUCH             = 52372,
+    //SPELL_BLOOD_STRIKE          = 52374,
+    SPELL_PLAGUE_STRIKE2        = 50688,
+    SPELL_THROW                 = 52356,
+    SPELL_DEATH_RACE_COMPLETE   = 52361
+};
+// 52693
+struct MANGOS_DLL_DECL mob_dark_rider_of_acherusAI : public ScriptedAI
+{
+    mob_dark_rider_of_acherusAI(Creature *pCreature) : ScriptedAI(pCreature)
+    {
+        Reset();
+    }
+
+    uint32 uiBlood_strike_timer;
+    uint32 uiIcy_touch_timer;
+    uint32 uiPlague_strike_timer;
+    uint32 uiThrow_timer;
+    uint64 uiPlayerGUID;
+
+    void Reset()
+    {
+        uiBlood_strike_timer = 3000;
+        uiIcy_touch_timer = 4000;
+        uiPlague_strike_timer = 5000;
+        uiThrow_timer = 10000;
+        uiPlayerGUID = 0;
+    }
+
+    void Aggro(Unit* who)
+    {
+        uiPlayerGUID = who->GetGUID();
+    }
+
+    void UpdateAI(const uint32 diff) 
+    {
+        if (uiBlood_strike_timer < diff)
+        {
+            DoCast(m_creature->getVictim(), SPELL_BLOOD_STRIKE);
+            uiBlood_strike_timer = 5000 + rand()%1000;
+        }else uiBlood_strike_timer -= diff;
+
+        if (uiIcy_touch_timer < diff)
+        {
+            DoCast(m_creature->getVictim(), SPELL_ICY_TOUCH);
+            uiIcy_touch_timer = 6000 + rand()%1000;
+        }else uiIcy_touch_timer -= diff;
+
+        if (uiPlague_strike_timer < diff)
+        {
+            DoCast(m_creature->getVictim(), SPELL_PLAGUE_STRIKE2);
+            uiPlague_strike_timer = 12000 + rand()%1000;
+        }else uiPlague_strike_timer -= diff;
+
+        if (uiThrow_timer < diff)
+        {
+            DoCast(m_creature->getVictim(), SPELL_THROW);
+            uiThrow_timer = 10000 + rand()%1000;
+        }else uiThrow_timer -= diff;
+
+        DoMeleeAttackIfReady();
+    }
+    void JustDied(Unit* killer)
+    {
+        if (Unit* pPlayer = Unit::GetUnit(*m_creature, uiPlayerGUID))
+            pPlayer->CastSpell(pPlayer, SPELL_DEATH_RACE_COMPLETE, true);
+    }
+};
+
+
+/*######
+## Mob scarlet miner
+######*/
+enum scarletminer
+{
+    SPELL_GIFT_OF_THE_HARVESTER_MISSILE = 52481,
+    NPC_SCARLET_GHOUL                   = 28845
+};
+
+struct MANGOS_DLL_DECL mob_scarlet_minerAI : public ScriptedAI
+{
+    mob_scarlet_minerAI(Creature *pCreature) : ScriptedAI(pCreature)
+    {
+        // hack spell 52481
+        SpellEntry *TempSpell = (SpellEntry*)GetSpellStore()->LookupEntry(SPELL_GIFT_OF_THE_HARVESTER_MISSILE);
+        if (TempSpell && TempSpell->EffectImplicitTargetB[0] != 16)
+        {
+            TempSpell->EffectImplicitTargetB[0] = 16;
+            TempSpell->EffectImplicitTargetB[1] = 87;
+            TempSpell->EffectImplicitTargetB[2] = 16;
+        }
+    }
+
+    void Reset() {}
+
+    void SpellHit(Unit* pCaster, const SpellEntry* pSpell)
+    {
+        if (pCaster->GetTypeId() == TYPEID_PLAYER && m_creature->isAlive() && pSpell->Id == SPELL_GIFT_OF_THE_HARVESTER_MISSILE)
+        {
+            if(((Player*)pCaster)->GetQuestStatus(12698) == QUEST_STATUS_INCOMPLETE)
+            {
+                // spell 52490 Scarlet Miner Ghoul Transform doesn't work, hack it
+                Unit* pGhoul = m_creature->SummonCreature(NPC_SCARLET_GHOUL, m_creature->GetPositionX(), m_creature->GetPositionY(), m_creature->GetPositionZ(), 0, TEMPSUMMON_TIMED_DESPAWN, 60000);
+                ((Player*)pCaster)->KilledMonsterCredit(NPC_SCARLET_GHOUL,pGhoul->GetGUID());
+                m_creature->setDeathState(JUST_DIED);
+                m_creature->RemoveCorpse();
+            }
+        }
+    }
+};
+
+/*######
+## Mob scarlet courier
+######*/
+// use 28957 Scarlet Crusader Test Dummy Guy to start it
+enum scarletcourier
+{
+    SAY_TREE1                          = -1609120,
+    SAY_TREE2                          = -1609121,
+    SPELL_SHOOT                        = 52818,
+    GO_INCONSPICUOUS_TREE              = 191144,
+    NPC_SCARLET_COURIER                = 29076
+};
+
+struct MANGOS_DLL_DECL mob_scarlet_courierAI : public ScriptedAI
+{
+    mob_scarlet_courierAI(Creature *pCreature) : ScriptedAI(pCreature)
+    {
+        Reset();
+    }
+
+    uint32 uiStage;
+    uint32 uiStage_timer;
+    uint64 pPlayer;
+
+    void Reset() {
+        uiStage = 0;
+        uiStage_timer = 3000;
+        pPlayer = 0;
+    }
+
+    void MovementInform(uint32 type, uint32 id)
+    {
+        if(type != POINT_MOTION_TYPE)
+                return;
+
+        switch(id)
+        {
+            case 0:
+                uiStage = 1;
+                break;
+            case 1:
+                uiStage = 2;
+                break;
+        }
+    }
+
+    void UpdateAI(const uint32 diff) 
+    {
+        if (uiStage_timer < diff)
+        {
+            switch(uiStage)
+            {
+                case 1:
+                {
+                    m_creature->GetMotionMaster()->Clear(false);
+                    m_creature->GetMotionMaster()->MoveIdle();
+                    m_creature->AddMonsterMoveFlag(MONSTER_MOVE_WALK);
+
+                    if (GameObject* treeGO = GetClosestGameObjectWithEntry(m_creature, GO_INCONSPICUOUS_TREE, 40.0f))
+                    {
+                        DoScriptText(SAY_TREE1, m_creature);
+                        m_creature->GetMotionMaster()->MovePoint(1, treeGO->GetPositionX(), treeGO->GetPositionY(), treeGO->GetPositionZ());
+                    }
+                    uiStage = 0;
+                } break;
+                case 2:
+                {
+                    m_creature->GetMotionMaster()->Clear(false);
+                    m_creature->GetMotionMaster()->MoveIdle();
+                    DoScriptText(SAY_TREE2, m_creature);
+                    m_creature->Unmount();
+                    //who->RemoveSpellsCausingAura(SPELL_AURA_MOD_STEALTH);
+                    uiStage = 0;
+                } break;
+            }
+            uiStage_timer = 3000;
+        }else uiStage_timer -= diff;
+
+        DoMeleeAttackIfReady();
+    }
+};
+struct MANGOS_DLL_DECL mob_scarlet_courier_controllerAI : public ScriptedAI
+{
+    mob_scarlet_courier_controllerAI(Creature *pCreature) : ScriptedAI(pCreature)
+    {
+        Reset();
+    }
+
+    bool bAmbush_overlook;
+
+    void Reset() {
+        bAmbush_overlook = false;
+    }
+
+    void UpdateAI(const uint32 diff) 
+    {
+        GameObject* treeGO = GetClosestGameObjectWithEntry(m_creature, GO_INCONSPICUOUS_TREE, 40.0f);
+        if(treeGO && bAmbush_overlook == false)
+        {
+            Creature* pCourier = m_creature->SummonCreature(NPC_SCARLET_COURIER, 1461.65, -6010.34, 116.369, 0, TEMPSUMMON_TIMED_DESPAWN, 180000);
+            pCourier->RemoveMonsterMoveFlag(MONSTER_MOVE_WALK);
+            pCourier->Mount(14338); // not sure about this id
+            pCourier->GetMotionMaster()->MovePoint(0, m_creature->GetPositionX(), m_creature->GetPositionY(), m_creature->GetPositionZ());
+            bAmbush_overlook = true;
+        }
+        if(!treeGO && bAmbush_overlook == true)
+            bAmbush_overlook = false;
+    }
+};
+
+/*######
+## Mob High Inquisitor Valroth
+######*/
+enum valroth
+{
+    SAY_VALROTH1                      = -1609122,
+    SAY_VALROTH2                      = -1609123,
+    SAY_VALROTH3                      = -1609124,
+    SAY_VALROTH4                      = -1609125,
+    SAY_VALROTH5                      = -1609126,
+    SAY_VALROTH6                      = -1609127,
+    SPELL_RENEW                       = 38210,
+    SPELL_INQUISITOR_PENANCE          = 52922,
+    SPELL_VALROTH_SMITE               = 52926,
+    SPELL_SUMMON_VALROTH_REMAINS      = 52929
+};
+
+/*######
+## quest How To Win Friends And Influence Enemies
+######*/
+enum win_friends
+{
+    SAY_PERSUADE1                     = -1609101,
+    SAY_PERSUADE2                     = -1609102,
+    SAY_PERSUADE3                     = -1609103,
+    SAY_PERSUADE4                     = -1609104,
+    SAY_PERSUADE5                     = -1609105,
+    SAY_PERSUADE6                     = -1609106,
+    SAY_PERSUADE7                     = -1609107,
+    SAY_CRUSADER1                     = -1609108,
+    SAY_CRUSADER2                     = -1609109,
+    SAY_CRUSADER3                     = -1609110,
+    SAY_CRUSADER4                     = -1609111,
+    SAY_CRUSADER5                     = -1609112,
+    SAY_CRUSADER6                     = -1609113,
+    SAY_PERSUADED1                    = -1609114,
+    SAY_PERSUADED2                    = -1609115,
+    SAY_PERSUADED3                    = -1609116,
+    SAY_PERSUADED4                    = -1609117,
+    SAY_PERSUADED5                    = -1609118,
+    SAY_PERSUADED6                    = -1609119,
+    SPELL_PERSUASIVE_STRIKE           = 52781
+};
+
+struct MANGOS_DLL_DECL npc_crusade_persuadedAI : public ScriptedAI
+{
+    npc_crusade_persuadedAI(Creature *pCreature) : ScriptedAI(pCreature)
+    {
+        Reset();
+    }
+
+    uint32 uiSpeech_timer;
+    uint32 uiSpeech_counter;
+    uint32 uiCrusade_faction;
+    uint64 uiPlayerGUID;
+
+    void Reset()
+    {
+        uiSpeech_timer = 0;
+        uiSpeech_counter = 0;
+        uiCrusade_faction = 0;
+        uiPlayerGUID = 0;
+    }
+
+    void SpellHit(Unit *caster, const SpellEntry *spell)
+    {
+        if (caster->GetTypeId() == TYPEID_PLAYER && m_creature->isAlive() && spell->Id == SPELL_PERSUASIVE_STRIKE && uiSpeech_counter == 0)
+        {
+            if(((Player*)caster)->GetQuestStatus(12720) == QUEST_STATUS_INCOMPLETE)
+            {
+                if (rand()%100 > 90) // chance
+                {
+                    uiPlayerGUID = ((Player*)caster)->GetGUID();
+                    uiCrusade_faction = m_creature->getFaction();
+                    uiSpeech_timer = 1000;
+                    uiSpeech_counter = 1;
+                    m_creature->setFaction(35);
+                }
+                else if (uiSpeech_counter == 0)
+                {
+                    switch(rand()%6)
+                    {
+                        case 0: DoScriptText(SAY_PERSUADE1, caster);break;
+                        case 1: DoScriptText(SAY_PERSUADE2, caster);break;
+                        case 2: DoScriptText(SAY_PERSUADE3, caster);break;
+                        case 3: DoScriptText(SAY_PERSUADE4, caster);break;
+                        case 4: DoScriptText(SAY_PERSUADE5, caster);break;
+                        case 5: DoScriptText(SAY_PERSUADE6, caster);break;
+                        case 6: DoScriptText(SAY_PERSUADE7, caster);break;
+                    }
+                    switch(rand()%5)
+                    {
+                        case 0: DoScriptText(SAY_CRUSADER1, m_creature);break;
+                        case 1: DoScriptText(SAY_CRUSADER2, m_creature);break;
+                        case 2: DoScriptText(SAY_CRUSADER3, m_creature);break;
+                        case 3: DoScriptText(SAY_CRUSADER4, m_creature);break;
+                        case 4: DoScriptText(SAY_CRUSADER5, m_creature);break;
+                        case 5: DoScriptText(SAY_CRUSADER6, m_creature);break;
+                    }
+                }
+            }
+        }
+    }
+
+    void UpdateAI(const uint32 diff) 
+    {
+        if (uiSpeech_counter >= 1 && uiSpeech_counter <= 6)
+            if (uiSpeech_timer < diff)
+            {
+                m_creature->CombatStop(true);
+                m_creature->StopMoving();
+                Unit* pPlayer = Unit::GetUnit(*m_creature, uiPlayerGUID);
+
+                switch(uiSpeech_counter)
+                {
+                    case 1: DoScriptText(SAY_PERSUADED1, m_creature); uiSpeech_timer = 8000; uiSpeech_counter++; break;
+                    case 2: DoScriptText(SAY_PERSUADED2, m_creature); uiSpeech_timer = 8000; uiSpeech_counter++; break;
+                    case 3: DoScriptText(SAY_PERSUADED3, m_creature); uiSpeech_timer = 8000; uiSpeech_counter++; break;
+                    case 4: DoScriptText(SAY_PERSUADED4, m_creature); uiSpeech_timer = 8000; uiSpeech_counter++; break;
+                    case 5: DoScriptText(SAY_PERSUADED5, pPlayer); uiSpeech_timer = 8000; uiSpeech_counter++; break;
+                    case 6:
+                        DoScriptText(SAY_PERSUADED6, m_creature);
+                        m_creature->setFaction(uiCrusade_faction);
+                        //m_creature->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
+                        //m_creature->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
+                        uiSpeech_timer = 0;
+                        uiCrusade_faction = 0;
+                        uiSpeech_counter++;
+                        AttackStart(pPlayer);
+                        if(((Player*)pPlayer)->GetQuestStatus(12720) == QUEST_STATUS_INCOMPLETE)
+                            ((Player*)pPlayer)->AreaExploredOrEventHappens(12720);
+                        break;
+                }
+            }else uiSpeech_timer -= diff;
+        else
+            DoMeleeAttackIfReady();
+    }
+};
+
+struct MANGOS_DLL_DECL mob_high_inquisitor_valrothAI : public ScriptedAI
+{
+    mob_high_inquisitor_valrothAI(Creature *pCreature) : ScriptedAI(pCreature)
+    {
+        Reset();
+    }
+
+    uint32 uiRenew_timer;
+    uint32 uiInquisitor_Penance_timer;
+    uint32 uiValroth_Smite_timer;
+
+    void Reset()
+    {
+        uiRenew_timer = 1000;
+        uiInquisitor_Penance_timer = 2000;
+        uiValroth_Smite_timer = 1000;
+    }
+
+    void Aggro(Unit* who)
+    {
+        DoScriptText(SAY_VALROTH2, m_creature);
+        DoCast(who, SPELL_VALROTH_SMITE);
+    }
+
+    void UpdateAI(const uint32 diff)
+    {
+        if (uiRenew_timer < diff)
+        {
+            Shout();
+            DoCast(m_creature, SPELL_RENEW);
+            uiRenew_timer = 1000 + rand()%5000;
+        }else uiRenew_timer -= diff;
+
+        if (uiInquisitor_Penance_timer < diff)
+        {
+            Shout();
+            DoCast(m_creature->getVictim(), SPELL_INQUISITOR_PENANCE);
+            uiInquisitor_Penance_timer = 2000 + rand()%5000;
+        }else uiInquisitor_Penance_timer -= diff;
+
+        if (uiValroth_Smite_timer < diff)
+        {
+            Shout();
+            DoCast(m_creature->getVictim(), SPELL_VALROTH_SMITE);
+            uiValroth_Smite_timer = 1000 + rand()%5000;
+        }else uiValroth_Smite_timer -= diff;
+
+        DoMeleeAttackIfReady();
+    }
+
+    void Shout()
+    {
+        switch(rand()%20)
+        {
+            case 0: DoScriptText(SAY_VALROTH3, m_creature);break;
+            case 1: DoScriptText(SAY_VALROTH4, m_creature);break;
+            case 2: DoScriptText(SAY_VALROTH5, m_creature);break;
+        }
+    }
+
+    void JustDied(Unit* killer)
+    {
+        DoScriptText(SAY_VALROTH6, m_creature);
+        killer->CastSpell(m_creature, SPELL_SUMMON_VALROTH_REMAINS, true);
+    }
+};
+
+
+CreatureAI* GetAI_mob_dark_rider_of_acherus(Creature* pCreature)
+{
+    return new mob_dark_rider_of_acherusAI (pCreature);
+}
+
+CreatureAI* GetAI_mob_scarlet_miner(Creature* pCreature)
+{
+    return new mob_scarlet_minerAI (pCreature);
+}
+
+CreatureAI* GetAI_mob_scarlet_courier_controller(Creature* pCreature)
+{
+    return new mob_scarlet_courier_controllerAI (pCreature);
+}
+
+CreatureAI* GetAI_mob_scarlet_courier(Creature* pCreature)
+{
+    return new mob_scarlet_courierAI (pCreature);
+}
+
+CreatureAI* GetAI_mob_high_inquisitor_valroth(Creature* pCreature)
+{
+    return new mob_high_inquisitor_valrothAI (pCreature);
+}
+
+CreatureAI* GetAI_npc_crusade_persuaded(Creature* pCreature)
+{
+    return new npc_crusade_persuadedAI (pCreature);
+}
+
 void AddSC_ebon_hold()
 {
     Script *newscript;
@@ -1135,5 +1637,41 @@ void AddSC_ebon_hold()
     newscript = new Script;
     newscript->Name = "go_acherus_soul_prison";
     newscript->pGOHello = &GOHello_go_acherus_soul_prison;
+    newscript->RegisterSelf();
+
+    newscript = new Script;
+    newscript->Name = "npc_salanar_the_horseman";
+    newscript->pGossipHello =  &GossipHello_npc_salanar_the_horseman;
+    newscript->pGossipSelect = &GossipSelect_npc_salanar_the_horseman;
+    newscript->RegisterSelf();
+
+    newscript = new Script;
+    newscript->Name = "mob_dark_rider_of_acherus";
+    newscript->GetAI = &GetAI_mob_dark_rider_of_acherus;
+    newscript->RegisterSelf();
+
+    newscript = new Script;
+    newscript->Name = "mob_scarlet_miner";
+    newscript->GetAI = &GetAI_mob_scarlet_miner;
+    newscript->RegisterSelf();
+
+    newscript = new Script;
+    newscript->Name = "mob_scarlet_courier_controller";
+    newscript->GetAI = &GetAI_mob_scarlet_courier_controller;
+    newscript->RegisterSelf();
+
+    newscript = new Script;
+    newscript->Name = "mob_scarlet_courier";
+    newscript->GetAI = &GetAI_mob_scarlet_courier;
+    newscript->RegisterSelf();
+
+    newscript = new Script;
+    newscript->Name = "mob_high_inquisitor_valroth";
+    newscript->GetAI = &GetAI_mob_high_inquisitor_valroth;
+    newscript->RegisterSelf();
+
+    newscript = new Script;
+    newscript->Name = "npc_crusade_persuaded";
+    newscript->GetAI = &GetAI_npc_crusade_persuaded;
     newscript->RegisterSelf();
 }
