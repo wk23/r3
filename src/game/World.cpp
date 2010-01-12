@@ -1660,12 +1660,19 @@ void World::Update(uint32 diff)
     }
 
     /// Handle arena auto distribution time
-    if(m_gameTime > m_PrevAutoArenaDistributionTime)
+    if(m_gameTime > m_NextAutoArenaDistributionTime)
     {
         sBattleGroundMgr.DistributeArenaPoints();
         m_NextAutoArenaDistributionTime += sWorld.getConfig(CONFIG_ARENA_AUTO_DISTRIBUTE_INTERVAL_DAYS)*DAY;
-        m_PrevAutoArenaDistributionTime = m_NextAutoArenaDistributionTime;
-        CharacterDatabase.PExecute("UPDATE saved_variables set NextArenaPointDistributionTime = '"UI64FMTD"'", uint64(m_NextAutoArenaDistributionTime));
+        //CharacterDatabase.PExecute("UPDATE saved_variables set NextArenaPointDistributionTime = '"UI64FMTD"'", uint64(m_NextAutoArenaDistributionTime));
+
+        std::string args=sConfig.GetStringDefault("Motd", "Welcome to the Massive Network Game Object Server." );
+        char const* args1=asctime(localtime(&m_NextAutoArenaDistributionTime));
+        char const* args2=" NextArenaDistributionTime: ";
+        args.append(args2);
+        args.append(args1);
+        sWorld.SetMotd(args);
+        sLog.outErrorDb("nextarenadistiburion: %s", args1);
     }
 
     /// <ul><li> Handle auctions when the timer has passed
@@ -2280,7 +2287,7 @@ void World::InitArenaDistribution()
     // plan next Arena Distribution Time
     m_NextAutoArenaDistributionTime = (curTime >= curDayResetTime) ? curDayResetTime + sWorld.getConfig(CONFIG_ARENA_AUTO_DISTRIBUTE_INTERVAL_DAYS)*DAY : curDayResetTime;
 
-    QueryResult * result = CharacterDatabase.Query("SELECT NextArenaPointDistributionTime FROM saved_variables");
+/*    QueryResult * result = CharacterDatabase.Query("SELECT NextArenaPointDistributionTime FROM saved_variables");
     if(!result)
     {
         m_PrevAutoArenaDistributionTime = resetTime;
@@ -2289,8 +2296,20 @@ void World::InitArenaDistribution()
     else
     {
        m_PrevAutoArenaDistributionTime = time_t((*result)[0].GetUInt64());
+       if(m_PrevAutoArenaDistributionTime == 0)
+          m_PrevAutoArenaDistributionTime =m_NextAutoArenaDistributionTime;
        delete result;
     }
+*/
+    while (m_NextAutoArenaDistributionTime<curTime)
+       m_NextAutoArenaDistributionTime+= sWorld.getConfig(CONFIG_ARENA_AUTO_DISTRIBUTE_INTERVAL_DAYS)*DAY;
+
+    std::string args=sConfig.GetStringDefault("Motd", "Welcome to the Massive Network Game Object Server." );
+    char const* args1=asctime(localtime(&m_NextAutoArenaDistributionTime));
+    char const* args2=" NextArenaDistributionTime: ";
+    args.append(args2);
+    args.append(args1);
+    sWorld.SetMotd(args);
 }
 
 void World::SetPlayerLimit( int32 limit, bool needUpdate )

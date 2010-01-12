@@ -7480,6 +7480,7 @@ bool Unit::HandleProcTriggerSpell(Unit *pVictim, uint32 damage, Aura* triggeredB
             // Drain Soul
             else if (auraSpellInfo->SpellFamilyFlags & UI64LIT(0x0000000000004000))
             {
+/*
                 Unit::AuraList const& mAddFlatModifier = GetAurasByType(SPELL_AURA_ADD_FLAT_MODIFIER);
                 for(Unit::AuraList::const_iterator i = mAddFlatModifier.begin(); i != mAddFlatModifier.end(); ++i)
                 {
@@ -7490,6 +7491,12 @@ bool Unit::HandleProcTriggerSpell(Unit *pVictim, uint32 damage, Aura* triggeredB
                         break;
                     }
                 }
+*/
+                if(HasSpell(18213))
+                   basepoints[0] = 7 * GetMaxPower(POWER_MANA) / 100;
+                else if(HasSpell(18372))
+                   basepoints[0] = 15 * GetMaxPower(POWER_MANA) / 100;
+                CastCustomSpell(this, 18371, &basepoints[0], NULL, NULL, true, castItem, triggeredByAura);
                 // Not remove charge (aura removed on death in any cases)
                 // Need for correct work Drain Soul SPELL_AURA_CHANNEL_DEATH_ITEM aura
                 return false;
@@ -7687,7 +7694,7 @@ bool Unit::HandleProcTriggerSpell(Unit *pVictim, uint32 damage, Aura* triggeredB
 
                 Aura * dummy = GetDummyAura(37658);
                 // release at 3 aura in stack (cont contain in basepoint of trigger aura)
-                if(!dummy || dummy->GetStackAmount() < triggerAmount)
+                if(!dummy || dummy->GetStackAmount() < 3)
                     return false;
 
                 RemoveAurasDueToSpell(37658);

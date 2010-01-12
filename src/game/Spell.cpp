@@ -496,6 +496,7 @@ void Spell::FillTargetMap()
         // for TARGET_FOCUS_OR_SCRIPTED_GAMEOBJECT (A) all is checked in Spell::CheckCast and in Spell::CheckItem
         // filled in Spell::CheckCast call
         if(m_spellInfo->EffectImplicitTargetA[i] == TARGET_SCRIPT_COORDINATES ||
+            m_spellInfo->Id ==33655 || 
            m_spellInfo->EffectImplicitTargetA[i] == TARGET_SCRIPT ||
            m_spellInfo->EffectImplicitTargetA[i] == TARGET_FOCUS_OR_SCRIPTED_GAMEOBJECT ||
            (m_spellInfo->EffectImplicitTargetB[i] == TARGET_SCRIPT && m_spellInfo->EffectImplicitTargetA[i] != TARGET_SELF))
@@ -1326,6 +1327,14 @@ void Spell::SetTargetMap(uint32 effIndex,uint32 targetMode,UnitList& TagUnitMap)
 
     // Get spell max affected targets
     uint32 unMaxTargets = m_spellInfo->MaxAffectedTargets;
+
+    if (m_spellInfo->Id == 33655)
+        {
+            if(m_targets.getUnitTarget())
+                TagUnitMap.push_back(m_targets.getUnitTarget());
+            if(m_targets.getItemTarget())
+                AddItemTarget(m_targets.getItemTarget(), effIndex);
+        }
 
     // custom target amount cases
     switch(m_spellInfo->SpellFamilyName)
@@ -4280,6 +4289,8 @@ SpellCastResult Spell::CheckCast(bool strict)
         {
             if(m_spellInfo->EffectImplicitTargetA[j] == TARGET_SCRIPT ||
                (m_spellInfo->EffectImplicitTargetB[j] == TARGET_SCRIPT && m_spellInfo->EffectImplicitTargetA[j] != TARGET_SELF) ||
+                (m_spellInfo->Id == 33655 && j == 0)  ||
+                (m_spellInfo->Id == 38439 && j == 1) ||
                m_spellInfo->EffectImplicitTargetA[j] == TARGET_SCRIPT_COORDINATES ||
                m_spellInfo->EffectImplicitTargetB[j] == TARGET_SCRIPT_COORDINATES ||
                m_spellInfo->EffectImplicitTargetA[j] == TARGET_FOCUS_OR_SCRIPTED_GAMEOBJECT)
@@ -5994,6 +6005,7 @@ bool Spell::CheckTarget( Unit* target, uint32 eff )
         // unselectable targets skipped in all cases except TARGET_SCRIPT targeting
         // in case TARGET_SCRIPT target selected by server always and can't be cheated
         if( target->HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE) &&
+            m_spellInfo->Id != 33655 &&
             m_spellInfo->EffectImplicitTargetA[eff] != TARGET_SCRIPT &&
             m_spellInfo->EffectImplicitTargetB[eff] != TARGET_SCRIPT &&
             m_spellInfo->EffectImplicitTargetA[eff] != TARGET_MASTER )

@@ -721,6 +721,26 @@ void Spell::EffectDummy(uint32 i)
         {
             switch(m_spellInfo->Id )
             {
+                // 45109 Orb of Murloc Control
+                case 45109:
+                {
+                    if (m_caster->GetTypeId() != TYPEID_PLAYER)
+                        return;
+                    Creature* target;
+                    target = (Creature*)unitTarget->SelectNearbyTarget(m_caster);
+                    if(!target)
+                        return;
+                    if (target->GetEntry() != 25084)
+                        return;
+                    m_caster->CastSpell(m_caster,45110,true,NULL);
+                    float x = target->GetPositionX();
+                    float y = target->GetPositionY();
+                    float z = target->GetPositionZ();
+                    float o = target->GetOrientation();
+                    target->ForcedDespawn();
+                    Creature* pCreature = m_caster->SummonCreature(25085, x, y, z, o,TEMPSUMMON_TIMED_OR_DEAD_DESPAWN,180000);
+                    return;
+                }
                 case 8063:                                  // Deviate Fish
                 {
                     if (m_caster->GetTypeId() != TYPEID_PLAYER)
@@ -3455,10 +3475,16 @@ void Spell::EffectSummonType(uint32 i)
         sLog.outError("EffectSummonType: Unhandled summon type %u", prop_id);
         return;
     }
-
+sLog.outError("summon group type %u;prop_id %u,summon_prop->Type %u,m_spellInfo->Id %u", summon_prop->Group,prop_id,summon_prop->Type,m_spellInfo->Id);
     if (prop_id == 208 || m_spellInfo->SpellIconID == 3184)
     {
         EffectSummonGuardian(i);
+        return;
+     }
+
+    if (prop_id == 607)
+    {
+        EffectSummonVehicle(i);
         return;
      }
 
@@ -3767,6 +3793,9 @@ void Spell::EffectDispel(uint32 i)
                 SpellEntry const* spellInfo = sSpellStore.LookupEntry(j->first);
                 data << uint32(spellInfo->Id);              // Spell Id
                 data << uint8(0);                           // 0 - dispeled !=0 cleansed
+               if (spellInfo->Dispel == DISPEL_POISON && spellInfo->StackAmount)
+                   unitTarget->RemoveSingleAuraFromStack(spellInfo->Id, 0);
+               else
                 unitTarget->RemoveSingleAuraDueToSpellByDispel(spellInfo->Id, j->second, m_caster);
             }
             m_caster->SendMessageToSet(&data, true);
@@ -7245,9 +7274,11 @@ void Spell::EffectRenamePet(uint32 /*eff_idx*/)
 
 void Spell::EffectSummonVehicle(uint32 i)
 {
+
     uint32 creature_entry = m_spellInfo->EffectMiscValue[i];
     if(!creature_entry)
         return;
+sLog.outError("creature_entry %u", creature_entry);
 
     float px, py, pz;
     // If dest location if present

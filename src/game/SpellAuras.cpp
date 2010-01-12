@@ -4649,26 +4649,19 @@ void Aura::HandleModMechanicImmunity(bool apply, bool /*Real*/)
                 ((Player*)m_target)->TeleportTo(obj->GetMapId(),obj->GetPositionX(),obj->GetPositionY(),obj->GetPositionZ(),obj->GetOrientation());
         }
     }
-
     // Bestial Wrath
     if (GetSpellProto()->SpellFamilyName == SPELLFAMILY_HUNTER && GetSpellProto()->SpellIconID == 1680)
     {
         // The Beast Within cast on owner if talent present
         if (Unit* owner = m_target->GetOwner())
         {
-            // Search talent
-            Unit::AuraList const& dummyAuras = owner->GetAurasByType(SPELL_AURA_DUMMY);
-            for(Unit::AuraList::const_iterator i = dummyAuras.begin(); i != dummyAuras.end(); ++i)
-            {
-                if ((*i)->GetSpellProto()->SpellIconID == 2229)
+            if(owner->HasSpell(34692))
                 {
                     if (apply)
                         owner->CastSpell(owner, 34471, true, 0, this);
                     else
                         owner->RemoveAurasDueToSpell(34471);
-                    break;
                 }
-            }
         }
     }
     // Heroic Fury
@@ -4829,6 +4822,40 @@ void Aura::HandlePeriodicTriggerSpell(bool apply, bool /*Real*/)
 {
     m_isPeriodic = apply;
 
+        switch(m_spellProto->Id)
+        {
+            case 35460:                                     // Staff of the Dreghood Elders
+            {
+                    if(!m_target)
+                        return;
+
+                    Creature* target = (Creature*)m_target->getVictim();
+                    if(!target)
+                        return;
+
+                    Unit* caster = GetCaster();
+                    if(!caster)
+                        return;
+
+                    float x = target->GetPositionX();
+                    float y = target->GetPositionY();
+                    float z = target->GetPositionZ();
+                    float o = target->GetOrientation();
+
+                    target->ForcedDespawn();
+
+                    Creature* pCreature = caster->SummonCreature(20680, x, y, z, o,TEMPSUMMON_TIMED_OR_DEAD_DESPAWN,180000);
+                    if (!pCreature)
+                        return;
+
+                    if(pCreature->AI())
+                        pCreature->AI()->AttackStart(caster);
+
+                return;
+            }
+            default:
+                break;
+        }
     if (!apply)
     {
         switch(m_spellProto->Id)
