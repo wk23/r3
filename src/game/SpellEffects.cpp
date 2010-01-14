@@ -742,6 +742,13 @@ void Spell::EffectDummy(uint32 i)
                     Creature* pCreature = m_caster->SummonCreature(25085, x, y, z, o,TEMPSUMMON_TIMED_OR_DEAD_DESPAWN,180000);
                     return;
                 }
+                case 42793:                                  // Burn Body
+                {
+                    if (m_caster->GetTypeId() != TYPEID_PLAYER)
+                        return;
+                    m_caster->CastSpell(m_caster, 43297, true, NULL);
+                    return;
+                }
                 case 8063:                                  // Deviate Fish
                 {
                     if (m_caster->GetTypeId() != TYPEID_PLAYER)
