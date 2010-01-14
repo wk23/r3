@@ -5213,6 +5213,24 @@ void Spell::EffectScriptEffect(uint32 effIndex)
                     unitTarget->HandleEmoteCommand(EMOTE_STATE_DANCE);
                     return;
                 }
+                // Surge Needle Teleporter
+                case 47097:
+                {
+                    if(!unitTarget)
+                        return;
+
+                    if (unitTarget->GetTypeId() == TYPEID_PLAYER) 
+                    {
+                    if (((Player*)unitTarget)->GetQuestStatus(12060) == QUEST_STATUS_INCOMPLETE || ((Player*)unitTarget)->GetQuestStatus(12061) == QUEST_STATUS_INCOMPLETE)
+                       {
+                       unitTarget->CastSpell(unitTarget, 47324, false);
+                       ((Player*)unitTarget)->KilledMonsterCredit(27853, 0);
+                       }
+                    else
+                        unitTarget->CastSpell(unitTarget, 47325, false);
+                    }
+                    return;
+                }
                 // Demonic Empowerment (succubus Vanish effect)
                 case 54436:
                 {
@@ -7296,7 +7314,7 @@ sLog.outError("creature_entry %u", creature_entry);
     Vehicle *v = m_caster->SummonVehicle(creature_entry, px, py, pz, m_caster->GetOrientation());
     if(!v)
         return;
-
+sLog.outError("m_spellInfo->Id %u", m_spellInfo->Id);
     v->SetUInt32Value(UNIT_CREATED_BY_SPELL, m_spellInfo->Id);
     v->SetCreatorGUID(m_caster->GetGUID());
 
