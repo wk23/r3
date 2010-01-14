@@ -23,6 +23,7 @@
 #include "Log.h"
 #include "UpdateMask.h"
 #include "World.h"
+#include "GridNotifiers.h"
 #include "ObjectMgr.h"
 #include "SpellMgr.h"
 #include "Player.h"
@@ -3475,7 +3476,7 @@ void Spell::EffectSummonType(uint32 i)
         sLog.outError("EffectSummonType: Unhandled summon type %u", prop_id);
         return;
     }
-sLog.outError("summon group type %u;prop_id %u,summon_prop->Type %u,m_spellInfo->Id %u", summon_prop->Group,prop_id,summon_prop->Type,m_spellInfo->Id);
+
     if (prop_id == 208 || m_spellInfo->SpellIconID == 3184)
     {
         EffectSummonGuardian(i);
@@ -3487,6 +3488,32 @@ sLog.outError("summon group type %u;prop_id %u,summon_prop->Type %u,m_spellInfo-
         EffectSummonVehicle(i);
         return;
      }
+
+    if (m_spellInfo->Id == 45503)
+    {
+        Creature *p_Creature = NULL;
+
+        CellPair p(MaNGOS::ComputeCellPair(m_caster->GetPositionX(), m_caster->GetPositionY()));
+        Cell cell(p);
+        cell.data.Part.reserved = ALL_DISTRICT;
+        cell.SetNoCreate();             // Really don't know what is that???
+
+        for(int i = 0; i < 4; ++i)
+        {
+        MaNGOS::NearestCreatureEntryWithLiveStateInObjectRangeCheck u_check(*m_caster,25402+i,true,5);
+        MaNGOS::CreatureLastSearcher<MaNGOS::NearestCreatureEntryWithLiveStateInObjectRangeCheck> searcher(m_caster, p_Creature, u_check);
+        TypeContainerVisitor<MaNGOS::CreatureLastSearcher<MaNGOS::NearestCreatureEntryWithLiveStateInObjectRangeCheck>, GridTypeMapContainer >  grid_creature_searcher(searcher);
+        CellLock<GridReadGuard> cell_lock(cell, p);
+        cell_lock->Visit(cell_lock, grid_creature_searcher, *m_caster->GetMap(), *m_caster, 5);
+
+        if (p_Creature)
+        if (m_caster->GetTypeId() == TYPEID_PLAYER)
+        {
+            ((Player*)m_caster)->KilledMonsterCredit(25402+i, 0);
+            p_Creature = NULL;
+        }
+        }
+    }
 
     switch(summon_prop->Group)
     {
@@ -7314,7 +7341,7 @@ sLog.outError("creature_entry %u", creature_entry);
     Vehicle *v = m_caster->SummonVehicle(creature_entry, px, py, pz, m_caster->GetOrientation());
     if(!v)
         return;
-sLog.outError("m_spellInfo->Id %u", m_spellInfo->Id);
+
     v->SetUInt32Value(UNIT_CREATED_BY_SPELL, m_spellInfo->Id);
     v->SetCreatorGUID(m_caster->GetGUID());
 
