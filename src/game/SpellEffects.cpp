@@ -3743,7 +3743,11 @@ void Spell::EffectDispel(uint32 i)
 {
     if (!unitTarget)
         return;
-
+    if(m_originalCaster && m_spellInfo->Id == m_spellInfo->Id)
+    switch (unitTarget->GetEntry()) {
+    case  26615: m_originalCaster->CastSpell(m_originalCaster, 47664, false); break;
+    case  26482: m_originalCaster->CastSpell(m_originalCaster, 47665, false); break;
+    default: break; }
     // Fill possible dispell list
     std::vector <Aura *> dispel_list;
 
@@ -5434,7 +5438,7 @@ void Spell::EffectScriptEffect(uint32 effIndex)
                 {
                 	if(m_caster->GetTypeId() != TYPEID_PLAYER)
                 		return;
-                	m_caster->CastSpell(m_caster,50250,true);
+                	m_caster->CastSpell(m_caster,50250,false);
                 	break;
                 }
                 // Emblazon Runeblade
