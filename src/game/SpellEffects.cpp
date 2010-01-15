@@ -24,6 +24,8 @@
 #include "UpdateMask.h"
 #include "World.h"
 #include "GridNotifiers.h"
+#include "CellImpl.h"
+#include "GridNotifiersImpl.h"
 #include "ObjectMgr.h"
 #include "SpellMgr.h"
 #include "Player.h"
@@ -3507,11 +3509,12 @@ void Spell::EffectSummonType(uint32 i)
 
         for(int i = 0; i < 4; ++i)
         {
-        MaNGOS::NearestCreatureEntryWithLiveStateInObjectRangeCheck u_check(*m_caster,25402+i,true,5);
+        float radius = 5;
+        MaNGOS::NearestCreatureEntryWithLiveStateInObjectRangeCheck u_check(*m_caster,25402+i,true, radius);
         MaNGOS::CreatureLastSearcher<MaNGOS::NearestCreatureEntryWithLiveStateInObjectRangeCheck> searcher(m_caster, p_Creature, u_check);
         TypeContainerVisitor<MaNGOS::CreatureLastSearcher<MaNGOS::NearestCreatureEntryWithLiveStateInObjectRangeCheck>, GridTypeMapContainer >  grid_creature_searcher(searcher);
         CellLock<GridReadGuard> cell_lock(cell, p);
-        cell_lock->Visit(cell_lock, grid_creature_searcher, *m_caster->GetMap(), *m_caster, 5);
+        cell_lock->Visit(cell_lock, grid_creature_searcher, *m_caster->GetMap(), *m_caster, radius);
 
         if (p_Creature)
         if (m_caster->GetTypeId() == TYPEID_PLAYER)
