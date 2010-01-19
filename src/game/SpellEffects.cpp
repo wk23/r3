@@ -24,6 +24,8 @@
 #include "UpdateMask.h"
 #include "World.h"
 #include "GridNotifiers.h"
+#include "CellImpl.h"
+#include "GridNotifiersImpl.h"
 #include "ObjectMgr.h"
 #include "SpellMgr.h"
 #include "Player.h"
