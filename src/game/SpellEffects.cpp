@@ -1466,6 +1466,7 @@ void Spell::EffectDummy(uint32 i)
                             break;
                         }
                     }
+                    m_caster->RemoveAurasDueToSpell(52437);
                 }
 
                 m_caster->SetPower(POWER_RAGE,m_caster->GetPower(POWER_RAGE)-rage);

@@ -7436,8 +7436,12 @@ bool Unit::HandleProcTriggerSpell(Unit *pVictim, uint32 damage, Aura* triggeredB
                     case 12867: basepoints[0] = int32(weaponDamage * 48 / 100); break;
                     // Impossible case
                     default:
+                        sLog.outError("Unit::HandleProcTriggerSpell: DW unknown spell rank %u",auraSpellInfo->Id);
                         return false;
                 }
+
+                // 1 tick/sec * 6 sec = 6 ticks
+                basepoints[0] /= 6;
 
                 trigger_spell_id = 12721;
                 break;
