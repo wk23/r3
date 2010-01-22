@@ -6078,9 +6078,37 @@ void Spell::EffectStuck(uint32 /*i*/)
     if(pTarget->isInFlight())
         return;
 
+    WorldSafeLocsEntry const *ClosestGrave = NULL;
+
+    // Special handle for battleground maps
+    if( BattleGround *bg = pTarget->GetBattleGround() )
+        ClosestGrave = bg->GetClosestGraveYard(pTarget);
+    else
+        ClosestGrave = sObjectMgr.GetClosestGraveYard( pTarget->GetPositionX(), pTarget->GetPositionY(), pTarget->GetPositionZ(), pTarget->GetMapId(), pTarget->GetTeam() );
+
+    // if no grave found, stay at the current location
+    // and don't show spirit healer location
+    if(ClosestGrave)
+    {
+        pTarget->TeleportTo(ClosestGrave->map_id, ClosestGrave->x, ClosestGrave->y, ClosestGrave->z, pTarget->GetOrientation());
+        if(pTarget->isDead())                                        // not send if alive, because it used in TeleportTo()
+        {
+            WorldPacket data(SMSG_DEATH_RELEASE_LOC, 4*4);  // show spirit healer position on minimap
+            data << ClosestGrave->map_id;
+            data << ClosestGrave->x;
+            data << ClosestGrave->y;
+            data << ClosestGrave->z;
+            pTarget->GetSession()->SendPacket(&data);
+        }
+    }
+    else if(pTarget->GetPositionZ() < -500.0f)
+        pTarget->TeleportToHomebind(unitTarget==m_caster ? TELE_TO_SPELL : 0);
+
+/*
     // homebind location is loaded always
     pTarget->TeleportToHomebind(unitTarget==m_caster ? TELE_TO_SPELL : 0);
 
+*/
     // Stuck spell trigger Hearthstone cooldown
     SpellEntry const *spellInfo = sSpellStore.LookupEntry(8690);
     if(!spellInfo)
