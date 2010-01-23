@@ -4123,15 +4123,15 @@ void Spell::EffectSummonGuardian(uint32 i, uint32 forceFaction)
 
                 spawnCreature->CastSpell(spawnCreature, 45204, true, NULL, NULL, m_caster->GetGUID());
                 spawnCreature->CastSpell(spawnCreature, 58836, true, NULL, NULL, m_caster->GetGUID());
-                if (spawnCreature->addSpell(31622)) //frost bolt
+                if (spawnCreature->addSpell(59638)) //frost bolt
                 {
-                        spawnCreature->AddCreatureSpellCooldown(31622);
-                        spawnCreature->ToggleAutocast(31622, true);
+                        spawnCreature->AddCreatureSpellCooldown(59638);
+                        spawnCreature->ToggleAutocast(59638, true);
                 }
-                if (spawnCreature->addSpell(36339)) //Fire Blast
+                if (spawnCreature->addSpell(59637)) //Fire Blast
                 {
-                        spawnCreature->AddCreatureSpellCooldown(36339);
-                        spawnCreature->ToggleAutocast(36339, true);
+                        spawnCreature->AddCreatureSpellCooldown(59637);
+                        spawnCreature->ToggleAutocast(59637, true);
                 }
         }
 
