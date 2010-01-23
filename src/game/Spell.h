@@ -329,6 +329,7 @@ class Spell
         void EffectSummonVehicle(uint32 i);
         void EffectDamageBuilding(uint32 i);
         void EffectPlayMusic(uint32 i);
+        void EffectCastButtons(uint32 i);
         void EffectSpecCount(uint32 i);
         void EffectActivateSpec(uint32 i);
        void EffectPhantasm(uint32 i);
