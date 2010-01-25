@@ -20593,7 +20593,7 @@ void Player::SendEnterVehicle(Vehicle *vehicle)
     data.append(vehicle->GetPackGUID());
     GetSession()->SendPacket(&data);
 
-    SetPosition(vehicle->GetPositionX(), vehicle->GetPositionY(), vehicle->GetPositionZ(),vehicle->GetOrientation());
+    //SetPosition(vehicle->GetPositionX(), vehicle->GetPositionY(), vehicle->GetPositionZ(),vehicle->GetOrientation());
 
     /*data.Initialize(SMSG_UNKNOWN_1191, 12);
     data << uint64(GetGUID());
