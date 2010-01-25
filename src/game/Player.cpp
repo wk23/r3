@@ -1653,7 +1653,7 @@ bool Player::TeleportTo(uint32 mapid, float x, float y, float z, float orientati
         return false;
     }
     //movement anticheat
-    m_anti_JustTeleported = 0;
+    m_anti_JustTeleported = 1;
     //end movement anticheat
     // preparing unsummon pet if lost (we must get pet before teleportation or will not find it later)
     Pet* pet = GetPet();

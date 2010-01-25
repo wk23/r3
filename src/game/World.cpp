@@ -79,6 +79,7 @@ float World::m_MaxVisibleDistanceInFlight     = DEFAULT_VISIBILITY_DISTANCE;
 float World::m_VisibleUnitGreyDistance        = 0;
 float World::m_VisibleObjectGreyDistance      = 0;
 
+
 //movement anticheat
 bool World::m_EnableMvAnticheat = true;
 uint32  World::m_TeleportToPlaneAlarms = 50;
