@@ -7449,13 +7449,8 @@ void Spell::EffectCastButtons(uint32 i)
         if (!spell_id)
             continue;
         p_caster->CastSpell(unitTarget, spell_id, true);
-
-        SpellEntry const *spellInfo = sSpellStore.LookupEntry(spell_id);
-        if (!spellInfo)
-           continue;
-        Spell spell(unitTarget, spellInfo, true, 0);
-        spell.SendSpellCooldown();
     }
+    p_caster->AddSpellCooldown(m_spellInfo->Id,0,time(NULL)+1);
 }
 
 void Spell::EffectSpecCount(uint32 /*eff_idx*/)
