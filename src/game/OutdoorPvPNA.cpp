@@ -135,8 +135,8 @@ void OutdoorPvPObjectiveNA::SpawnNPCsForTeam(uint32 team)
         creatures=HordeControlNPCs;
     else
         return;
-    for(int i = 0; i < NA_CONTROL_NPC_NUM; ++i)
-        AddCreature(i,creatures[i].entry,creatures[i].teamval,creatures[i].map,creatures[i].x,creatures[i].y,creatures[i].z,creatures[i].o,1000000);
+    //for(int i = 0; i < NA_CONTROL_NPC_NUM; ++i)
+        //AddCreature(i,creatures[i].entry,creatures[i].teamval,creatures[i].map,creatures[i].x,creatures[i].y,creatures[i].z,creatures[i].o,1000000);
 }
 
 void OutdoorPvPObjectiveNA::DeSpawnNPCs()

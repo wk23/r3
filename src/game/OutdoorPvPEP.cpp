@@ -191,11 +191,11 @@ void OutdoorPvPObjectiveEP_EWT::SummonSupportUnitAtNorthpassTower(uint32 team)
     else
         ct=EP_EWT_Summons_H;
 
-    for(int i = 0; i < EP_EWT_NUM_CREATURES; ++i)
+    /*for(int i = 0; i < EP_EWT_NUM_CREATURES; ++i)
     {
         DelCreature(i);
         AddCreature(i,ct[i].entry,ct[i].teamval,ct[i].map,ct[i].x,ct[i].y,ct[i].z,ct[i].o,1000000);
-    }
+    }*/
 }
 
 // NPT
