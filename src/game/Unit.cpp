@@ -949,7 +949,18 @@ uint32 Unit::DealDamage(Unit *pVictim, uint32 damage, CleanDamage const* cleanDa
     SpellEntry const *auraSpellInfo = sSpellStore.LookupEntry(48266);
     DealHeal(this, addhealth_bp, auraSpellInfo);
     }
-
+    //Improved Blood Presence r.1
+    else if (HasSpell(50365)) {
+    SpellEntry const *auraSpellInfo = sSpellStore.LookupEntry(50365);
+    uint32 addhealth_bp=(uint32)(damage*auraSpellInfo->EffectBasePoints[0]/100);
+    DealHeal(this, addhealth_bp, auraSpellInfo);
+    }
+    //Improved Blood Presence r.2
+    else if (HasSpell(50371)) {
+    SpellEntry const *auraSpellInfo = sSpellStore.LookupEntry(50371);
+    uint32 addhealth_bp=(uint32)(damage*auraSpellInfo->EffectBasePoints[0]/100);
+    DealHeal(this, addhealth_bp, auraSpellInfo);
+    }
     return damage;
 }
 
@@ -8892,6 +8903,19 @@ void Unit::UnsummonAllTotems()
 
 int32 Unit::DealHeal(Unit *pVictim, uint32 addhealth, SpellEntry const *spellProto, bool critical)
 {
+    //Blood Presence
+    if (pVictim->HasAura(48266)) {
+    //Improved Blood Presence r.1
+    if (pVictim->HasSpell(50365)) {
+    SpellEntry const *auraSpellInfo = sSpellStore.LookupEntry(50365);
+    addhealth += addhealth*auraSpellInfo->EffectBasePoints[1]/100;
+    }
+    //Improved Blood Presence r.2
+    else if (pVictim->HasSpell(50371)) {
+    SpellEntry const *auraSpellInfo = sSpellStore.LookupEntry(50371);
+    addhealth += addhealth*auraSpellInfo->EffectBasePoints[1]/100;
+    }
+    }
     int32 gain = pVictim->ModifyHealth(int32(addhealth));
 
     Unit* unit = this;
