@@ -2879,7 +2879,17 @@ SpellMissInfo Unit::SpellHitResult(Unit *pVictim, SpellEntry const *spell, bool 
 
     // Check for immune
     if (pVictim->IsImmunedToDamage(GetSpellSchoolMask(spell)))
-        return SPELL_MISS_IMMUNE;
+        {
+            //Shattering Throw
+            {
+                // remove immunity effects
+                pVictim->RemoveAurasDueToSpell(642); // Divine Shield
+                pVictim->RemoveAurasDueToSpell(1022); // Hand of Protection rank 1
+                pVictim->RemoveAurasDueToSpell(5599); // Hand of Protection rank 2
+                pVictim->RemoveAurasDueToSpell(10278); // Hand of Protection rank 3
+                pVictim->RemoveAurasDueToSpell(45438); // Ice Block
+            }
+        }
 
     // Try victim reflect spell
     if (canReflect)
