@@ -1352,6 +1352,15 @@ void Spell::EffectDummy(uint32 i)
                         return;
                     m_caster->CastSpell(unitTarget,60934,true,NULL);
                     return;
+                case 62990:                                 // Chop Tree 
+                    if (!unitTarget)
+                        return;
+                    if (unitTarget->isAlive())
+                    {
+                        unitTarget->CastSpell(m_caster, 62855, true, NULL);
+                        m_caster->DealDamage(unitTarget, unitTarget->GetHealth(), NULL, DIRECT_DAMAGE, SPELL_SCHOOL_MASK_NORMAL, NULL, false);
+                    }
+                return;
                 case 67019:                                 // Flask of the North
                 {
                     if (m_caster->GetTypeId() != TYPEID_PLAYER)
