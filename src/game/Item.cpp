@@ -774,7 +774,11 @@ bool Item::IsFitToSpellRequirements(SpellEntry const* spellInfo) const
     if(spellInfo->EquippedItemInventoryTypeMask != 0)       // 0 == any inventory type
     {
         if((spellInfo->EquippedItemInventoryTypeMask  & (1 << proto->InventoryType)) == 0)
-            return false;                                   // inventory type not present in mask
+        {
+            // check for one-handed weapons in the left hand
+            if (!((spellInfo->EquippedItemInventoryTypeMask & (1 << INVTYPE_WEAPONOFFHAND)) && m_slot == EQUIPMENT_SLOT_OFFHAND))
+                return false;                                   // inventory type not present in mask
+        }
     }
 
     return true;
