@@ -396,7 +396,12 @@ void Spell::EffectSchoolDMG(uint32 effect_idx)
                 }
                 // Shield Slam
                 else if ((m_spellInfo->SpellFamilyFlags & UI64LIT(0x0000020000000000)) && m_spellInfo->Category==1209)
+                {
                     damage += int32(m_caster->GetShieldBlockValue());
+                    // Glyph of Blocking
+                    if (m_caster->HasAura(58375))
+                       m_caster->CastSpell(m_caster, 58374, true);
+                }
                 // Victory Rush
                 else if (m_spellInfo->SpellFamilyFlags & UI64LIT(0x10000000000))
                 {
