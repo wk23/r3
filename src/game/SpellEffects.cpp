@@ -4903,6 +4903,19 @@ void Spell::EffectWeaponDmg(uint32 i)
             }
             break;
         }
+        case SPELLFAMILY_HUNTER:
+        {
+            if (m_spellInfo->SpellIconID == 3676)
+            {
+                spellBonusNeedWeaponDamagePercentMod = true;
+
+                spell_bonus += m_spellInfo->EffectBasePoints[0];
+
+                spell_bonus += int32( 0.2f * m_caster->GetTotalAttackPowerValue(RANGED_ATTACK) );
+                break;
+            }
+
+          }
         case SPELLFAMILY_SHAMAN:
         {
             // Skyshatter Harness item set bonus
