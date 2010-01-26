@@ -530,7 +530,7 @@ namespace MaNGOS
             bool operator()(Creature* u)
             {
                 if (i_funit->GetTypeId()!=TYPEID_PLAYER || !((Player*)i_funit)->isHonorOrXPTarget(u) ||
-                    u->getDeathState() != CORPSE || u->isDeadByDefault() || u->isInFlight() ||
+                    (u->getDeathState()!=CORPSE && u->getDeathState()!=GHOULED) || u->isDeadByDefault() || u->isInFlight() ||
                     ( u->GetCreatureTypeMask() & (1 << (CREATURE_TYPE_HUMANOID-1)) )==0 ||
                     (u->GetDisplayId() != u->GetNativeDisplayId()))
                     return false;
