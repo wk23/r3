@@ -1478,6 +1478,7 @@ struct MANGOS_DLL_DECL npc_crusade_persuadedAI : public ScriptedAI
                 m_creature->StopMoving();
                 Unit* pPlayer = Unit::GetUnit(*m_creature, uiPlayerGUID);
 
+                if(pPlayer)
                 switch(uiSpeech_counter)
                 {
                     case 1: DoScriptText(SAY_PERSUADED1, m_creature); uiSpeech_timer = 8000; uiSpeech_counter++; break;
