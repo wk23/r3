@@ -2286,9 +2286,21 @@ void World::InitArenaDistribution()
     time_t resetTime = (curTime < curDayResetTime) ? curDayResetTime - sWorld.getConfig(CONFIG_ARENA_AUTO_DISTRIBUTE_INTERVAL_DAYS)*DAY : curDayResetTime;
 
     // plan next Arena Distribution Time
-    m_NextAutoArenaDistributionTime = (curTime >= curDayResetTime) ? curDayResetTime + sWorld.getConfig(CONFIG_ARENA_AUTO_DISTRIBUTE_INTERVAL_DAYS)*DAY : curDayResetTime;
+    m_NextAutoArenaDistributionTime = resetTime;
 
-/*    QueryResult * result = CharacterDatabase.Query("SELECT NextArenaPointDistributionTime FROM saved_variables");
+    while (m_NextAutoArenaDistributionTime<curTime)
+       m_NextAutoArenaDistributionTime+= sWorld.getConfig(CONFIG_ARENA_AUTO_DISTRIBUTE_INTERVAL_DAYS)*DAY;
+
+    std::string args=sConfig.GetStringDefault("Motd", "Welcome to the Massive Network Game Object Server." );
+    char const* args1=asctime(localtime(&m_NextAutoArenaDistributionTime));
+    char const* args2=" NextArenaDistributionTime: ";
+    args.append(args2);
+    args.append(args1);
+    sWorld.SetMotd(args);
+/*
+    //m_NextAutoArenaDistributionTime = (curTime >= curDayResetTime) ? curDayResetTime + sWorld.getConfig(CONFIG_ARENA_AUTO_DISTRIBUTE_INTERVAL_DAYS)*DAY : curDayResetTime;
+
+    QueryResult * result = CharacterDatabase.Query("SELECT NextArenaPointDistributionTime FROM saved_variables");
     if(!result)
     {
         m_PrevAutoArenaDistributionTime = resetTime;
@@ -2302,15 +2314,6 @@ void World::InitArenaDistribution()
        delete result;
     }
 */
-    while (m_NextAutoArenaDistributionTime<curTime)
-       m_NextAutoArenaDistributionTime+= sWorld.getConfig(CONFIG_ARENA_AUTO_DISTRIBUTE_INTERVAL_DAYS)*DAY;
-
-    std::string args=sConfig.GetStringDefault("Motd", "Welcome to the Massive Network Game Object Server." );
-    char const* args1=asctime(localtime(&m_NextAutoArenaDistributionTime));
-    char const* args2=" NextArenaDistributionTime: ";
-    args.append(args2);
-    args.append(args1);
-    sWorld.SetMotd(args);
 }
 
 void World::SetPlayerLimit( int32 limit, bool needUpdate )
