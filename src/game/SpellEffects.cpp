@@ -7583,13 +7583,14 @@ void Spell::EffectCastButtons(uint32 i)
         uint32 spell_id = p_caster->GetActionButtonSpell(button_id);
         if (!spell_id)
             continue;
-        p_caster->CastSpell(unitTarget, spell_id, true);
+        if (!(p_caster->HasSpellCooldown(spell_id)))
+           p_caster->CastSpell(unitTarget, spell_id, true);
 
-        SpellEntry const *spellInfo = sSpellStore.LookupEntry(spell_id);
+/*        SpellEntry const *spellInfo = sSpellStore.LookupEntry(spell_id);
         if (!spellInfo)
            continue;
         Spell spell(unitTarget, spellInfo, true, 0);
-        spell.SendSpellCooldown();
+        spell.SendSpellCooldown();*/
     }
 }
 
