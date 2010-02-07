@@ -6121,12 +6121,12 @@ void Player::RewardReputation(Unit *pVictim, float rate)
     // aura 57818 is a hidden aura common to northrend tabards allowing championning.
     if(HasAura(57818))
     {
-        InstanceTemplate const* mInstance = objmgr.GetInstanceTemplate(pVictim->GetMapId());
+        InstanceTemplate const* mInstance = ObjectMgr::GetInstanceTemplate(pVictim->GetMapId());
         MapEntry const* StoredMap = sMapStore.LookupEntry(pVictim->GetMapId());
 
         // only for expansion 2 map (wotlk), and : heroic mode or a min level >= lv75 
         // entering a lv80 designed instance require a min level>=75. note : min level != suggested level
-        if (StoredMap->Expansion() == 2 && ( mInstance->levelMin >= 75 || pVictim->GetMap()->IsHeroic() ) )
+        if (StoredMap->Expansion() == 2 && ( mInstance->levelMin >= 75 || !pVictim->GetMap()->IsRegularDifficulty() ) )
         {      
             Item* pItem = GetItemByPos( INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_TABARD );
             if(pItem)
