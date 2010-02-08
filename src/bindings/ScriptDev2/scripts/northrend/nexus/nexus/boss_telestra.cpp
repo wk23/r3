@@ -1,4 +1,4 @@
-/* Copyright (C) 2006 - 2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
+/* Copyright (C) 2006 - 2010 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -16,12 +16,13 @@
 
 /* ScriptData
 SDName: Boss_Telestra
-SD%Complete: 10%
-SDComment:
+SD%Complete: 80%
+SDComment: script depend on database spell support and eventAi for clones. transition to phase 2 also not fully implemented
 SDCategory: Nexus
 EndScriptData */
 
 #include "precompiled.h"
+#include "nexus.h"
 
 enum
 {
@@ -50,7 +51,7 @@ enum
     SPELL_SUMMON_ARCANE     = 47708,
     SPELL_SUMMON_FROST      = 47709,
 
-    SPELL_FIRE_DIES         = 47711,
+    SPELL_FIRE_DIES         = 47711,                        // cast by clones at their death
     SPELL_ARCANE_DIES       = 47713,
     SPELL_FROST_DIES        = 47712,
 
@@ -58,7 +59,12 @@ enum
 
     NPC_TELEST_FIRE         = 26928,
     NPC_TELEST_ARCANE       = 26929,
-    NPC_TELEST_FROST        = 26930
+    NPC_TELEST_FROST        = 26930,
+
+    PHASE_1                 = 1,
+    PHASE_2                 = 2,
+    PHASE_3                 = 3,
+    PHASE_4                 = 4
 };
 
 /*######
@@ -77,8 +83,38 @@ struct MANGOS_DLL_DECL boss_telestraAI : public ScriptedAI
     ScriptedInstance* m_pInstance;
     bool m_bIsRegularMode;
 
+    uint8 m_uiPhase;
+    uint8 m_uiCloneDeadCount;
+
+    uint32 m_uiFirebombTimer;
+    uint32 m_uiIceNovaTimer;
+    uint32 m_uiGravityWellTimer;
+
     void Reset()
     {
+        m_uiPhase = PHASE_1;
+        m_uiCloneDeadCount = 0;
+
+        m_uiFirebombTimer = urand(2000, 4000);
+        m_uiIceNovaTimer = urand(8000, 12000);
+        m_uiGravityWellTimer = urand(15000, 25000);
+    }
+
+    void JustReachedHome()
+    {
+        m_creature->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
+    }
+
+    void AttackStart(Unit* pWho)
+    {
+        if (m_creature->Attack(pWho, true))
+        {
+            m_creature->AddThreat(pWho);
+            m_creature->SetInCombatWith(pWho);
+            pWho->SetInCombatWith(m_creature);
+
+            m_creature->GetMotionMaster()->MoveChase(pWho, 15.0f);
+        }
     }
 
     void Aggro(Unit* pWho)
@@ -89,6 +125,9 @@ struct MANGOS_DLL_DECL boss_telestraAI : public ScriptedAI
     void JustDied(Unit* pKiller)
     {
         DoScriptText(SAY_DEATH, m_creature);
+
+        if (m_pInstance)
+            m_pInstance->SetData(TYPE_TELESTRA, DONE);
     }
 
     void KilledUnit(Unit* pVictim)
@@ -97,12 +136,111 @@ struct MANGOS_DLL_DECL boss_telestraAI : public ScriptedAI
             DoScriptText(SAY_KILL, m_creature);
     }
 
+    void SpellHit(Unit* pCaster, const SpellEntry *pSpell)
+    {
+        switch(pSpell->Id)
+        {
+            // eventAi must make sure clones cast spells when each of them die
+            case SPELL_FIRE_DIES:
+            case SPELL_ARCANE_DIES:
+            case SPELL_FROST_DIES:
+            {
+                ++m_uiCloneDeadCount;
+
+                if (m_uiCloneDeadCount == 3 || m_uiCloneDeadCount == 6)
+                {
+                    m_creature->RemoveAurasDueToSpell(SPELL_SUMMON_CLONES);
+                    m_creature->CastSpell(m_creature, SPELL_SPAWN_BACK_IN, false);
+
+                    m_creature->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
+
+                    DoScriptText(SAY_MERGE, m_creature);
+
+                    m_uiPhase = m_uiCloneDeadCount == 3 ? PHASE_3 : PHASE_4;
+                }
+                break;
+            }
+            case SPELL_SUMMON_CLONES:
+                m_creature->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
+                break;
+        }
+    }
+
+    void JustSummoned(Creature* pSummoned)
+    {
+        switch(pSummoned->GetEntry())
+        {
+            case NPC_TELEST_FIRE: pSummoned->CastSpell(pSummoned, SPELL_FIRE_VISUAL, true); break;
+            case NPC_TELEST_ARCANE: pSummoned->CastSpell(pSummoned, SPELL_ARCANE_VISUAL, true); break;
+            case NPC_TELEST_FROST: pSummoned->CastSpell(pSummoned, SPELL_FROST_VISUAL, true); break;
+        }
+    }
+
     void UpdateAI(const uint32 uiDiff)
     {
         if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
-        DoMeleeAttackIfReady();
+        switch(m_uiPhase)
+        {
+            case PHASE_1:
+            case PHASE_3:
+            case PHASE_4:
+            {
+                if (!m_creature->GetCurrentSpell(CURRENT_CHANNELED_SPELL))
+                {
+                    if (m_uiFirebombTimer < uiDiff)
+                    {
+                        if (DoCastSpellIfCan(m_creature->getVictim(), m_bIsRegularMode ? SPELL_FIREBOMB : SPELL_FIREBOMB_H) == CAST_OK)
+                            m_uiFirebombTimer = urand(4000, 6000);
+                    }
+                    else
+                        m_uiFirebombTimer -= uiDiff;
+
+                    if (m_uiIceNovaTimer < uiDiff)
+                    {
+                        if (DoCastSpellIfCan(m_creature, m_bIsRegularMode ? SPELL_ICE_NOVA : SPELL_ICE_NOVA_H) == CAST_OK)
+                            m_uiIceNovaTimer = urand(10000, 15000);
+                    }
+                    else
+                        m_uiIceNovaTimer -= uiDiff;
+
+                    if (m_uiPhase == PHASE_1 && m_creature->GetHealth()*100 < m_creature->GetMaxHealth()*50)
+                    {
+                        if (DoCastSpellIfCan(m_creature, SPELL_SUMMON_CLONES, CAST_INTURRUPT_PREVIOUS) == CAST_OK)
+                        {
+                            DoScriptText(urand(0, 1) ? SAY_SPLIT_1 : SAY_SPLIT_2, m_creature);
+                            m_uiPhase = PHASE_2;
+                        }
+                    }
+
+                    if (m_uiPhase == PHASE_3 && !m_bIsRegularMode && m_creature->GetHealth()*100 < m_creature->GetMaxHealth()*15)
+                    {
+                        if (DoCastSpellIfCan(m_creature, SPELL_SUMMON_CLONES, CAST_INTURRUPT_PREVIOUS) == CAST_OK)
+                        {
+                            DoScriptText(urand(0, 1) ? SAY_SPLIT_1 : SAY_SPLIT_2, m_creature);
+                            m_uiPhase = PHASE_2;
+                        }
+                    }
+
+                    DoMeleeAttackIfReady();
+                }
+
+                if (m_uiGravityWellTimer < uiDiff)
+                {
+                    if (DoCastSpellIfCan(m_creature, SPELL_GRAVITY_WELL) == CAST_OK)
+                        m_uiGravityWellTimer = urand(15000, 30000);
+                }
+                else
+                    m_uiGravityWellTimer -= uiDiff;
+
+                break;
+            }
+            case PHASE_2:
+            {
+                break;
+            }
+        }
     }
 };
 
