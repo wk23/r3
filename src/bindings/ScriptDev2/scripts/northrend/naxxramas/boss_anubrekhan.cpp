@@ -1,4 +1,4 @@
-/* Copyright (C) 2006 - 2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
+/* Copyright (C) 2006 - 2010 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -42,9 +42,9 @@ enum
 {
 //Anub'Rekhan spels
     SPELL_IMPALE       = 28783,                           //May be wrong spell id. Causes more dmg than I expect
-    H_SPELL_IMPALE     = 56090,
+    SPELL_IMPALE_H     = 56090,
     SPELL_LOCUSTSWARM  = 28785,                           //This is a self buff that triggers the dmg debuff
-    H_SPELL_LOCUSTSWARM = 54021,
+    SPELL_LOCUSTSWARM_H = 54021,
     SPELL_BERSERK      = 46587,                           
     SPELL_SELF_SPAWN_5 = 29105,                           //This spawns 5 corpse scarabs ontop of us (most likely the player casts this on death)
 
@@ -67,7 +67,7 @@ struct MANGOS_DLL_DECL boss_anubrekhanAI : public ScriptedAI
     boss_anubrekhanAI(Creature *c) : ScriptedAI(c) 
     {
         pInstance = ((ScriptedInstance*)c->GetInstanceData());
-        Regular = c->GetMap()->IsRegularDifficulty();
+        m_bIsRegularMode = c->GetMap()->IsRegularDifficulty();
         
         for (int i = 0; i < MAX_CRYPT_GUARDS; i++)
             guidCryptGuards[i] = 0;
@@ -76,13 +76,18 @@ struct MANGOS_DLL_DECL boss_anubrekhanAI : public ScriptedAI
     }
 
     ScriptedInstance *pInstance;
-    bool Regular;
 
+    bool m_ach_10ppl;
+    bool m_ach_25ppl;
+    bool m_bIsRegularMode;
+    uint32 m_count_ppl;
+    uint32 Ach_Timer;
     uint32 Impale_Timer;
     uint32 LocustSwarm_Timer;
     uint32 SummonFirst_Timer;
     uint32 Berserk_Timer;
     uint32 RiseFromCorpse_Timer;
+    uint32 m_uiEvadeCheckCooldown;
 
     uint64 guidCryptGuards[MAX_CRYPT_GUARDS];
     uint32 CryptGuard_count;
@@ -92,9 +97,14 @@ struct MANGOS_DLL_DECL boss_anubrekhanAI : public ScriptedAI
 
     void Reset()
     {
+        m_ach_10ppl = true;
+        m_ach_25ppl = true;
+        Ach_Timer = 10000;
+        m_count_ppl = 0;
+        m_uiEvadeCheckCooldown = 2000;
         Impale_Timer = 15000;                               //15 seconds
-        LocustSwarm_Timer = urand(80000, 120000);           //Random time between 80 seconds and 2 minutes for initial cast
-        SummonFirst_Timer = 20000;                            //45 seconds after initial locust swarm
+        LocustSwarm_Timer = 80000 + (rand()%40000);         //Random time between 80 seconds and 2 minutes for initial cast
+        SummonFirst_Timer = 15000;                            //45 seconds after initial locust swarm
         Berserk_Timer = 600000;
         RiseFromCorpse_Timer = 20000 + (rand()%20000);
         swarm = false;
@@ -109,23 +119,41 @@ struct MANGOS_DLL_DECL boss_anubrekhanAI : public ScriptedAI
                 pUnit->AddObjectToRemoveList();
             guidCryptGuards[i] = 0;
         }
-        
         //Remove all corpse scarabs
+
         std::list<Creature*> CorpseScarabs = GetCreaturesByEntry(MOB_CORPSE_SCARAB);
         if (!CorpseScarabs.empty())
             for(std::list<Creature*>::iterator itr = CorpseScarabs.begin(); itr != CorpseScarabs.end(); ++itr)
                 (*itr)->AddObjectToRemoveList();
 
-        //if anubrekhan is alive -> this must be first time we entered Arachnid Quarter -> close all other doors
+        //if anubrekhan is alive -> this must be first time we entered Archanid Wing -> close all other doors
         if(pInstance && m_creature->isAlive())
-            pInstance->SetData(TYPE_ANUBREKHAN, NOT_STARTED);
+            pInstance->SetData(ENCOUNT_ANUBREKHAN, NOT_STARTED);
     }
 
     void JustDied(Unit*)
     {
+        if (!pInstance)
+            return;
         //Anubrekhan is slayed -> open all doors to Faerlina
-        if(pInstance)
-            pInstance->SetData(TYPE_ANUBREKHAN, DONE);
+        pInstance->SetData(ENCOUNT_ANUBREKHAN, DONE);
+
+        Map::PlayerList const &PlList = pInstance->instance->GetPlayers();
+        if (PlList.isEmpty())
+            return;
+        for(Map::PlayerList::const_iterator i = PlList.begin(); i != PlList.end(); ++i)
+        {
+            if (Player* pPlayer = i->getSource())
+            {
+                if (!m_creature->IsWithinDistInMap(pPlayer,200))
+                    continue;
+
+                if (m_bIsRegularMode && m_ach_10ppl)
+                    pPlayer->UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_KILL_CREATURE,m_creature->GetEntry(),1,0,0,7146);
+                else if (!m_bIsRegularMode && m_ach_25ppl)
+                    pPlayer->UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_KILL_CREATURE,m_creature->GetEntry(),1,0,0,7159);
+            }
+        }
     }
 
     void KilledUnit(Unit* Victim)
@@ -133,9 +161,41 @@ struct MANGOS_DLL_DECL boss_anubrekhanAI : public ScriptedAI
         DoScriptText(SAY_SLAY, m_creature);
     }
 
+    void CheckAch()
+    {
+        if (!pInstance)
+            return;
+
+        m_count_ppl = 0;
+        Map::PlayerList const &PlList = pInstance->instance->GetPlayers();
+        if (PlList.isEmpty())
+            return;
+        for(Map::PlayerList::const_iterator i = PlList.begin(); i != PlList.end(); ++i)
+        {
+            if (Player* pPlayer = i->getSource())
+            {
+                if (pPlayer->isGameMaster())
+                    continue;
+                ++m_count_ppl;
+            }
+        }
+        if (m_bIsRegularMode)
+        {
+            if(m_count_ppl>8)
+                m_ach_10ppl = false;
+        }
+        else
+        {
+            if(m_count_ppl>20)
+                m_ach_25ppl = false;
+        }
+    }
+
     void Aggro(Unit *who)
     {
-        if(pInstance) pInstance->SetData(TYPE_ANUBREKHAN, IN_PROGRESS);
+        //Close the room for boss fight
+        if(pInstance)
+            pInstance->SetData(ENCOUNT_ANUBREKHAN, IN_PROGRESS);
 
         switch(rand()%3)
         {
@@ -143,6 +203,7 @@ struct MANGOS_DLL_DECL boss_anubrekhanAI : public ScriptedAI
             case 1: DoScriptText(SAY_AGGRO2, m_creature); break;
             case 2: DoScriptText(SAY_AGGRO3, m_creature); break;
         }
+        CheckAch();
     }
     
     bool IsVisible(Unit* who) const
@@ -191,7 +252,7 @@ struct MANGOS_DLL_DECL boss_anubrekhanAI : public ScriptedAI
         guidCryptGuards[CryptGuard_count++] = temp->GetGUID();
         if (Unit* target = SelectUnit(SELECT_TARGET_RANDOM,0))
         {
-            temp->AddThreat(target);
+            temp->AddThreat(target,0.0f);
             m_creature->SetInCombatWithZone();
         }
 
@@ -209,6 +270,15 @@ struct MANGOS_DLL_DECL boss_anubrekhanAI : public ScriptedAI
         if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
+        if (m_uiEvadeCheckCooldown < diff)
+        {
+            if (m_creature->GetDistance2d(3307.02f, -3476.27f) > 125.0f)
+                EnterEvadeMode();
+            m_uiEvadeCheckCooldown = 2000;
+        }
+        else
+            m_uiEvadeCheckCooldown -= diff;
+
         //Berserk_Timer
         if (Berserk_Timer < diff)
         {
@@ -216,13 +286,16 @@ struct MANGOS_DLL_DECL boss_anubrekhanAI : public ScriptedAI
             Berserk_Timer = 300000;
         }else Berserk_Timer -= diff;
 
-        //SumonFirstCryptGuard_Timer
-        if (SummonFirst_Timer < diff)
+        if (m_bIsRegularMode)
         {
-            if (CryptGuard_count < MAX_CRYPT_GUARDS)
-                DoSpawnCreature(MOB_CRYPT_GUARD,0,0,0,0,TEMPSUMMON_TIMED_OR_DEAD_DESPAWN,10000);
-            SummonFirst_Timer = 2000000;
-        }else SummonFirst_Timer -= diff;
+            //SumonFirstCryptGuard_Timer
+            if (SummonFirst_Timer < diff)
+            {
+                if (CryptGuard_count < MAX_CRYPT_GUARDS)
+                    m_creature->SummonCreature(MOB_CRYPT_GUARD,3330,-3477,288,3.2,TEMPSUMMON_TIMED_OR_DEAD_DESPAWN,10000);
+                SummonFirst_Timer = 2000000;
+            }else SummonFirst_Timer -= diff;
+        }
 
         //RiseFromCorpse_Timer
         if (RiseFromCorpse_Timer < diff)
@@ -260,9 +333,9 @@ struct MANGOS_DLL_DECL boss_anubrekhanAI : public ScriptedAI
             {
                 //Cast Impale on a random target
                 //Do NOT cast it when we are afflicted by locust swarm
-                if (!m_creature->HasAura(Regular ? SPELL_LOCUSTSWARM : H_SPELL_LOCUSTSWARM, 1))
+                if (!m_creature->HasAura(SPELL_LOCUSTSWARM,1))
                     if (Unit* target = SelectUnit(SELECT_TARGET_RANDOM,1))
-                        DoCast(target,Regular ? SPELL_IMPALE : H_SPELL_IMPALE);
+                        DoCast(target,m_bIsRegularMode ? SPELL_IMPALE : SPELL_IMPALE_H);
                 Impale_Timer = 15000;
             }else Impale_Timer -= diff;
 
@@ -270,11 +343,11 @@ struct MANGOS_DLL_DECL boss_anubrekhanAI : public ScriptedAI
             if (LocustSwarm_Timer < diff)
             {
                 //Cast Locust Swarm buff on ourselves
-                DoCast(m_creature, Regular ? SPELL_LOCUSTSWARM : H_SPELL_LOCUSTSWARM);
+                DoCast(m_creature, !m_bIsRegularMode ? SPELL_LOCUSTSWARM_H:SPELL_LOCUSTSWARM);
                 swarm = true;
                 //Summon Crypt Guard immidietly after Locust Swarm
                 if (CryptGuard_count < MAX_CRYPT_GUARDS)
-                    DoSpawnCreature(MOB_CRYPT_GUARD,0,0,0,0,TEMPSUMMON_TIMED_OR_DEAD_DESPAWN,10000);
+                    m_creature->SummonCreature(MOB_CRYPT_GUARD,3330,-3477,288,3.2,TEMPSUMMON_TIMED_OR_DEAD_DESPAWN,10000);
                 LocustSwarm_Timer = 20000;
             }else LocustSwarm_Timer -= diff;
         }
@@ -283,9 +356,18 @@ struct MANGOS_DLL_DECL boss_anubrekhanAI : public ScriptedAI
             if (LocustSwarm_Timer < diff)
             {            
                 swarm = false;
-                LocustSwarm_Timer = 60000 + rand()%20000;
+                LocustSwarm_Timer = 85000;
             }else LocustSwarm_Timer -= diff;
         }
+
+        if (Ach_Timer<diff)
+        {
+            if (m_bIsRegularMode && m_ach_10ppl)
+                CheckAch();
+            else if (!m_bIsRegularMode && m_ach_25ppl)
+                CheckAch();
+            Ach_Timer = 10000;
+        }else Ach_Timer -= diff;            
 
         DoMeleeAttackIfReady();
     }

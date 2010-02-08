@@ -1,4 +1,4 @@
-/* Copyright (C) 2006 - 2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
+/* Copyright (C) 2006 - 2010 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -22,6 +22,7 @@ SDCategory: Naxxramas
 EndScriptData */
 
 #include "precompiled.h"
+#include "naxxramas.h"
 
 #define SAY_AGGRO1              -1533017
 #define SAY_AGGRO2              -1533018
@@ -39,13 +40,16 @@ EndScriptData */
 
 struct MANGOS_DLL_DECL boss_patchwerkAI : public ScriptedAI
 {
-    boss_patchwerkAI(Creature* pCreature) : ScriptedAI(pCreature)
+    boss_patchwerkAI(Creature* pCreature) : ScriptedAI(pCreature) 
     {
-        Regular = pCreature->GetMap()->IsRegularDifficulty();
+        m_pInstance = (ScriptedInstance*)pCreature->GetInstanceData();
+        m_bIsRegularMode = pCreature->GetMap()->IsRegularDifficulty();
         Reset();
     }
 
-    bool Regular;
+    ScriptedInstance* m_pInstance;
+    bool m_bIsRegularMode;
+
     uint32 HatefullStrike_Timer;
     uint32 Enrage_Timer;
     uint32 Slimebolt_Timer;
@@ -57,11 +61,14 @@ struct MANGOS_DLL_DECL boss_patchwerkAI : public ScriptedAI
         Enrage_Timer = 420000;                              //7 minutes 420,000
         Slimebolt_Timer = 450000;                           //7.5 minutes 450,000
         Enraged = false;
+
+        if (m_pInstance)
+            m_pInstance->SetData(ENCOUNT_PATCHWERK, NOT_STARTED);
     }
 
     void KilledUnit(Unit* Victim)
     {
-        if (urand(0, 4))
+        if (rand()%5)
             return;
 
         DoScriptText(SAY_SLAY, m_creature);
@@ -70,14 +77,20 @@ struct MANGOS_DLL_DECL boss_patchwerkAI : public ScriptedAI
     void JustDied(Unit* Killer)
     {
         DoScriptText(SAY_DEATH, m_creature);
+
+        if (m_pInstance)
+            m_pInstance->SetData(ENCOUNT_PATCHWERK, DONE);
     }
 
     void Aggro(Unit *who)
     {
-        if (urand(0, 1))
+        if (rand()%2)
             DoScriptText(SAY_AGGRO1, m_creature);
         else
             DoScriptText(SAY_AGGRO2, m_creature);
+
+        if (m_pInstance)
+            m_pInstance->SetData(ENCOUNT_PATCHWERK, IN_PROGRESS);
     }
 
     void UpdateAI(const uint32 diff)
@@ -93,11 +106,11 @@ struct MANGOS_DLL_DECL boss_patchwerkAI : public ScriptedAI
             uint32 MostHP = 0;
             Unit* pMostHPTarget = NULL;
             Unit* pTemp = NULL;
-            ThreatList const& tList = m_creature->getThreatManager().getThreatList();
+            ThreatList const& t_list = m_creature->getThreatManager().getThreatList();
 
-            for (ThreatList::const_iterator i = tList.begin();i != tList.end(); ++i)
+            for(ThreatList::const_iterator itr = t_list.begin(); itr!= t_list.end(); ++itr)
             {
-                Unit* pTemp = Unit::GetUnit((*m_creature),(*i)->getUnitGuid());
+                pTemp = Unit::GetUnit((*m_creature),(*itr)->getUnitGuid());
                 if (pTemp && pTemp->isAlive() && pTemp->GetHealth() > MostHP && m_creature->IsWithinDist(pTemp, 5.0f, false))
                 {
                     MostHP = pTemp->GetHealth();
@@ -106,7 +119,7 @@ struct MANGOS_DLL_DECL boss_patchwerkAI : public ScriptedAI
             }
 
             if (pMostHPTarget)
-                DoCast(pMostHPTarget, Regular ? SPELL_HATEFULSTRIKE : H_SPELL_HATEFULSTRIKE);
+                DoCast(pMostHPTarget, !m_bIsRegularMode ? H_SPELL_HATEFULSTRIKE : SPELL_HATEFULSTRIKE);
 
             HatefullStrike_Timer = 1200;
         }else HatefullStrike_Timer -= diff;

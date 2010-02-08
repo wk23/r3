@@ -1,99 +1,125 @@
-/* Copyright (C) 2006 - 2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
+/* Copyright (C) 2006 - 2010 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  * This program is free software licensed under GPL version 2
  * Please see the included DOCS/LICENSE.TXT for more information */
 
-/* Originally based on BroodWyrm scripts. Modified by danbst. Modified by Lutik.*/
+/* Originally based on BroodWyrm scripts. Modified by danbst*/
 
 #ifndef DEF_NAXXRAMAS_H
 #define DEF_NAXXRAMAS_H
 
+//GO system
 enum
 {
-    //Spider Quarter
-    TYPE_ANUBREKHAN   = 0,
-    TYPE_FAERLINA     = 1,
-    TYPE_MAEXXNA      = 2,
+    GO_DOOR_STATE_OPEN = 0,
+    GO_DOOR_STATE_CLOSE = 1
+};
 
-    //Construct Quarter
-    TYPE_PATCHWERK    = 3,
-    TYPE_GROBBULUS    = 4,
-    TYPE_GLUTH        = 5,
-    TYPE_THADDIUS     = 6,
+//Encounters
+#define ENCOUNTERS         15
+enum
+{
+    //Spiderwing
+    ENCOUNT_ANUBREKHAN   = 0,
+    ENCOUNT_FAERLINA     = 1,
+    ENCOUNT_MAEXXNA      = 2,
 
-    //Military Quarter
-    TYPE_RAZUVIOUS    = 7,
-    TYPE_GOTHIK       = 8,
-    TYPE_FOURHORSEMEN = 9,
+    //Abomination Wing
+    ENCOUNT_PATCHWERK    = 3,
+    ENCOUNT_GROBBULUS    = 4,
+    ENCOUNT_GLUTH        = 5,
+    ENCOUNT_THADDIUS     = 6,
 
-    //Plague Quarter
-    TYPE_NOTH         = 10,
-    TYPE_HEIGAN       = 11,
-    TYPE_LOATHEB      = 12,
+    //Deathknight Wing
+    ENCOUNT_RAZUVIOUS    = 7,
+    ENCOUNT_GOTHIK       = 8,
+    ENCOUNT_FOURHORSEMAN = 9,
+
+    //Plague Wing
+    ENCOUNT_NOTH         = 10,
+    ENCOUNT_HEIGAN       = 11,
+    ENCOUNT_LOATHEB      = 12,
 
     //Frostwyrm Lair
-    TYPE_SAPPHIRON    = 13,
-    TYPE_KELTHUZAD    = 14,
+    ENCOUNT_SAPPHIRON    = 13,
+    ENCOUNT_KELTHUZAD    = 14
+};
+
+//Bosses
+enum
+{
+    //Spiderwing
+    GUID_ANUBREKHAN   = 100,
+    GUID_FAERLINA     = 101,
+    GUID_MAEXXNA      = 102,
+    GUID_WORSHIPPER1  = 20,
+    GUID_WORSHIPPER2  = 21,
+    GUID_WORSHIPPER3  = 22,
+    GUID_WORSHIPPER4  = 23,
+
+    //Abomination Wing
+    GUID_PATCHWERK    = 103,
+    GUID_GROBBULUS    = 104,
+    GUID_GLUTH        = 105,
+    GUID_THADDIUS     = 600,
+    GUID_FEUGEN       = 601,
+    GUID_STALAGG      = 602,
+
+    //Deathknight Wing
+    GUID_RAZUVIOUS    = 107,
+    GUID_GOTHIK       = 108,
+    GUID_KORTHAZZ     = 901,
+    GUID_BLAUMEUX     = 902,
+    GUID_RIVENDARE    = 903,
+    GUID_ZELIEK       = 904,
+
+    //Plague Wing
+    GUID_NOTH          = 110,
+    GUID_HEIGAN       = 111,
+    GUID_LOATHEB      = 112,
+
+    //Frostwyrm Lair
+    GUID_SAPPHIRON    = 113,
+    GUID_KELTHUZAD    = 114
+};
+
+//Doors and other gameobject
+enum
+{
+    //Spiderwing
+    GO_ANUBREKHAN_DOOR  = 1000,
+    GO_ANUBREKHAN_GATE  = 1001,
+    GO_FAERLINA_DOOR    = 1002,
+    GO_FAERLINA_WEB     = 1003,
+    GO_MAEXXNA_OUTERWEB = 1004,
+    GO_MAEXXNA_INNERWEB = 1005,
+    GO_SPIDERWING_EYE_BOSS = 1006,
+    GO_SPIDERWING_EYE_RAMP = 1007,
+    GO_SPIDERWING_PORTAL   = 1008,
     
-    //Misc
-    TYPE_KORTHAZZ,
-    TYPE_BLAUMEAUX,
-    TYPE_ZELIEK,
-    TYPE_RIVENDARE,
+    //Abomination Wing
+    GO_PATCHWORK_EXIT   = 2000,
+    GO_GLUTH_EXIT       = 2001,
+    GO_THADDIUS_DOOR    = 2002,
 
-    ENCOUNTERS         = 15
-};
+    //Plague Wing
+    GO_NOTH_ENTRY       = 3000,
+    GO_NOTH_EXIT        = 3001,
+    GO_HEIGAN_ENTRY     = 3002,
+    GO_HEIGAN_EXIT      = 3003,
+    GO_HEIGAN_EXITGATE  = 3004,
+    GO_LOATHEB_DOOR     = 3005,
 
-enum
-{
-    GUID_FAERLINA
-};
-
-enum
-{
-    GO_ARAC_ANUB_DOOR           = 181126,                   //encounter door
-    GO_ARAC_ANUB_GATE           = 181195,                   //open after boss is dead
-    GO_ARAC_FAER_WEB            = 181235,                   //encounter door
-    GO_ARAC_FAER_DOOR           = 194022,                   //after faerlina, to outer ring
-    GO_ARAC_MAEX_INNER_DOOR     = 181197,                   //encounter door
-    GO_ARAC_MAEX_OUTER_DOOR     = 181209,                   //right before maex
-
-    // Plague Quarter
-    GO_PLAG_SLIME01_DOOR        = 181198,                   //not used
-    GO_PLAG_SLIME02_DOOR        = 181199,                   //not used
-    GO_PLAG_NOTH_ENTRY_DOOR     = 181200,                   //encounter door
-    GO_PLAG_NOTH_EXIT_DOOR      = 181201,                   //exit, open when boss dead
-    GO_PLAG_HEIG_ENTRY_DOOR     = 181202,
-    GO_PLAG_HEIG_EXIT_DOOR      = 181203,                   //exit, open when boss dead
-    GO_PLAG_LOAT_DOOR           = 181241,                   //encounter door
-
-    // Military Quarter
-    GO_MILI_GOTH_ENTRY_GATE     = 181124,                   //open after razuvious died
-    GO_MILI_GOTH_EXIT_GATE      = 181125,                   //exit, open at boss dead
-    GO_MILI_GOTH_COMBAT_GATE    = 181170,                   //used while encounter is in progress
-    GO_MILI_HORSEMEN_DOOR       = 181119,                   //encounter door
-
-    GO_CHEST_HORSEMEN_NORM      = 181366,                   //four horsemen event, DoRespawnGameObject() when event == DONE
-    GO_CHEST_HORSEMEN_HERO      = 193426,
-
-    // Construct Quarter
-    GO_CONS_PATH_EXIT_DOOR      = 181123,
-    GO_CONS_GLUT_EXIT_DOOR      = 181120,
-    GO_CONS_THAD_DOOR           = 181121,                   // Thaddius enc door
-
-    // Frostwyrm Lair
-    GO_KELTHUZAD_WATERFALL_DOOR = 181225,                   // exit, open after sapphiron is dead
-
-    // Eyes
-    GO_ARAC_EYE_RAMP            = 181212,
-    GO_PLAG_EYE_RAMP            = 181211,
-    GO_MILI_EYE_RAMP            = 181210,
-    GO_CONS_EYE_RAMP            = 181213,
-
-    // Portals
-    GO_ARAC_PORTAL              = 181575,
-    GO_PLAG_PORTAL              = 181577,
-    GO_MILI_PORTAL              = 181578,
-    GO_CONS_PORTAL              = 181576
+    //Deathknight Wing
+    GO_VACCUUM_ENTER      = 4000,
+    GO_VACCUUM_EXIT       = 4001,
+    GO_VACCUUM_COMBAT     = 4002,
+    GO_DEATHKNIGHT_DOOR   = 4003,
+    GO_FOURHORSEMEN_CHEST = 4004,
+    
+    //Frostwyrm Lair
+    GO_FROSTWYRM_WATERFALL  = 5000,
+    GO_KELTHUZAD_DOOR       = 5001,
+	GO_SAPPHIRON_BIRTH      = 5002
 };
 
 #endif
