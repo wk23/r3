@@ -1147,6 +1147,7 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
             return m_Auras.find(spellEffectPair(spellId, effIndex)) != m_Auras.end();
         }
         bool HasAura(uint32 spellId) const;
+        bool HasAuraByCasterSpell(uint32 spellId, uint64 casterGUID) const;
 
         const uint64& GetAuraUpdateMask() const { return m_auraUpdateMask; }
         void SetAuraUpdateMask(uint8 slot) { m_auraUpdateMask |= (uint64(1) << slot); }
@@ -1203,6 +1204,7 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         void SendThreatUpdate();
 
         void BuildHeartBeatMsg( WorldPacket *data ) const;
+        void SendMovementFlagUpdate();
 
         virtual void MoveOutOfRange(Player &) {  };
 

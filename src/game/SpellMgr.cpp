@@ -346,8 +346,6 @@ bool IsSingleFromSpellSpecificPerTargetPerCaster(SpellSpecific spellSpec1,SpellS
             return spellSpec1==spellSpec2;
         default:
             return false;
-        case 36032:                                         // Arcane Blast
-            return true;
     }
 }
 
@@ -467,6 +465,22 @@ bool IsPositiveEffect(uint32 spellId, uint32 effIndex)
 {
     SpellEntry const *spellproto = sSpellStore.LookupEntry(spellId);
     if (!spellproto) return false;
+
+    switch(spellId)
+    {
+        case 28441:                                         // not positive dummy spell
+        case 37675:                                         // Chaos Blast
+        case 42966:                                         // Upset Tummy
+            return false;
+        case 36032:                                         // Arcane Blast
+        case 47314:
+        case 45848:                                         // Shield of the Blue
+        case 45860:                                         // Breath: Revitalize
+        case 45856:                                         // Breath: Haste
+        case 45862:                                         // Blink
+        case 43730:                                         // Electrified
+            return true;
+    }
 
     switch(spellproto->Effect[effIndex])
     {
@@ -1381,6 +1395,45 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
                     if( (spellInfo_1->Id == 8326 && spellInfo_2->Id == 20584) ||
                         (spellInfo_2->Id == 8326 && spellInfo_1->Id == 20584) )
                          return false;
+
+					// Fire Bloom
+                    if( (spellInfo_1->Id == 45641 && spellInfo_2->Id == 45642) ||
+                        (spellInfo_2->Id == 45641 && spellInfo_1->Id == 45642) )
+                         return false;
+
+                    // Forge Ember && Sundial of the Exiled
+                    if( (spellInfo_1->Id == 60064 && spellInfo_2->Id == 60479) ||
+                        (spellInfo_2->Id == 60064 && spellInfo_1->Id == 60479) )
+                        return false;
+
+                    // Positive Charge
+                    if ( (spellInfo_1->Id == 28059 && spellInfo_2->Id == 29659) ||
+                         (spellInfo_2->Id == 28059 && spellInfo_1->Id == 29659) )
+                         return false;
+
+                    //Negative Charge
+                    if ( (spellInfo_1->Id == 28084 && spellInfo_2->Id == 29660) ||
+                         (spellInfo_2->Id == 28084 && spellInfo_1->Id == 29660) )
+                        return false;
+
+                    // Sartharion Tsunami spells
+                    if(spellInfo_1->SpellIconID == 3087 && spellInfo_2->SpellIconID == 3087)
+                        return false;
+
+                    if ( (spellInfo_1->Id == 29306 && spellInfo_2->Id == 552) ||
+                         (spellInfo_2->Id == 29306 && spellInfo_1->Id == 552) )
+                         return false;
+
+                    if ( (spellInfo_1->Id == 44436 && spellInfo_2->Id == 42965) ||
+                        (spellInfo_2->Id == 44436 && spellInfo_1->Id == 42965) )
+                        return false;
+
+                    if ( (spellInfo_1->Id == 42966 && spellInfo_2->Id == 43049) ||
+                        (spellInfo_2->Id == 42966 && spellInfo_1->Id == 43049) )
+                        return false;
+
+                    if (spellInfo_1->Id == 26218 || spellInfo_2->Id == 26218)
+                        return false;
 
                     // Sextant of Unstable Currents and Band of the Eternal Sage
                     if( spellInfo_1->SpellIconID == 502 && spellInfo_2->SpellIconID == 502 )

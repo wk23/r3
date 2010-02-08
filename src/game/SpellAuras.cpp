@@ -1340,7 +1340,7 @@ void Aura::SetStackAmount(uint8 stackAmount)
         m_stackAmount = stackAmount;
         int32 amount = m_stackAmount * caster->CalculateSpellDamage(m_spellProto, m_effIndex, m_currentBasePoints, target);
         // Reapply if amount change
-        if (amount!=m_modifier.m_amount)
+        if (amount!=m_modifier.m_amount || (GetId() == 28832 || GetId() == 28833 || GetId() == 28834 || GetId() == 28835))
         {
             ApplyModifier(false, true);
             m_modifier.m_amount = amount;
@@ -1700,8 +1700,17 @@ void Aura::TriggerSpell()
                         target->CastCustomSpell(target, 29879, &bpDamage, NULL, NULL, true, NULL, this, casterGUID);
                         return;
                     }
-//                    // Detonate Mana
-//                    case 27819: break;
+                    // Detonate Mana
+                    case 27819:
+                    {
+                        Unit* caster = GetCaster();
+                        if (!caster)
+                            return;
+                        int32 bpDamage = target->GetMaxPower(POWER_MANA);
+                        caster->CastCustomSpell(target, 27820, &bpDamage, NULL, NULL, true, NULL, this, target->GetGUID());
+                        target->ModifyPower(POWER_MANA,-2000);                        
+                        return;
+                    }
 //                    // Controller Timer
 //                    case 28095: break;
 //                    // Stalagg Chain
@@ -2348,6 +2357,19 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
                         if (Unit* caster = GetCaster())
                             caster->CastSpell(caster, 13138, true, NULL, this);
                         return;
+                    // Four Horsemen Mark Spells
+                    case 28832:
+                    case 28833:
+                    case 28834:
+                    case 28835:
+                    {
+                        Unit* caster = GetCaster();
+                        if (!caster)
+                            return;
+                        if (caster && m_target)
+                           caster->CastSpell(m_target,28836,true,NULL,this);
+                        return;
+                    }
                     case 39850:                             // Rocket Blast
                         if(roll_chance_i(20))               // backfire stun
                             m_target->CastSpell(m_target, 51581, true, NULL, this);
@@ -2511,6 +2533,13 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
                 m_target->CastSpell(m_target, 28206, true, NULL, this);
                 // Poison Cloud
                 m_target->CastSpell(m_target, 28240, true, NULL, this);
+                return;
+            }
+            case 32286:                                     // Focus Target Visual
+            {
+                if (m_removeMode == AURA_REMOVE_BY_DEFAULT)
+                    m_target->CastSpell(m_target, 32301, true, NULL, this);
+
                 return;
             }
             case 36730:                                     // Flame Strike
@@ -5040,6 +5069,8 @@ void Aura::HandlePeriodicDamage(bool apply, bool Real)
                     m_modifier.m_amount += int32(caster->GetTotalAttackPowerValue(BASE_ATTACK) * 3 / 100);
                     return;
                 }
+                if (m_spellProto->Id == 55053)
+                    m_modifier.m_amount = 400;
                 break;
             }
             case SPELLFAMILY_WARRIOR:
@@ -5172,9 +5203,18 @@ void Aura::HandlePeriodicDamage(bool apply, bool Real)
     // remove time effects
     else
     {
+        Unit *caster = GetCaster();
+        if (!caster)
+            return;
+
         // Parasitic Shadowfiend - handle summoning of two Shadowfiends on DoT expire
         if(m_spellProto->Id == 41917)
             m_target->CastSpell(m_target, 41915, true);
+
+        if (m_spellProto->Id == 55053)
+            m_target->CastSpell(m_target,55601,true,0,0,caster->GetGUID());
+        if (m_spellProto->Id == 29865)
+            m_target->CastSpell(m_target,55594,true,0,0,caster->GetGUID());
     }
 }
 

@@ -575,6 +575,9 @@ class MANGOS_DLL_SPEC GameObject : public WorldObject
         void Update(uint32 p_time);
         GameObjectInfo const* GetGOInfo() const;
 
+        // from trinity
+        static GameObject* GetGameObject(WorldObject& object, uint64 guid);
+
         bool IsTransport() const;
 
         uint32 GetDBTableGUIDLow() const { return m_DBTableGuid; }
@@ -633,6 +636,7 @@ class MANGOS_DLL_SPEC GameObject : public WorldObject
                 (m_respawnTime == 0 && m_spawnedByDefault);
         }
         bool isSpawnedByDefault() const { return m_spawnedByDefault; }
+        void SetSpawnedByDefault(bool b) { m_spawnedByDefault = b; }
         uint32 GetRespawnDelay() const { return m_respawnDelayTime; }
         void Refresh();
         void Delete();

@@ -1354,10 +1354,15 @@ struct TargetDistanceOrder : public std::binary_function<const Unit, const Unit,
 void Spell::SetTargetMap(uint32 effIndex,uint32 targetMode,UnitList& TagUnitMap)
 {
     float radius;
-    if (m_spellInfo->EffectRadiusIndex[effIndex])
-        radius = GetSpellRadius(sSpellRadiusStore.LookupEntry(m_spellInfo->EffectRadiusIndex[effIndex]));
+    if (m_spellInfo->Id == 54363 || m_spellInfo->Id == 28241)
+        radius = this->GetRadius();
     else
-        radius = GetSpellMaxRange(sSpellRangeStore.LookupEntry(m_spellInfo->rangeIndex));
+    {
+        if (m_spellInfo->EffectRadiusIndex[effIndex])
+            radius = GetSpellRadius(sSpellRadiusStore.LookupEntry(m_spellInfo->EffectRadiusIndex[effIndex]));
+        else
+            radius = GetSpellMaxRange(sSpellRangeStore.LookupEntry(m_spellInfo->rangeIndex));
+    }
 
     uint32 EffectChainTarget = m_spellInfo->EffectChainTarget[effIndex];
 
@@ -1384,6 +1389,36 @@ void Spell::SetTargetMap(uint32 effIndex,uint32 targetMode,UnitList& TagUnitMap)
     // custom target amount cases
     switch(m_spellInfo->SpellFamilyName)
     {
+        case SPELLFAMILY_GENERIC:
+        {
+            switch(m_spellInfo->Id)
+            {
+                case 31347:                                 // Doom TODO: exclude top threat target from target selection
+                case 33711:                                 // Murmur's Touch
+                case 38794:                                 // Murmur's Touch (h)
+                    unMaxTargets = 1;
+                    break;
+                case 28542:                                 // Life Drain
+                    unMaxTargets = 2;
+                    break;
+                case 28796:                                 // Poison Bolt Volley
+                case 29213:                                 // Curse of the Plaguebringer
+                case 31298:                                 // Sleep
+                    unMaxTargets = 3;
+                    break;
+                case 30843:                                 // Enfeeble TODO: exclude top threat target from target selection
+                case 42005:                                 // Bloodboil TODO: need to be 5 targets(players) furthest away from caster
+                case 55665:                                 // Life Drain (h)
+                case 45641:
+                    unMaxTargets = 5;
+                    break;
+                case 54098:                                 // Poison Bolt Volley (h)
+                case 54835:                                 // Curse of the Plaguebringer (h)
+                    unMaxTargets = 10;
+                    break;
+            }
+            break;
+        }
         case SPELLFAMILY_DRUID:
             // Starfall
             if (m_spellInfo->SpellFamilyFlags2 & 0x00000100)
@@ -1845,8 +1880,20 @@ void Spell::SetTargetMap(uint32 effIndex,uint32 targetMode,UnitList& TagUnitMap)
 
                 FillRaidOrPartyHealthPriorityTargets(TagUnitMap, m_caster, target, radius, count, true, false, true);
             }
+            else if (m_spellInfo->SpellFamilyName == SPELLFAMILY_PRIEST && m_spellInfo->SpellIconID == 2214)
+            {
+                Unit* target = m_targets.getUnitTarget();
+                if(!target)
+                    target = m_caster;
+
+                FillRaidOrPartyHealthPriorityTargets(TagUnitMap, m_caster, target, radius, 5, true, false, true);
+            }
             else
                 FillAreaTargets(TagUnitMap, m_targets.m_destX, m_targets.m_destY, radius, PUSH_DEST_CENTER, SPELL_TARGETS_FRIENDLY);
+
+            if (m_spellInfo->Id == 27820)
+                TagUnitMap.remove(m_originalCaster);
+
             break;
         // TARGET_SINGLE_PARTY means that the spells can only be casted on a party member and not on the caster (some seals, fire shield from imp, etc..)
         case TARGET_SINGLE_PARTY:
@@ -5811,6 +5858,10 @@ SpellCastResult Spell::CheckItems()
                     if (pEnchant->slot & ENCHANTMENT_CAN_SOULBOUND)
                         return SPELL_FAILED_NOT_TRADEABLE;
                 }
+
+                if (m_spellInfo->maxLevel && (item->GetProto()->ItemLevel > m_spellInfo->maxLevel))
+                    return SPELL_FAILED_BAD_TARGETS;
+
                 break;
             }
             case SPELL_EFFECT_ENCHANT_HELD_ITEM:

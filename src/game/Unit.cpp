@@ -1003,6 +1003,9 @@ void Unit::CastSpell(Unit* Victim,SpellEntry const *spellInfo, bool triggered, I
     SpellCastTargets targets;
     targets.setUnitTarget( Victim );
     spell->m_CastItem = castItem;
+    if (spellInfo->Id == 54363 || spellInfo->Id == 28241)
+        if (triggeredByAura)
+            spell->SetRadius((triggeredByAura->GetAuraMaxDuration() - triggeredByAura->GetAuraDuration())/10000 + 1.2f);
     spell->prepare(&targets, triggeredByAura);
 }
 
@@ -4484,6 +4487,19 @@ bool Unit::HasAura(uint32 spellId) const
         AuraMap::const_iterator iter = m_Auras.find(spellEffectPair(spellId, i));
         if (iter != m_Auras.end())
             return true;
+    }
+    return false;
+}
+
+bool Unit::HasAuraByCasterSpell(uint32 spellId, uint64 casterGUID) const
+{
+    for (AuraMap::const_iterator iter = m_Auras.begin(); iter != m_Auras.end(); )
+    {
+        Aura *aur = iter->second;
+        if (aur->GetId() == spellId && aur->GetCasterGUID() == casterGUID)
+            return true;
+        else
+            ++iter;
     }
     return false;
 }
@@ -9971,6 +9987,12 @@ bool Unit::IsImmunedToSpell(SpellEntry const* spellInfo)
     if (!spellInfo)
         return false;
 
+    // Single spell immunity.
+    SpellImmuneList const& idList = m_spellImmune[IMMUNITY_ID];
+    for (SpellImmuneList::const_iterator itr = idList.begin(); itr != idList.end(); ++itr)
+        if(itr->type == spellInfo->Id)
+            return true;
+
     //TODO add spellEffect immunity checks!, player with flag in bg is imune to imunity buffs from other friendly players!
     //SpellImmuneList const& dispelList = m_spellImmune[IMMUNITY_EFFECT];
 
@@ -12769,6 +12791,13 @@ void Unit::StopMoving()
     WorldPacket data;
     BuildHeartBeatMsg(&data);
     SendMessageToSet(&data,false);
+}
+
+void Unit::SendMovementFlagUpdate()
+{
+    WorldPacket data;
+    BuildHeartBeatMsg(&data);
+    SendMessageToSet(&data, false);
 }
 
 void Unit::SetFeared(bool apply, uint64 const& casterGUID, uint32 spellID, uint32 time)

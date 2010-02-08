@@ -284,6 +284,9 @@ void Spell::EffectInstaKill(uint32 /*i*/)
         m_caster->CastSpell(m_caster, spellID, true);
     }
 
+    if (m_spellInfo->Id == 48743)
+        return;
+
     if(m_caster == unitTarget)                              // prevent interrupt message
         finish();
 
@@ -355,6 +358,71 @@ void Spell::EffectSchoolDMG(uint32 effect_idx)
                     case 38441:
                     {
                         damage = unitTarget->GetMaxHealth() / 2;
+                        break;
+                    }
+                    // Lightning Nova (Emalon, Heroic)
+                    case 65279:
+                    {
+                        float distance = m_caster->GetDistance2d(unitTarget);
+                        if (distance > 20.0f)
+                            damage = (int32)((float) damage * 10.0f / (10.0f + distance));
+                        break;
+                    }
+                    case 28062:
+                    {
+                        if (unitTarget->HasAura(28059))
+                        {
+                            
+                            unitTarget->CastSpell(unitTarget,29659,true,0,0,m_caster->GetGUID());
+                            if (Aura *positive = unitTarget->GetAura(29659, 0))
+                            {
+                                if (positive->GetStackAmount() > 10)
+                                    positive->modStackAmount(-1);
+                            }
+                            return;
+                        }
+                        break;
+                    }
+                    case 28085:
+                    {
+                        if (unitTarget->HasAura(28084))
+                        {
+                            unitTarget->CastSpell(unitTarget,29660,true,0,0,m_caster->GetGUID());
+                            if (Aura *negative = unitTarget->GetAura(29660, 0))
+                            {
+                                if (negative->GetStackAmount() > 10)
+                                    negative->modStackAmount(-1);
+                            }
+                            return;
+                        }
+                        break;
+                    }
+                    case 28836:
+                    {
+                        if (!m_triggeredByAuraSpell)
+                            return;
+
+                        switch(m_triggeredByAuraSpell->Id)
+                        {
+                        case 28832:
+                        case 28833:
+                        case 28834:
+                        case 28835:
+                            if (Aura *mark = unitTarget->GetAura(m_triggeredByAuraSpell->Id, 0))
+                            {
+                                switch(mark->GetStackAmount())
+                                {
+                                case 1: damage = 0;     break;
+                                case 2: damage = 500;   break;
+                                case 3: damage = 1500;  break;
+                                case 4: damage = 4000;  break;
+                                case 5: damage = 12500; break;
+                                case 6: damage = 20000; break;
+                                default: damage = (20000 + 1000 * (mark->GetStackAmount() - 6)); break;
+                                }
+                            }
+                            break;
+                        }
                         break;
                     }
                     // Explode
@@ -984,6 +1052,20 @@ void Spell::EffectDummy(uint32 i)
                     m_caster->CastSpell(m_caster, 23782, true);
                     m_caster->CastSpell(m_caster, 23783, true);
                     return;
+                case 24930:
+                    if (m_caster && unitTarget)
+                    {
+                        uint32 spellId = 0;
+                        switch(rand() % 4)
+                        {
+                        case 0: spellId = 24924; break;
+                        case 1: spellId = 24925; break;
+                        case 2: spellId = 24926; break;
+                        case 3: spellId = 24927; break;
+                        }
+                        m_caster->CastSpell(unitTarget, spellId, true);
+                    }
+                    return;
                 case 25860:                                 // Reindeer Transformation
                 {
                     if (!m_caster->HasAuraType(SPELL_AURA_MOUNTED))
@@ -1023,6 +1105,28 @@ void Spell::EffectDummy(uint32 i)
                         m_caster->CastSpell(unitTarget, 29294, true);
                     return;
                 }
+                case 28089:
+                    {
+                        if (unitTarget && unitTarget->GetTypeId() != TYPEID_PLAYER)
+                            return;
+
+                        if (rand()%2)
+                        {
+                            // cast positive
+                            unitTarget->RemoveAurasDueToSpell(29659);
+                            unitTarget->RemoveAurasDueToSpell(28084);
+                            unitTarget->RemoveAurasDueToSpell(29660);
+                            unitTarget->CastSpell(unitTarget,28059,true);
+                        }
+                        else
+                        {
+                            // cast negative
+                            unitTarget->RemoveAurasDueToSpell(29659);
+                            unitTarget->RemoveAurasDueToSpell(28059);
+                            unitTarget->RemoveAurasDueToSpell(29660);
+                            unitTarget->CastSpell(unitTarget,28084,true);
+                        }
+                    }
                 case 29200:                                 // Purify Helboar Meat
                 {
                     if (m_caster->GetTypeId() != TYPEID_PLAYER)
@@ -3838,6 +3942,10 @@ void Spell::EffectDispel(uint32 i)
 {
     if (!unitTarget)
         return;
+
+    // Cleansing Totem Effect have damage 0
+    if (m_spellInfo->SpellFamilyName == SPELLFAMILY_SHAMAN && (m_spellInfo->SpellFamilyFlags & UI64LIT(0x4000000)))
+        damage = 1.0f;
 
     // Fill possible dispell list
     std::vector <Aura *> dispel_list;

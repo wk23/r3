@@ -437,6 +437,8 @@ class Spell
         uint64 GetDelayStart() const { return m_delayStart; }
         void SetDelayStart(uint64 m_time) { m_delayStart = m_time; }
         uint64 GetDelayMoment() const { return m_delayMoment; }
+        void SetRadius(float rad) { m_radius = rad; }
+        float GetRadius() const { return m_radius; }
 
         bool IsNeedSendToClient() const;
 
@@ -582,6 +584,7 @@ class Spell
 
         uint32 m_spellState;
         uint32 m_timer;
+        float m_radius;
 
         float m_castPositionX;
         float m_castPositionY;

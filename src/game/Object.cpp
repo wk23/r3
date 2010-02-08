@@ -1435,6 +1435,25 @@ bool WorldObject::HasInArc(const float arcangle, const WorldObject* obj) const
     return (( angle >= lborder ) && ( angle <= rborder ));
 }
 
+bool WorldObject::IsInBetween(const WorldObject *obj1, const WorldObject *obj2, float size) const
+{
+	if(!obj1)
+	   return false;
+	if(!obj2)
+	   return false;
+	if(GetPositionX() > std::max(obj1->GetPositionX(), obj2->GetPositionX())
+		|| GetPositionX() < std::min(obj1->GetPositionX(), obj2->GetPositionX())
+		|| GetPositionY() > std::max(obj1->GetPositionY(), obj2->GetPositionY())
+		|| GetPositionY() < std::min(obj1->GetPositionY(), obj2->GetPositionY()))
+		return false;
+
+	if(!size)
+		size = GetObjectSize() / 2;
+
+	float angle = obj1->GetAngle(this) - obj1->GetAngle(obj2);
+	return abs(sin(angle)) * GetExactDist2d(obj1->GetPositionX(), obj1->GetPositionY()) < size;
+}
+
 bool WorldObject::isInFrontInMap(WorldObject const* target, float distance,  float arc) const
 {
     return IsWithinDistInMap(target, distance) && HasInArc( arc, target );
@@ -1718,6 +1737,34 @@ Creature* WorldObject::SummonCreature(uint32 id, float x, float y, float z, floa
 
     // return the creature therewith the summoner has access to it
     return pCreature;
+}
+
+GameObject* WorldObject::SummonGameObject(uint32 entry, float x, float y, float z, float ang, float rotation0, float rotation1, float rotation2, float rotation3, uint32 respawnTime)
+{
+	if(!IsInWorld())
+		return NULL;
+
+	GameObjectInfo const* goinfo = sObjectMgr.GetGameObjectInfo(entry);
+	if(!goinfo)
+	{
+		sLog.outErrorDb("Gameobject template %u not found in database!", entry);
+		return NULL;
+	}
+	Map *map = GetMap();
+	GameObject *go = new GameObject();
+	if(!go->Create(sObjectMgr.GenerateLowGuid(HIGHGUID_GAMEOBJECT), entry, map, GetPhaseMask(), x,y,z,ang,rotation0,rotation1,rotation2,rotation3,100,GO_STATE_READY))
+	{
+		delete go;
+		return NULL;
+	}
+	go->SetRespawnTime(respawnTime);
+	if(GetTypeId() == TYPEID_PLAYER || GetTypeId()==TYPEID_UNIT) //not sure how to handle this
+		((Unit*)this)->AddGameObject(go);
+	else
+		go->SetSpawnedByDefault(false);
+	map->Add(go);
+
+	return go;
 }
 
 Vehicle* WorldObject::SummonVehicle(uint32 id, float x, float y, float z, float ang, uint32 vehicleId)
