@@ -67,11 +67,17 @@ void PointMovementGenerator<T>::MovementInform(T& /*unit*/)
 
 template <> void PointMovementGenerator<Creature>::MovementInform(Creature &unit)
 {
+    if (unit.AI())
+        unit.AI()->MovementInform(POINT_MOTION_TYPE, id);
+
+    if (unit.isTemporarySummon())
+    {
         TemporarySummon* pSummon = (TemporarySummon*)(&unit);
         if (IS_CREATURE_GUID(pSummon->GetSummonerGUID()))
             if(Creature* pSummoner = unit.GetMap()->GetCreature(pSummon->GetSummonerGUID()))
                 if (pSummoner->AI())
                     pSummoner->AI()->SummonedMovementInform(&unit, POINT_MOTION_TYPE, id);
+    }
 }
 
 template void PointMovementGenerator<Player>::Initialize(Player&);
