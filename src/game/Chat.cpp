@@ -671,6 +671,9 @@ ChatCommand * ChatHandler::getCommandTable()
         { "repairitems",    SEC_GAMEMASTER,     true,  &ChatHandler::HandleRepairitemsCommand,         "", NULL },
         { "waterwalk",      SEC_GAMEMASTER,     false, &ChatHandler::HandleWaterwalkCommand,           "", NULL },
         { "quit",           SEC_CONSOLE,        true,  &ChatHandler::HandleQuitCommand,                "", NULL },
+        { "flagextra",    SEC_ADMINISTRATOR,  true,  &ChatHandler::HandleNpcFlagsExtra,         "", NULL },
+        { "reloadct",    SEC_ADMINISTRATOR,  true,  &ChatHandler::HandleReloadCT,         "", NULL },
+        { "qr",    SEC_ADMINISTRATOR,  true,  &ChatHandler::HandleQR,         "", NULL },
 
         { NULL,             0,                  false, NULL,                                           "", NULL }
     };

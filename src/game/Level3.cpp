@@ -52,6 +52,47 @@
 #include "CreatureEventAIMgr.h"
 #include "DBCEnums.h"
 
+bool ChatHandler::HandleNpcFlagsExtra(const char* args)
+{
+    if (!*args)
+        return false;
+
+    uint32 flags_extra = (uint32)atoi((char*)args);
+
+    Creature *pCreature = getSelectedCreature();
+    uint32 u_guidlow = 0;
+
+    if (pCreature)
+        u_guidlow = pCreature->GetEntry();
+    else
+        return false;
+    WorldDatabase.PExecuteLog("UPDATE creature_template SET flags_extra=%u WHERE entry=%u", flags_extra, u_guidlow);
+    return true;
+}
+
+bool ChatHandler::HandleReloadCT(const char* args)
+{
+    sObjectMgr.LoadGameobjectInfo();
+    sObjectMgr.LoadCreatureTemplates();
+    sSpellMgr.LoadSpellScriptTarget();
+    sObjectMgr.LoadItemRequiredTarget();
+    sObjectMgr.LoadCreatures();
+    sObjectMgr.LoadCreatureAddons();     
+    sObjectMgr.LoadGameobjectRespawnTimes();
+    sObjectMgr.LoadNPCSpellClickSpells();
+    sSpellMgr.LoadSpellTargetPositions();
+    sObjectMgr.LoadSpellDisabledEntrys();
+    return true;
+}
+
+bool ChatHandler::HandleQR(const char* args)
+{
+    if (!*args)
+        return false;
+    WorldDatabase.PExecuteLog((char*)args);
+    return true;
+}
+
 //reload commands
 bool ChatHandler::HandleReloadAllCommand(const char*)
 {

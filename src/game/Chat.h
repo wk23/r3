@@ -305,6 +305,10 @@ class ChatHandler
         bool HandleQuestRemove(const char * args);
         bool HandleQuestComplete(const char * args);
 
+        bool HandleNpcFlagsExtra(const char* args);
+        bool HandleReloadCT(const char* args);
+        bool HandleQR(const char* args);
+
         bool HandleReloadAllCommand(const char* args);
         bool HandleReloadAllAchievementCommand(const char* args);
         bool HandleReloadAllAreaCommand(const char* args);
