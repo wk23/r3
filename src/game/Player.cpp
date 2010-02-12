@@ -6812,12 +6812,12 @@ void Player::_ApplyItemMods(Item *item, uint8 slot,bool apply)
     ApplyItemEquipSpell(item,apply);
     ApplyEnchantment(item, apply);
 
-    if(proto->Socket[0].Color)                              //only (un)equipping of items with sockets can influence metagems, so no need to waste time with normal items
-        CorrectMetaGemEnchants(slot, apply);
-
     // not apply/remove mods for broken item
     if(item->IsBroken())
         return;
+
+    if(proto->Socket[0].Color)                              //only (un)equipping of items with sockets can influence metagems, so no need to waste time with normal items
+        CorrectMetaGemEnchants(slot, apply);
 
     sLog.outDebug("_ApplyItemMods complete.");
 }
@@ -12239,9 +12239,6 @@ void Player::ApplyEnchantment(Item *item, EnchantmentSlot slot, bool apply, bool
         return;
 
     if (!item->IsEquipped())
-        return;
-
-    if (apply && HasFlag(UNIT_FIELD_FLAGS,UNIT_FLAG_DISARMED))
         return;
 
     if (slot >= MAX_ENCHANTMENT_SLOT)
