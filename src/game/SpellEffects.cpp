@@ -6331,9 +6331,10 @@ void Spell::EffectStuck(uint32 /*i*/)
 
     // Special handle for battleground maps
     if( BattleGround *bg = pTarget->GetBattleGround() )
-        ClosestGrave = bg->GetClosestGraveYard(pTarget);
-    else
-        ClosestGrave = sObjectMgr.GetClosestGraveYard( pTarget->GetPositionX(), pTarget->GetPositionY(), pTarget->GetPositionZ(), pTarget->GetMapId(), pTarget->GetTeam() );
+        return;
+        //ClosestGrave = bg->GetClosestGraveYard(pTarget);
+    //else
+        //ClosestGrave = sObjectMgr.GetClosestGraveYard( pTarget->GetPositionX(), pTarget->GetPositionY(), pTarget->GetPositionZ(), pTarget->GetMapId(), pTarget->GetTeam() );
 
     // if no grave found, stay at the current location
     // and don't show spirit healer location
