@@ -120,12 +120,25 @@ bool ItemUse_item_flying_machine(Player* pPlayer, Item* pItem, const SpellCastTa
         if (pPlayer->GetBaseSkillValue(SKILL_RIDING) == 300)
             return false;
 
-    if (itemId == 54732)
+    debug_log("SD2: Player attempt to use item %u, but did not meet riding requirement",itemId);
+    pPlayer->SendEquipError(EQUIP_ERR_ERR_CANT_EQUIP_SKILL, pItem, NULL);
+    return true;
+}
+
+/*#####
+# item_gnomish_army_knife
+#####*/
+
+bool ItemUse_item_gnomish_army_knife(Player* pPlayer, Item* pItem, const SpellCastTargets &pTargets)
+{
+    uint32 itemId = pItem->GetEntry();
+
+    if (itemId == 40772)
         if (pPlayer->GetBaseSkillValue(SKILL_ENGINERING) >= 400)
             return false;
 
     debug_log("SD2: Player attempt to use item %u, but did not meet riding requirement",itemId);
-    pPlayer->SendEquipError(EQUIP_ERR_ERR_CANT_EQUIP_SKILL, pItem, NULL);
+    pPlayer->SendEquipError(EQUIP_ERR_CANT_DO_RIGHT_NOW, pItem, NULL);
     return true;
 }
 
@@ -205,6 +218,11 @@ void AddSC_item_scripts()
     newscript = new Script;
     newscript->Name = "item_flying_machine";
     newscript->pItemUse = &ItemUse_item_flying_machine;
+    newscript->RegisterSelf();
+
+    newscript = new Script;
+    newscript->Name = "item_gnomish_army_knife";
+    newscript->pItemUse = &ItemUse_item_gnomish_army_knife;
     newscript->RegisterSelf();
 
     newscript = new Script;
