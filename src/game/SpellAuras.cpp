@@ -6506,6 +6506,15 @@ void Aura::HandleSpellSpecificBoosts(bool apply)
             }
             break;
         }
+        case SPELLFAMILY_DRUID:
+        {
+            // Remove King of the Jungle aura only if caster no longer has Enrage.
+            if (GetId() == 5229 && !apply)
+                spellId1 = 51185;
+            else
+                return;
+            break;
+        }
         case SPELLFAMILY_ROGUE:
             // Sprint (skip non player casted spells by category)
             if (GetSpellProto()->SpellFamilyFlags & UI64LIT(0x0000000000000040) && GetSpellProto()->Category == 44)

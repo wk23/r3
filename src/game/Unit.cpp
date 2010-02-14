@@ -6038,27 +6038,23 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura* triggeredByAu
                     break;
                 }
             }
-            // King of the Jungle 
-            if (dummySpell->SpellIconID == 2850) 
-            { 
-                if (!procSpell) 
-                    return false; 
- 
-                if (effIndex!=0) 
-                    return true; 
- 
-                if (procSpell->SpellFamilyFlags & UI64LIT(0x0000000000080000)) 
-                { 
-                    triggered_spell_id = 51185; 
-                    basepoints0 = triggerAmount; 
-                    break; 
-                } 
-                if (procSpell->SpellFamilyFlags2 & UI64LIT(0x00000800)) 
-                { 
-                    triggered_spell_id = 51178; 
-                    basepoints0 = 4*triggerAmount; 
-                    break; 
-                } 
+            // King of the Jungle
+            if (dummySpell->SpellIconID == 2850)
+            {
+                // Effect 0 for Enrage
+                if (effIndex == 0 && procSpell->Id == 5229)
+                {
+                    triggered_spell_id = 51185;
+                    basepoints0 = triggerAmount;
+                    break;
+                }
+                // Effect 1 for Tiger's Fury
+                else if (effIndex == 1 && (procSpell->SpellFamilyFlags2 & UI64LIT(0x0000000000000800)))
+                {
+                    triggered_spell_id = 51178;
+                    basepoints0 = triggerAmount;
+                    break;
+                }
             }
             // Eclipse
             if (dummySpell->SpellIconID == 2856)
