@@ -4242,7 +4242,8 @@ SpellCastResult Spell::CheckCast(bool strict)
     }
 
      //check caster for combat
-     if(m_caster->isInCombat() && IsNonCombatSpell(m_spellInfo) && !m_caster->isIgnoreUnitState(m_spellInfo))
+     if(m_caster->isInCombat() && IsNonCombatSpell(m_spellInfo) && !m_caster->isIgnoreUnitState(m_spellInfo)
+       && !(m_spellInfo->SpellFamilyFlags & SPELLFAMILYFLAG_ROGUE_STEALTH) && (m_spellInfo->SpellFamilyFlags & SPELLFAMILYFLAG_ROGUE_VANISH))  // Vanish hack
         return SPELL_FAILED_AFFECTING_COMBAT;
 
     // cancel autorepeat spells if cast start when moving
