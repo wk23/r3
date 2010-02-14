@@ -471,6 +471,7 @@ bool IsPositiveEffect(uint32 spellId, uint32 effIndex)
         case 28441:                                         // not positive dummy spell
         case 37675:                                         // Chaos Blast
         case 42966:                                         // Upset Tummy
+        case 26680:                                         // Adored
             return false;
         case 36032:                                         // Arcane Blast
         case 47314:
