@@ -1429,7 +1429,15 @@ void Spell::EffectDummy(uint32 i)
                     if (!m_CastItem)
                         return;
                     if (roll_chance_i(95))                  // Nitro Boosts - success
+                    {
+                        if (m_caster->GetTypeId() != TYPEID_PLAYER)
+                            return;
+
+                        if (BattleGround* bg = ((Player*)m_caster)->GetBattleGround())
+                            bg->EventPlayerDroppedFlag((Player*)m_caster);
+
                         m_caster->CastSpell(m_caster, 54861, true, m_CastItem);
+                    }
                     else                                    // Knocked Up   - backfire 5%
                         m_caster->CastSpell(m_caster, 46014, true, m_CastItem);
                     return;
@@ -1465,6 +1473,10 @@ void Spell::EffectDummy(uint32 i)
                         m_caster->DealDamage(unitTarget, unitTarget->GetHealth(), NULL, DIRECT_DAMAGE, SPELL_SCHOOL_MASK_NORMAL, NULL, false);
                     }
                 return;
+                case 26899:
+                    if (unitTarget)
+                        unitTarget->RemoveAurasDueToSpell(26898);
+                    return;
                 case 67019:                                 // Flask of the North
                 {
                     if (m_caster->GetTypeId() != TYPEID_PLAYER)
@@ -5748,6 +5760,29 @@ void Spell::EffectScriptEffect(uint32 effIndex)
                     // learn random explicit discovery recipe (if any)
                     if(uint32 discoveredSpell = GetExplicitDiscoverySpell(m_spellInfo->Id, (Player*)m_caster))
                         ((Player*)m_caster)->learnSpell(discoveredSpell, false);
+                    return;
+                }
+                case 26899:
+                    if (unitTarget)
+                        unitTarget->RemoveAurasDueToSpell(26898);
+                    return;
+                case 26678:
+                {
+                    // need remove at 3.3.0
+                    if (!unitTarget || unitTarget->GetTypeId() != TYPEID_PLAYER)
+                        return;
+
+                    switch(urand(0, 7))
+                    {
+                    case 0: ((Player*)unitTarget)->UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_CAST_SPELL,26668); break;
+                    case 1: ((Player*)unitTarget)->UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_CAST_SPELL,26670); break;
+                    case 2: ((Player*)unitTarget)->UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_CAST_SPELL,26671); break;
+                    case 3: ((Player*)unitTarget)->UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_CAST_SPELL,26672); break;
+                    case 4: ((Player*)unitTarget)->UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_CAST_SPELL,26673); break;
+                    case 5: ((Player*)unitTarget)->UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_CAST_SPELL,26674); break;
+                    case 6: ((Player*)unitTarget)->UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_CAST_SPELL,26675); break;
+                    case 7: ((Player*)unitTarget)->UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_CAST_SPELL,26676); break;
+                    }
                     return;
                 }
                 case 60123: // Lightwell
