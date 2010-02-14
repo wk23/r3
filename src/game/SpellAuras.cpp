@@ -7469,7 +7469,18 @@ void Aura::PeriodicTick()
             // ignore non positive values (can be result apply spellmods to aura damage
             uint32 amount = m_modifier.m_amount > 0 ? m_modifier.m_amount : 0;
 
-            uint32 pdamage = uint32(m_target->GetMaxPower(POWER_MANA) * amount / 100);
+            uint32 pdamage;
+
+            Pet *pet = ((Pet*)m_target); // Bloodthirsty effect 0
+            if (pet && pet->getPetType() == HUNTER_PET)
+            {
+                pdamage = uint32(pet->GetPower(POWER_HAPPINESS) * amount / 100);
+                SpellPeriodicAuraLogInfo pInfo(this, pdamage, 0, 0, 0, 0.0f);
+                m_target->SendPeriodicAuraLog(&pInfo);
+                int32 gain = pet->ModifyPower(POWER_HAPPINESS, pdamage);
+                break;
+            }
+            pdamage = uint32(m_target->GetMaxPower(POWER_MANA) * amount / 100);
 
             sLog.outDetail("PeriodicTick: %u (TypeId: %u) energize %u (TypeId: %u) for %u mana inflicted by %u",
                 GUID_LOPART(GetCasterGUID()), GuidHigh2TypeId(GUID_HIPART(GetCasterGUID())), m_target->GetGUIDLow(), m_target->GetTypeId(), pdamage, GetId());
