@@ -5859,7 +5859,7 @@ SpellCastResult Spell::CheckItems()
                         return SPELL_FAILED_NOT_TRADEABLE;
                 }
 
-                if (m_spellInfo->maxLevel && (item->GetProto()->ItemLevel > m_spellInfo->maxLevel))
+                if (!(m_spellInfo->baseLevel) && m_spellInfo->maxLevel && (item->GetProto()->ItemLevel > m_spellInfo->maxLevel)
                     return SPELL_FAILED_BAD_TARGETS;
 
                 break;
