@@ -12241,6 +12241,9 @@ void Player::ApplyEnchantment(Item *item, EnchantmentSlot slot, bool apply, bool
     if (!item->IsEquipped())
         return;
 
+    if (apply && HasFlag(UNIT_FIELD_FLAGS,UNIT_FLAG_DISARMED))
+        return;
+
     if (slot >= MAX_ENCHANTMENT_SLOT)
         return;
 
