@@ -211,7 +211,7 @@ void Script::RegisterSelf()
     }
     else
     {
-        debug_log("SD2: RegisterSelf, but script named %s does not have ScriptName assigned in database.",(this)->Name.c_str());
+        error_log("SD2: RegisterSelf, but script named %s does not have ScriptName assigned in database.",(this)->Name.c_str());
         delete this;
     }
 }
