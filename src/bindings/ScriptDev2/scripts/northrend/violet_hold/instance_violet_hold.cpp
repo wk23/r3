@@ -180,7 +180,7 @@ void instance_violet_hold::OnPlayerEnter(Player* pPlayer)
 
 void instance_violet_hold::SetData(uint32 uiType, uint32 uiData)
 {
-    error_log("SD2: instance_violet_hold: SetData got type % u, data %u.", uiType, uiData);
+    //error_log("SD2: instance_violet_hold: SetData got type % u, data %u.", uiType, uiData);
 
     switch(uiType)
     {
@@ -232,7 +232,62 @@ void instance_violet_hold::SetData(uint32 uiType, uint32 uiData)
             break;
         }
     }
+
+        if (uiData == DONE)
+        {
+            OUT_SAVE_INST_DATA;
+
+            std::ostringstream saveStream;
+            saveStream << m_uiWorldStatePortalCount;
+            strInstData = saveStream.str();
+
+            SaveToDB();
+            OUT_SAVE_INST_DATA_COMPLETE;
+        }
+
 }
+
+    const char* instance_violet_hold::Save()
+    {
+        return strInstData.c_str();
+    }
+    void instance_violet_hold::Load(const char* chrIn)
+    {
+
+        if (!chrIn)
+        {
+            OUT_LOAD_INST_DATA_FAIL;
+            return;
+        }
+
+        OUT_LOAD_INST_DATA(chrIn);
+
+        std::istringstream loadStream(chrIn);
+        loadStream >> m_uiWorldStatePortalCount;
+        OUT_LOAD_INST_DATA_COMPLETE;
+        if (m_uiWorldStatePortalCount>0)
+        {
+        DoUpdateWorldState(WORLD_STATE_ID, 1);
+        DoUpdateWorldState(WORLD_STATE_SEAL, 100);
+        DoUpdateWorldState(WORLD_STATE_PORTALS, m_uiWorldStatePortalCount);
+        UpdateWorldState(true);
+
+        m_auiEncounter[0] = DONE;
+        SetData(TYPE_MAIN, DONE);
+
+        }
+    }
+
+
+    uint32 instance_violet_hold::GetData(uint32 uiType)
+    {
+        switch (uiType)
+        {
+            case TYPE_MAIN:              return m_auiEncounter[0];
+        }
+
+        return 0;
+    }
 
 void instance_violet_hold::SetIntroPortals(bool bDeactivate)
 {
@@ -277,13 +332,13 @@ void instance_violet_hold::SetPortalId()
         if (iTemp >= m_uiPortalId)
             ++iTemp;
 
-        error_log("SD2: instance_violet_hold: SetPortalId %i, old was id %u.", iTemp, m_uiPortalId);
+        //error_log("SD2: instance_violet_hold: SetPortalId %i, old was id %u.", iTemp, m_uiPortalId);
 
         m_uiPortalId = iTemp;
     }
     else
     {
-        error_log("SD2: instance_violet_hold: SetPortalId %u (is boss), old was id %u.", m_uiMaxCountPortalLoc, m_uiPortalId);
+        //error_log("SD2: instance_violet_hold: SetPortalId %u (is boss), old was id %u.", m_uiMaxCountPortalLoc, m_uiPortalId);
         m_uiPortalId = m_uiMaxCountPortalLoc;
     }
 }
@@ -307,16 +362,24 @@ void instance_violet_hold::SetRandomBosses()
         }
     }
 
-    for(std::list<uint32>::iterator itr = m_lRandomBossList.begin(); itr != m_lRandomBossList.end(); ++itr)
-        error_log("SD2: instance_violet_hold random boss is entry %u", *itr);
+    //for(std::list<uint32>::iterator itr = m_lRandomBossList.begin(); itr != m_lRandomBossList.end(); ++itr)
+        //error_log("SD2: instance_violet_hold random boss is entry %u", *itr);
 }
 
 uint32 instance_violet_hold::GetRandomBosses()
 {
-if(m_uiWorldStatePortalCount == 6) return *m_lRandomBossList.begin();
-if(m_uiWorldStatePortalCount == 12) return *m_lRandomBossList.end();
-if(m_uiWorldStatePortalCount == 18) return NPC_CYANIGOSA;
-return 0;
+    switch (m_uiWorldStatePortalCount)
+    {
+        case 6: return *m_lRandomBossList.begin();
+        case 12: 
+        {
+           for(std::list<uint32>::iterator itr = m_lRandomBossList.begin(); itr != m_lRandomBossList.end(); ++itr)
+               if(itr != m_lRandomBossList.begin())
+                  return *itr;
+        }
+        case 18: return NPC_CYANIGOSA;
+        default: return 0;
+    }
 }
 
 void instance_violet_hold::CallGuards(bool bRespawn)

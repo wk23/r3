@@ -239,6 +239,7 @@ struct MANGOS_DLL_DECL npc_teleportation_portalAI : public ScriptedAI
             if (m_pInstance)
             if (Creature* pSaboteur = m_creature->SummonCreature(NPC_AZURE_SABOTEUR, 0.0f, 0.0f, 0.0f, 0.0f, TEMPSUMMON_TIMED_OR_DEAD_DESPAWN, 600*IN_MILISECONDS))
             {
+                pSaboteur->setFaction(35);
                 if (Creature*  pBoss = m_pInstance->instance->GetCreature(m_pInstance->GetData64(m_pInstance->GetRandomBosses())))
                 {
                    pBoss->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_OOC_NOT_ATTACKABLE);
@@ -247,8 +248,8 @@ struct MANGOS_DLL_DECL npc_teleportation_portalAI : public ScriptedAI
                    pBoss->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_DISABLE_MOVE);
                    pBoss->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PACIFIED);
                    pBoss->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_STUNNED);
-                   pBoss->GetMotionMaster()->MoveFollow(pSaboteur, 0.0f, 0.0f);
                    pBoss->setFaction(14);
+                   pBoss->GetMotionMaster()->MovePoint(0,1890.73, 803.309, 38.4001);
                 }
                 pSaboteur->ForcedDespawn(5000);
             }
@@ -321,6 +322,27 @@ struct MANGOS_DLL_DECL npc_teleportation_portalAI : public ScriptedAI
 
     void UpdateAI(const uint32 uiDiff)
     {
+        switch(m_uiMyPortalNumber)
+        {
+            case 6:
+            case 12:
+            case 18:
+                if (m_pInstance)
+                {
+                    if (Creature*  pBoss = m_pInstance->instance->GetCreature(m_pInstance->GetData64(m_pInstance->GetRandomBosses())))
+                    if (pBoss->isDead())
+                    {
+                        // no need if a new portal was made while this was in progress
+                        if (m_uiMyPortalNumber == m_pInstance->GetCurrentPortalNumber())
+                            m_pInstance->SetData(TYPE_PORTAL, DONE);
+                        m_creature->ForcedDespawn();
+                    }
+                }
+                break;
+            default:
+               break;
+        }
+
         if (m_uiIntroTimer)
         {
             if (m_uiIntroTimer <= uiDiff)
