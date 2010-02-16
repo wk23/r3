@@ -138,6 +138,8 @@ extern void AddSC_boss_kalecgos();
 extern void AddSC_instance_sunwell_plateau();
 extern void AddSC_boss_ironaya();                           //uldaman
 extern void AddSC_uldaman();
+extern void AddSC_instance_uldaman();
+extern void AddSC_boss_archaedas();
 extern void AddSC_boss_akilzon();                           //zulaman
 extern void AddSC_boss_halazzi();
 extern void AddSC_boss_janalai();
@@ -221,7 +223,6 @@ extern void AddSC_boss_skeram();
 extern void AddSC_boss_twinemperors();
 extern void AddSC_mob_anubisath_sentinel();
 extern void AddSC_instance_temple_of_ahnqiraj();
-extern void AddSC_instance_wailing_caverns();
 extern void AddSC_zulfarrak();                              //zulfarrak
 
 extern void AddSC_ashenvale();
@@ -552,6 +553,8 @@ void AddScripts()
     AddSC_instance_sunwell_plateau();
     AddSC_boss_ironaya();                                   //uldaman
     AddSC_uldaman();
+    AddSC_instance_uldaman();
+    AddSC_boss_archaedas();
     AddSC_boss_akilzon();                                   //zulaman
     AddSC_boss_halazzi();
     AddSC_boss_janalai();
@@ -635,7 +638,6 @@ void AddScripts()
     AddSC_boss_twinemperors();
     AddSC_mob_anubisath_sentinel();
     AddSC_instance_temple_of_ahnqiraj();
-    AddSC_instance_wailing_caverns();
     AddSC_zulfarrak();                                      //zulfarrak
 
     AddSC_ashenvale();
