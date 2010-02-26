@@ -1742,7 +1742,7 @@ void Spell::EffectDummy(uint32 i)
             }
             break;
         case SPELLFAMILY_PRIEST:
-            // Penance
+            // 
             if (m_spellInfo->SpellFamilyFlags & UI64LIT(0x0080000000000000))
             {
                 if (!unitTarget)
@@ -1761,9 +1761,11 @@ void Spell::EffectDummy(uint32 i)
                         return;
                 }
                 if (m_caster->IsFriendlyTo(unitTarget))
-                    m_caster->CastSpell(unitTarget, heal, true, 0);
+                    m_caster->CastSpell(unitTarget, heal, false);
                 else
-                    m_caster->CastSpell(unitTarget, hurt, true, 0);
+                    m_caster->CastSpell(unitTarget, hurt, false);
+                //To avoid Interrupt message
+                finish(true);
                 return;
             }
             break;
