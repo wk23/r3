@@ -4721,8 +4721,8 @@ uint32 Player::DurabilityRepair(uint16 pos, bool cost, float discountMod, bool g
     item->SetState(ITEM_CHANGED, this);
 
     // reapply mods for total broken and repaired item if equipped
-    if(IsEquipmentPos(pos) && !curDurability)
-        _ApplyItemMods(item,pos & 255, true);
+    //if(IsEquipmentPos(pos) && !curDurability)
+        //_ApplyItemMods(item,pos & 255, true);
     return TotalCost;
 }
 
@@ -6810,6 +6810,14 @@ void Player::_ApplyItemMods(Item *item, uint8 slot,bool apply)
     if(!proto)
         return;
 
+    // not apply/remove mods for broken item
+    if(item->IsBroken())
+    {
+        if (proto->Socket[0].Color)
+           CorrectMetaGemEnchants(slot, apply);
+        return;
+     }
+
     sLog.outDetail("applying mods for item %u ",item->GetGUIDLow());
 
     uint32 attacktype = Player::GetAttackBySlot(slot);
@@ -6825,8 +6833,6 @@ void Player::_ApplyItemMods(Item *item, uint8 slot,bool apply)
     ApplyEnchantment(item, apply);
 
     // not apply/remove mods for broken item
-    if(item->IsBroken())
-        return;
 
     if(proto->Socket[0].Color)                              //only (un)equipping of items with sockets can influence metagems, so no need to waste time with normal items
         CorrectMetaGemEnchants(slot, apply);
