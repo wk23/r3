@@ -378,6 +378,7 @@ class ChatHandler
         bool HandleReloadQuestStartScriptsCommand(const char* args);
         bool HandleReloadQuestTemplateCommand(const char* args);
         bool HandleReloadReservedNameCommand(const char*);
+        bool HandleReloadLFGNamesCommand(const char*);
         bool HandleReloadSkillDiscoveryTemplateCommand(const char* args);
         bool HandleReloadSkillExtraItemTemplateCommand(const char* args);
         bool HandleReloadSkillFishingBaseLevelCommand(const char* args);
@@ -468,6 +469,7 @@ class ChatHandler
         bool HandleDeMorphCommand(const char* args);
         bool HandlePInfoCommand(const char* args);
         bool HandleMuteCommand(const char* args);
+        bool HandleLFGMuteCommand(const char* args);
         bool HandleUnmuteCommand(const char* args);
         bool HandleMovegensCommand(const char* args);
 

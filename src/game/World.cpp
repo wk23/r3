@@ -1444,6 +1444,9 @@ void World::SetInitialWorldSettings()
     sLog.outString( "Loading ReservedNames..." );
     sObjectMgr.LoadReservedPlayersNames();
 
+    sLog.outString( "Loading LFGNames..." );
+    sObjectMgr.LoadLFGNames();
+
     sLog.outString( "Loading GameObjects for quests..." );
     sObjectMgr.LoadGameObjectForQuests();
 

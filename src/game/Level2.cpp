@@ -98,6 +98,60 @@ bool ChatHandler::HandleMuteCommand(const char* args)
     return true;
 }
 
+//lfgmute player for 5 minutes
+bool ChatHandler::HandleLFGMuteCommand(const char* args)
+{
+    std::string nameStr=extractPlayerNameFromLink((char*)args);
+
+    Player* target;
+    Player* muter;
+
+    uint64 target_guid;
+    std::string target_name;
+
+    if(!extractPlayerTarget((char*)nameStr.c_str(),&target,&target_guid,&target_name))
+        return false;
+
+    uint32 account_id = target ? target->GetSession()->GetAccountId() : sObjectMgr.GetPlayerAccountIdByGUID(target_guid);
+
+    // find only player from same account if any
+    if(!target)
+    {
+        if(WorldSession* session = sWorld.FindSession(account_id))
+            target = session->GetPlayer();
+    }
+
+    muter = m_session->GetPlayer();
+
+    // must have strong lesser security level
+    std::string name;
+    if(muter)
+        name = muter->GetName();
+    if(target && muter)
+    {
+        if((!sObjectMgr.IsLFGName(name) || (muter->GetTeam() != target->GetTeam())))
+            return false;
+    }
+    else
+        return false;
+
+    uint32 notspeaktime = 5;//5 min
+    time_t mutetime = time(NULL) + notspeaktime*60;
+
+    if (target)
+        target->GetSession()->m_muteTime = mutetime;
+
+    loginDatabase.PExecute("UPDATE account SET mutetime = " UI64FMTD " WHERE id = '%u'",uint64(mutetime), account_id );
+
+    if(target && muter)
+        ChatHandler(target).PSendSysMessage(" %s disabled you chat for %u minutes.", muter->GetName(), notspeaktime);
+
+    std::string nameLink = playerLink(target_name);
+
+    PSendSysMessage(LANG_YOU_DISABLE_CHAT, nameLink.c_str(), notspeaktime);
+    return true;
+}
+
 //unmute player
 bool ChatHandler::HandleUnmuteCommand(const char* args)
 {

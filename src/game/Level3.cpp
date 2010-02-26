@@ -111,6 +111,7 @@ bool ChatHandler::HandleReloadAllCommand(const char*)
     HandleReloadMailLevelRewardCommand("");
     HandleReloadCommandCommand("");
     HandleReloadReservedNameCommand("");
+    HandleReloadLFGNamesCommand("");
     HandleReloadMangosStringCommand("");
     HandleReloadGameTeleCommand("");
 
@@ -509,6 +510,13 @@ bool ChatHandler::HandleReloadReservedNameCommand(const char*)
     sLog.outString( "Loading ReservedNames... (`reserved_name`)" );
     sObjectMgr.LoadReservedPlayersNames();
     SendGlobalSysMessage("DB table `reserved_name` (player reserved names) reloaded.");
+    return true;
+}
+
+bool ChatHandler::HandleReloadLFGNamesCommand(const char*)
+{
+    sLog.outString( "Loading ReservedNames... (`lfg_names`)" );
+    sObjectMgr.LoadLFGNames();
     return true;
 }
 
