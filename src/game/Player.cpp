@@ -3779,6 +3779,7 @@ bool Player::resetTalents(bool no_cost)
 			removeSpell(itr2->first, !IsPassiveSpell(itr2->first),false);
 			itr2->second->state = PLAYERSPELL_REMOVED;
         }
+    _SaveSpells();
     }
 
     SetFreeTalentPoints(talentPointsForLevel);
@@ -3791,6 +3792,17 @@ bool Player::resetTalents(bool no_cost)
 
         m_resetTalentsCost = cost;
         m_resetTalentsTime = time(NULL);
+    }
+
+    _SaveSpells();
+    _SaveTalents();
+
+    if(getClass() == CLASS_HUNTER)
+    {
+        Pet::resetTalentsForAllPetsOf(this);
+        Pet* pet = GetPet();
+        if(pet)
+            SendTalentsInfoData(true);
     }
 
     //FIXME: remove pet before or after unlearn spells? for now after unlearn to allow removing of talent related, pet affecting auras
@@ -21988,6 +22000,17 @@ void Player::ActivateSpec(uint8 spec)
     
     ResummonPetTemporaryUnSummonedIfAny();
     SendActionButtons(1);
+
+    _SaveSpells();
+    _SaveTalents();
+
+    if(getClass() == CLASS_HUNTER)
+    {
+        Pet::resetTalentsForAllPetsOf(this);
+        Pet* pet = GetPet();
+        if(pet)
+            SendTalentsInfoData(true);
+    }
 
     Powers pw = getPowerType();
     if(pw != POWER_MANA)
