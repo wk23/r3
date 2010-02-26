@@ -2227,6 +2227,30 @@ void Aura::TriggerSpell()
         // Spell exist but require custom code
         switch(auraId)
         {
+            // Fire Nova (1-9 ranks)
+            case 8443:
+            case 8504:
+            case 8505:
+            case 11310:
+            case 11311:
+            case 25538:
+            case 25539:
+            case 61651:
+            case 61660:
+            {
+                if (Unit* caster = GetCaster())
+                if (((Creature*)caster)->isTotem())
+                if (Player* owner = ((Player*)caster->GetOwner()))
+                {
+                            if(owner->IsInWorld() && owner->HasTalent(16544,owner->GetActiveSpec()))
+                               caster->CastSpell(target, 51880, true, NULL, this);
+                            if(owner->IsInWorld() && owner->HasTalent(16086,owner->GetActiveSpec()))
+                               if(roll_chance_i(50))
+                                  caster->CastSpell(target, 51880, true, NULL, this);
+                caster->CastSpell(target, trigger_spell_id, true, NULL, this, casterGUID);    
+                }
+                break;
+            }
             // Curse of Idiocy
             case 1010:
             {

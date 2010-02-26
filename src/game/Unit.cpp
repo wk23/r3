@@ -6737,10 +6737,6 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura* triggeredByAu
                     triggered_spell_id = 64930;            // Electrified
                     break;
                 }
-                // Improved Fire Nova (Rank 2)
-                case 16544:
-                    triggered_spell_id = 51880;
-                    break;
                 // Earthen Power (Rank 1,2)
                 case 51523:
                 case 51524:
@@ -7259,6 +7255,10 @@ bool Unit::HandleProcTriggerSpell(Unit *pVictim, uint32 damage, Aura* triggeredB
 {
     // Get triggered aura spell info
     SpellEntry const* auraSpellInfo = triggeredByAura->GetSpellProto();
+
+    //Improved Fire Nova Totem
+    if(auraSpellInfo->Id == 16086)
+        return false;
 
     // Basepoints of trigger aura
     int32 triggerAmount = triggeredByAura->GetModifier()->m_amount;
