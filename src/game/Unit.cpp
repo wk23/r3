@@ -730,6 +730,17 @@ uint32 Unit::DealDamage(Unit *pVictim, uint32 damage, CleanDamage const* cleanDa
                             pSummoner->AI()->SummonedCreatureJustDied(cVictim);
             }
 
+            //Heart of the Phoenix 
+            if(cVictim->isPet()) 
+               if(Pet *pet = ((Pet*)cVictim))
+                  if(pet->getPetType() == HUNTER_PET && pet->HasSpell(55709) && !pet->HasAura(55711))
+                     if(Player* owner = (Player*)(pet->GetOwner()))
+                     {
+                         int32 basePoints = 100;
+                         owner->CastCustomSpell(this, 54114, &basePoints, 0, 0, true);
+                         pet->CastSpell(pet, 55711, true);
+                     }
+
             // Dungeon specific stuff, only applies to players killing creatures
             if(cVictim->GetInstanceId())
             {
