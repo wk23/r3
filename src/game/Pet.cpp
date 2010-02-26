@@ -1455,6 +1455,7 @@ bool Pet::learnSpell(uint32 spell_id)
             ((Player*)owner)->PetSpellInitialize();
         }
     }
+    UpdateAllStats();
     return true;
 }
 
@@ -1513,6 +1514,7 @@ bool Pet::unlearnSpell(uint32 spell_id, bool learn_prev, bool clear_ab)
                 }
             }
         }
+        UpdateAllStats();
         return true;
     }
     return false;
