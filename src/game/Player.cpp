@@ -6832,8 +6832,6 @@ void Player::_ApplyItemMods(Item *item, uint8 slot,bool apply)
     ApplyItemEquipSpell(item,apply);
     ApplyEnchantment(item, apply);
 
-    // not apply/remove mods for broken item
-
     if(proto->Socket[0].Color)                              //only (un)equipping of items with sockets can influence metagems, so no need to waste time with normal items
         CorrectMetaGemEnchants(slot, apply);
 
@@ -8509,6 +8507,16 @@ void Player::SendInitWorldStates(uint32 zoneid, uint32 areaid)
                 data << uint32(0xbb8) << uint32(0x0);           // 7 gold
                 data << uint32(0xbb9) << uint32(0x0);           // 8 green
                 data << uint32(0xbba) << uint32(0x0);           // 9 show
+            }
+            break;
+        case 4378:                                          // Dalaran Sewers
+            if (bg && bg->GetTypeID() == BATTLEGROUND_DS)
+                bg->FillInitialWorldStates(data);
+            else
+            {
+                data << uint32(3601) << uint32(0x0);           // 7 gold
+                data << uint32(3600) << uint32(0x0);           // 8 green
+                data << uint32(3610) << uint32(0x0);           // 9 show
             }
             break;
         case 3703:                                          // Shattrath City
