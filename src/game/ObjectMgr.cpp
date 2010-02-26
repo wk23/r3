@@ -6920,6 +6920,63 @@ bool ObjectMgr::IsReservedName( const std::string& name ) const
     return m_ReservedNames.find(wstr) != m_ReservedNames.end();
 }
 
+void ObjectMgr::LoadLFGNames()
+{
+    m_LFGNames.clear();                                // need for reload case
+
+    QueryResult *result = WorldDatabase.Query("SELECT name FROM lfg_names");
+
+    uint32 count = 0;
+
+    if( !result )
+    {
+        barGoLink bar( 1 );
+        bar.step();
+
+        sLog.outString();
+        sLog.outString( ">> Loaded %u reserved player names", count );
+        return;
+    }
+
+    barGoLink bar( result->GetRowCount() );
+
+    Field* fields;
+    do
+    {
+        bar.step();
+        fields = result->Fetch();
+        std::string name= fields[0].GetCppString();
+
+        std::wstring wstr;
+        if(!Utf8toWStr (name,wstr))
+        {
+            sLog.outError("Table `lfg_names` have invalid name: %s", name.c_str() );
+            continue;
+        }
+
+        wstrToLower(wstr);
+
+        m_LFGNames.insert(wstr);
+        ++count;
+    } while ( result->NextRow() );
+
+    delete result;
+
+    sLog.outString();
+    sLog.outString( ">> Loaded %u lfg player names", count );
+}
+
+bool ObjectMgr::IsLFGName( const std::string& name ) const
+{
+    std::wstring wstr;
+    if(!Utf8toWStr (name,wstr))
+        return false;
+
+    wstrToLower(wstr);
+
+    return m_LFGNames.find(wstr) != m_LFGNames.end();
+}
+
 enum LanguageType
 {
     LT_BASIC_LATIN    = 0x0000,

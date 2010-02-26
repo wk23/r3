@@ -775,6 +775,9 @@ class ObjectMgr
         void LoadReservedPlayersNames();
         bool IsReservedName(const std::string& name) const;
 
+        void LoadLFGNames();
+        bool IsLFGName(const std::string& name) const;
+
         // name with valid structure and symbols
         static uint8 CheckPlayerName( const std::string& name, bool create = false );
         static PetNameInvalidReason CheckPetName( const std::string& name );
@@ -945,6 +948,7 @@ class ObjectMgr
         //character reserved names
         typedef std::set<std::wstring> ReservedNamesMap;
         ReservedNamesMap    m_ReservedNames;
+        ReservedNamesMap    m_LFGNames;
 
         typedef UNORDERED_MAP<uint32, uint32> SpellDisabledMap;
 		SpellDisabledMap  m_spell_disabled;
