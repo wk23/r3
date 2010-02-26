@@ -2242,9 +2242,9 @@ void Aura::TriggerSpell()
                 if (((Creature*)caster)->isTotem())
                 if (Player* owner = ((Player*)caster->GetOwner()))
                 {
-                            if(owner->IsInWorld() && owner->HasTalent(16544,owner->GetActiveSpec()))
+                            if(owner->IsInWorld() && owner->HasSpell(16544))
                                caster->CastSpell(target, 51880, true, NULL, this);
-                            if(owner->IsInWorld() && owner->HasTalent(16086,owner->GetActiveSpec()))
+                            if(owner->IsInWorld() && owner->HasSpell(16086))
                                if(roll_chance_i(50))
                                   caster->CastSpell(target, 51880, true, NULL, this);
                 caster->CastSpell(target, trigger_spell_id, true, NULL, this, casterGUID);    
