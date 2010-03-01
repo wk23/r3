@@ -11323,6 +11323,10 @@ void Unit::TauntApply(Unit* taunter)
     if(target && target == taunter)
         return;
 
+    uint32 unitflag = GetUInt32Value(UNIT_FIELD_FLAGS);
+    if(unitflag&(UNIT_FLAG_STUNNED | UNIT_FLAG_FLEEING | UNIT_FLAG_CONFUSED))
+        return;
+
     SetInFront(taunter);
     if (((Creature*)this)->AI())
         ((Creature*)this)->AI()->AttackStart(taunter);
