@@ -53,6 +53,11 @@ struct MANGOS_DLL_DECL npc_spirit_guideAI : public ScriptedAI
     {
     }
 
+    void DamageTaken(Unit* done_by, uint32 &damage)
+    {
+        damage = 0;
+    }
+
     void UpdateAI(const uint32 uiDiff)
     {
         // auto cast the whole time this spell
