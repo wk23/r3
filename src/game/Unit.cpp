@@ -965,6 +965,7 @@ uint32 Unit::DealDamage(Unit *pVictim, uint32 damage, CleanDamage const* cleanDa
     DEBUG_LOG("DealDamageEnd returned %d damage", damage);
 
     //blood presence
+    if(pVictim != this)
     if (HasAura(48266)) {
     uint32 addhealth_bp=(uint32)(damage*0.04);
     SpellEntry const *auraSpellInfo = sSpellStore.LookupEntry(48266);
