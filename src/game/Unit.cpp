@@ -7170,27 +7170,26 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura* triggeredByAu
                 break;
             }
             // Unholy Blight
+                switch (procSpell->Id)
             if (dummySpell->SpellIconID == 1494)
+            {
             switch (dummySpell->Id)
             {
                     case 49194:                             // Rank 1
-                        basepoints0 = triggerAmount * damage / 1000;
                         triggered_spell_id = 50536; break;
                     case 51376:                             // Rank 2
-                        basepoints0 = triggerAmount * damage / 1000;
                         triggered_spell_id = 51373; break;
                     case 51378:                             // Rank 3
-                        basepoints0 = triggerAmount * damage / 1000;
                         triggered_spell_id = 51374; break;
                     case 51379:                             // Rank 4
-                        basepoints0 = triggerAmount * damage / 1000;
                         triggered_spell_id = 51375; break;
                     default: break;
             }
-            if (dummySpell->Id == 49194)
-            {
-                basepoints0 = triggerAmount * damage / 1000;
-                triggered_spell_id = 50536;
+                SpellEntry const* triggeredEntry = sSpellStore.LookupEntry(triggered_spell_id); 
+                if (!triggeredEntry) 
+                   return false; 
+                basepoints0 = triggerAmount * damage / 100;
+                basepoints0 /= (GetSpellDuration(triggeredEntry) / triggeredEntry->EffectAmplitude[EFFECT_INDEX_0]); 
                 break;
             }
             // Blood-Caked Blade
