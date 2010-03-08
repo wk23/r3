@@ -666,7 +666,7 @@ void WorldSession::HandleMovementOpcodes( WorldPacket & recv_data )
         }
     }
     /* process position-change */
-    if (check_passed && mover)
+    if (check_passed && mover && mover->IsInWorld())
     {
     WorldPacket data(opcode, recv_data.size());
     movementInfo.time = getMSTime();
