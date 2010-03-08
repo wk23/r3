@@ -73,7 +73,7 @@ void WorldSession::HandleSwapInvItemOpcode( WorldPacket & recv_data )
 
     if(_player->pTrader)
     {
-        _player->SendEquipError( EQUIP_ERR_CANT_DO_RIGHT_NOW );
+        _player->SendEquipError( EQUIP_ERR_CANT_DO_RIGHT_NOW, NULL, NULL  );
         return;
     }
 
