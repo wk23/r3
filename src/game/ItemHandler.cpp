@@ -71,6 +71,12 @@ void WorldSession::HandleSwapInvItemOpcode( WorldPacket & recv_data )
     if(srcslot == dstslot)
         return;
 
+    if(_player->pTrader)
+    {
+        _player->SendEquipError( EQUIP_ERR_CANT_DO_RIGHT_NOW );
+        return;
+    }
+
     if(!_player->IsValidPos(INVENTORY_SLOT_BAG_0, srcslot, true))
     {
         _player->SendEquipError( EQUIP_ERR_ITEM_NOT_FOUND, NULL, NULL );
